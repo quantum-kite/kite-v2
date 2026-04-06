@@ -58,9 +58,9 @@ Eigen::Array<std::complex<T>, -1, 1> build_exponential(const T t)
 }
 
 template <typename T, unsigned D>
-void Simulation<T, D>::calc_evolwave()
+void Simulation<T, D>::calc_localized_wavepacket()
 {
-  debug_message("Entered Simulation::calc_evolwave\n");
+  debug_message("Entered Simulation::calc_localized_wavepacket\n");
 #pragma omp barrier
 #pragma omp master
   {
@@ -69,20 +69,20 @@ void Simulation<T, D>::calc_evolwave()
     try {
       int dummy_variable;
       get_hdf5<
-        int>(&dummy_variable, file, (char *)"/Calculation/evol_wave/Measurements");
+        int>(&dummy_variable, file, (char *)"/Calculation/localized_wave_packet/Measurements");
       Global.calculate_evol_wave = true;
     } catch (H5::Exception &e) {
-      debug_message("evolwave: no need to calculate it.\n");
+      debug_message("localized_wavepacket: no need to calculate it.\n");
     }
     file->close();
     delete file;
   }
 #pragma omp barrier
-  bool local_calculate_evol_wave = false;
+  bool local_calculate_wavepacket = false;
 #pragma omp critical
-  local_calculate_evol_wave = Global.calculate_evol_wave;
+  local_calculate_wavepacket = Global.calculate_localized_wavepacket;
 #pragma omp barrier
-  if (local_calculate_evol_wave) {
+  if (local_calculate_wavepacket) {
 #pragma omp master
     std::cout << "Calculating time evolution of wave packet.\n";
 #pragma omp barrier
@@ -91,25 +91,25 @@ void Simulation<T, D>::calc_evolwave()
 #pragma omp critical
     {
       H5::H5File *file = new H5::H5File(name, H5F_ACC_RDONLY);
-      get_hdf5<double>(&time, file, (char *)"/Calculation/evol_wave/Time");
+      get_hdf5<double>(&time, file, (char *)"/Calculation/localized_wave_packet/Time");
       get_hdf5<
-        unsigned>(&n_measures, file, (char *)"/Calculation/evol_wave/Measurements");
+        unsigned>(&n_measures, file, (char *)"/Calculation/localized_wave_packet/Measurements");
 
       file->close();
       delete file;
     }
-    evolwave(time, n_measures);
+    localized_wavepacket(time, n_measures);
   }
 }
 
 template <typename T, unsigned D>
-void Simulation<T, D>::evolwave(
+void Simulation<T, D>::localized_wavepacket(
   const std::array<unsigned, D + 1> &pos_,
   const value_type t,
   const unsigned measurements
 )
 {
-  debug_message("Entered evolwave\n");
+  debug_message("Entered localized_wavepacket\n");
   value_type energy_scale;
   value_type energy_shift;
 #pragma omp critical
@@ -163,17 +163,17 @@ void Simulation<T, D>::evolwave(
     phi.Exchange_Boundaries();
   }
 
-  store_evolwave(results);
+  store_localized_wavepacket(results);
 }
 
 template <typename T, unsigned D>
-void Simulation<T, D>::store_evolwave(const Eigen::Array<T, -1, -1> &results_)
+void Simulation<T, D>::store_localized_wavepacket(const Eigen::Array<T, -1, -1> &results_)
 {
-  debug_message("Entered store_evolwave\n");
+  debug_message("Entered store_wavepacket\n");
   Coordinates<std::size_t, D + 1> global(r.Lt);
   Coordinates<std::size_t, D + 1> local(r.Ld);
 #pragma omp master
-  Global.evol_wave.resize(r.Sizet, results_.cols());
+  Global.localized_wavepacket.resize(r.Sizet, results_.cols());
 #pragma omp barrier
   std::array<unsigned, D> idx;
   std::array<unsigned, D> start;
@@ -189,7 +189,7 @@ void Simulation<T, D>::store_evolwave(const Eigen::Array<T, -1, -1> &results_)
       else if constexpr (D == 3)
         local.set({i[2], i[1], i[0], io});
       r.convertCoordinates(global, local);
-      Global.evol_wave.row(global.index) = results_.row(local.index);
+      Global.localized_wavepacket.row(global.index) = results_.row(local.index);
     };
     UnitCellLoop<D>::run(idx, start, final, body);
   }
@@ -198,11 +198,11 @@ void Simulation<T, D>::store_evolwave(const Eigen::Array<T, -1, -1> &results_)
   {
     H5::H5File *file = new H5::H5File(name, H5F_ACC_RDWR);
     char buffer[200];
-    std::sprintf(buffer, "/Calculation/evol_wave/States");
+    std::sprintf(buffer, "/Calculation/localized_wave_packet/States");
     const std::string name(buffer);
-    write_hdf5(Global.evol_wave, file, name);
+    write_hdf5(Global.localized_wavepacket, file, name);
     delete file;
   }
 #pragma omp barrier
-  debug_message("Left evolwave\n");
+  debug_message("Left localized_wavepacket\n");
 }

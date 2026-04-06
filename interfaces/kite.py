@@ -497,6 +497,12 @@ class Calculation:
         return self._gaussian_wave_packet
 
     @property
+    def get_localized_wave_packet(self):
+        """Returns the requested wave packet time evolution function, with a localized wavepacket with spectrum filtering
+        ."""
+        return self._localized_wave_packet
+
+    @property
     def get_conductivity_dc(self):
         """Returns the requested DC conductivity functions."""
         return self._conductivity_dc
@@ -546,6 +552,7 @@ class Calculation:
         self._conductivity_optical           = []
         self._conductivity_optical_nonlinear = []
         self._gaussian_wave_packet           = []
+        self._localized_wave_packet          = []
         self._singleshot_conductivity_dc     = []
         self._orbital_index_collection       = {}
         self._custom_operator_collection     = {}
@@ -669,6 +676,25 @@ class Calculation:
             {'num_points': num_points, 'num_moments': num_moments,
              'timestep': timestep, 'num_disorder': num_disorder, 'spinor': spinor, 'width': width, 'k_vector': k_vector,
              'mean_value': mean_value, 'probing_point': probing_point})
+
+    def localized_wave_packet(self, time, num_measures, initial_pos, energy_window = None):
+        """Calculate the time evolution function of a localized wave packet with spectrum filtering
+
+        Parameters
+        ----------
+        time : float
+            Total dimensionless time over which the wave packet is evolved.
+            Together with 'num_measures', it determines the time step between measurements.
+        num_measures : int 
+            Number of time evolution steps.
+        initial_pos : np.array 
+            Initial position of the localized wave packet.
+        energy_window : np.array 
+            Localized packet will be filtered to only keep eigenstates with energy inside this window.
+        """
+
+        self._localized_wave_packet.append({'time': time, 'num_measures': num_measures, 
+                               'initial_pos': initial_pos, 'energy_window': energy_window})
 
     def conductivity_dc(self, direction, num_points, num_moments, num_random, num_disorder=1, temperature=0):
         """Calculate the DC conductivity for a given direction
@@ -1090,7 +1116,7 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
         config._is_complex = 1
         config.set_type()
 
-    if calculation.get_gaussian_wave_packet and complx == 0:
+    if (calculation.get_gaussian_wave_packet or calculation.get_localized_wave_packet) and complx == 0:
         print('Wavepacket is requested but is_complex identifier is 0. Automatically turning is_complex to 1!')
         config._is_complex = 1
         config.set_type()
@@ -1706,6 +1732,30 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
         grpc_p.create_dataset('spinor', data=np.asmatrix(np.asarray(spinor)).astype(config.type))
         grpc_p.create_dataset('k_vector', data=np.asmatrix(np.asarray(k_vector)), dtype=np.float32)
         grpc_p.create_dataset('timestep', data=timestep, dtype=np.float32)
+
+    if calculation.get_localized_wave_packet:
+        grpc_p = grpc.create_group('localized_wave_packet')
+        grpc_p.create_dataset('Time', 
+                              data = np.asarray(calculation.get_localized_wave_packet[0]['time']), 
+                              dtype = np.float64
+        )
+        grpc_p.create_dataset('Measurements', 
+                              data = np.asarray(calculation.get_localized_wave_packet[0]['num_measures']), 
+                              dtype = np.int32
+        )
+        grpc_p.create_dataset('InitialPos', 
+                              data=np.asmatrix(calculation.get_localized_wave_packet[0]['initial_pos'])
+                              .astype(np.float32)
+        )
+
+        energy_window = calculation.get_localized_wave_packet[0]['energy_window']
+
+        # If no window is provided the C++ code does not perform the filtering
+        if energy_window:
+            grpc_p.create_dataset('EnergyWindow', 
+                                data=np.asmatrix(energy_window)
+                                .astype(np.float32)
+            )
 
     if calculation.get_conductivity_dc:
         grpc_p = grpc.create_group('conductivity_dc')
