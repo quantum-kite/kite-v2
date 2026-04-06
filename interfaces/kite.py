@@ -1744,7 +1744,7 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
                               dtype = np.int32
         )
         grpc_p.create_dataset('InitialPos', 
-                              data=np.asmatrix(calculation.get_localized_wave_packet[0]['initial_pos'])
+                              data=np.asarray(calculation.get_localized_wave_packet[0]['initial_pos'])
                               .astype(np.int32)
         )
 
@@ -1755,7 +1755,7 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
             energy_window = np.array([0,0])
 
         grpc_p.create_dataset('EnergyWindow', 
-                            data=np.asmatrix(energy_window)
+                            data=np.asarray(energy_window)
                             .astype(np.float32)
         )
 

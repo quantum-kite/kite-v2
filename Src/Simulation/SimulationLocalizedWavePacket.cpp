@@ -16,6 +16,7 @@ class KPM_Vector;
 #include "KPM_VectorBasis.hpp"
 #include "KPM_Vector.hpp"
 #include "Loop.hpp"
+#include <typeinfo>
 
 template <typename T>
 T jackson(const int n_, const int polynomials_)
@@ -49,40 +50,48 @@ Eigen::Array<std::complex<T>, -1, 1> build_exponential(const T t)
      {0.0, 1.0}
   }};
   const unsigned N_pols =
-    std::max<unsigned>(4, static_cast<unsigned>(std::ceil(1.5 * t)));
+    std::max<unsigned>(8, static_cast<unsigned>(std::ceil(2 * t)));
   Eigen::Array<std::complex<T>, -1, 1> moments(N_pols);
 
   for (unsigned n = 0; n < N_pols; ++n)
-    moments(n) = (n == 0 ? 1. : 2.) * mi_pow[n % 4] * std::cyl_bessel_j(n, t);
+    moments(n) = (n == 0 ? T(1) : T(2)) * mi_pow[n % 4] * T(std::cyl_bessel_j(n, t));
   return moments;
 }
 
-template <typename T, unsigned D>
+template <typename T, unsigned D, typename Scalar>
 Eigen::Array<T, -1, 1> filter_state_by_window(
   KPM_Vector<T, D> &phi,
-  const std::array<value_type, 2> &energy_window,
-  value_type energy_scale,
-  value_type energy_shift)
+  const std::array<Scalar, 2> &energy_window,
+  Scalar energy_scale,
+  Scalar energy_shift)
 {
-  const value_type Emin = (energy_window[0] - energy_shift) / energy_scale;
-  const value_type Emax = (energy_window[1] - energy_shift) / energy_scale;
+  const Scalar Emin = (energy_window[0] - energy_shift) / energy_scale;
+  const Scalar Emax = (energy_window[1] - energy_shift) / energy_scale;
 
-  const value_type Emin_clamped =
-    std::max<value_type>(-1.0, std::min<value_type>(1.0, Emin));
-  const value_type Emax_clamped =
-    std::max<value_type>(-1.0, std::min<value_type>(1.0, Emax));
+  const Scalar Emin_clamped =
+    std::max<Scalar>(-1.0, std::min<Scalar>(1.0, Emin));
+  const Scalar Emax_clamped =
+    std::max<Scalar>(-1.0, std::min<Scalar>(1.0, Emax));
 
-  const Eigen::Array<T, -1, 1> coefs = build_window<value_type>(Emin_clamped, Emax_clamped);
+  std::cout << "Ran0\n";
+
+  const Eigen::Array<Scalar, -1, 1> coefs = build_window<Scalar>(Emin_clamped, Emax_clamped);
+
+  std::cout << "Ran1\n";
 
   Eigen::Array<T, -1, 1> filtered(phi.v.col(0).size());
   filtered.setZero();
+
+  std::cout << "Ran2\n";
 
   for (unsigned n = 0, N = coefs.size(); n < N; ++n) {
     phi.cheb_iteration(n);
     filtered += coefs(n) * phi.v.col(phi.get_index()).array();
   }
 
-  return filtered.normalized();
+  std::cout << "Ran3\n";
+
+  return filtered.matrix().normalized();
 }
 
 template <typename T, unsigned D>
@@ -126,6 +135,8 @@ void Simulation<T, D>::calc_localized_wavepacket()
       get_hdf5<unsigned>(pos.data(), file, (char *)"/Calculation/localized_wave_packet/InitialPos");
       get_hdf5<value_type>(energy_window.data(), file, (char *)"/Calculation/localized_wave_packet/EnergyWindow");
 
+      std::cout << energy_window[0] << " " << energy_window[1] << "\n";
+
       file->close();
       delete file;
     }
@@ -141,67 +152,74 @@ void Simulation<T, D>::localized_wavepacket(
   const std::array<value_type, 2> &energy_window
 )
 {
-  debug_message("Entered localized_wavepacket\n");
-  value_type energy_scale;
-  value_type energy_shift;
+  if constexpr (is_tt<std::complex, T>::value) {
+    debug_message("Entered localized_wavepacket\n");
+    value_type energy_scale;
+    value_type energy_shift;
 #pragma omp critical
-  {
-    H5::H5File *file = new H5::H5File(name, H5F_ACC_RDONLY);
-    get_hdf5<value_type>(&energy_scale, file, (char *)"/EnergyScale");
-    get_hdf5<value_type>(&energy_shift, file, (char *)"/EnergyShift");
-    file->close();
-    delete file;
-  }
+    {
+      H5::H5File *file = new H5::H5File(name, H5F_ACC_RDONLY);
+      get_hdf5<value_type>(&energy_scale, file, (char *)"/EnergyScale");
+      get_hdf5<value_type>(&energy_shift, file, (char *)"/EnergyShift");
+      file->close();
+      delete file;
+    }
 #pragma omp barrier
-  Coordinates<std::ptrdiff_t, D + 1> global(r.Lt);
-  const value_type dt = t / measurements;
-  const value_type step = dt * energy_scale;
+    Coordinates<std::ptrdiff_t, D + 1> global(r.Lt);
+    const value_type dt = t / measurements;
+    const value_type step = dt * energy_scale;
 
-  // The scaled times enter the coefficients
-  std::complex<value_type> phase = std::exp(std::complex<value_type>(0.0, - energy_shift * dt));
-  const Eigen::Array<T, -1, 1> coefs = build_exponential<value_type>(step) * phase;
+    // The scaled times enter the coefficients
+    std::complex<value_type> phase = std::exp(std::complex<value_type>(0.0, - energy_shift * dt));
+    const Eigen::Array<std::complex<value_type>, -1, 1> coefs = build_exponential<value_type>(step) * phase;
 
-  KPM_Vector<T, D> phi(2, *this);
-  Eigen::Array<T, -1, 1> ket(r.Sized);
-  Eigen::Array<T, -1, -1> results(r.Sized, measurements + 1); // Stores initial wavepacket
-  results.setZero();
+    KPM_Vector<T, D> phi(2, *this);
+    Eigen::Array<T, -1, 1> ket(r.Sized);
+    Eigen::Array<T, -1, -1> results(r.Sized, measurements + 1); // Stores initial wavepacket
+    results.setZero();
 
-  h.generate_disorder();
-  h.generate_twists();
+    h.generate_disorder();
+    h.generate_twists();
 
-  phi.initiate_phases();
-  phi.set_index(0);
-  if constexpr(D == 2)
-    global.set({pos_[0], pos_[1], pos_[2]});
-  else if constexpr(D == 3)
-    global.set({pos_[0], pos_[1], pos_[2], pos_[3]});
-  phi.build_site(global.index); // Does it set index = 0?
-  phi.Exchange_Boundaries();
-
-  if (!(energy_window[0] == 0. && energy_window[1] == 0.)) {
-    psi0 = filter_state_by_window(phi, energy_window, energy_scale, energy_shift);
-    phi.v.col(0) = psi0;
+    phi.initiate_phases();
     phi.set_index(0);
+    if constexpr(D == 2)
+      global.set({pos_[0], pos_[1], pos_[2]});
+    else if constexpr(D == 3)
+      global.set({pos_[0], pos_[1], pos_[2], pos_[3]});
+    phi.build_site(global.index); // Does it set index = 0?
     phi.Exchange_Boundaries();
-  }
 
-  results.col(0) = phi.v.col(0);
-
-  for (unsigned i = 0; i < measurements; ++i) {
-    ket.setZero();
-
-    for (unsigned n = 0, N = coefs.size(); n < N; ++n) {
-      phi.cheb_iteration(n);
-      ket += coefs(n) * phi.v.col(phi.get_index()).array();
+    if (!(energy_window[0] == 0. && energy_window[1] == 0.)) {
+      Eigen::Array<T, -1, 1> psi0 = filter_state_by_window
+        <T, D, value_type>
+        (phi, energy_window, energy_scale, energy_shift);
+      phi.v.col(0) = psi0;
+      phi.set_index(0);
+      phi.Exchange_Boundaries();
     }
 
-    results.col(i + 1) = ket;
-    phi.v.col(0) = ket;
-    phi.set_index(0);
-    phi.Exchange_Boundaries();
-  }
+    results.col(0) = phi.v.col(0);
 
-  store_localized_wavepacket(results);
+    for (unsigned i = 0; i < measurements; ++i) {
+      ket.setZero();
+
+      for (unsigned n = 0, N = coefs.size(); n < N; ++n) {
+        phi.cheb_iteration(n);
+        ket += coefs(n) * phi.v.col(phi.get_index()).array();
+      }
+
+      // if ((i + 1) % 8 == 0)
+      //   ket.matrix().normalize();
+
+      results.col(i + 1) = ket;
+      phi.v.col(0) = ket;
+      phi.set_index(0);
+      phi.Exchange_Boundaries();
+    }
+
+    store_localized_wavepacket(results);
+  }
 }
 
 template <typename T, unsigned D>
@@ -244,3 +262,6 @@ void Simulation<T, D>::store_localized_wavepacket(const Eigen::Array<T, -1, -1> 
 #pragma omp barrier
   debug_message("Left localized_wavepacket\n");
 }
+
+#define instantiate(type, dim) template class Simulation<type, dim>;
+#include "instantiate.hpp"
