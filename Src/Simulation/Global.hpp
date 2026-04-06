@@ -29,11 +29,13 @@ struct GLOBAL_VARIABLES {
   Eigen::Array <T, Eigen::Dynamic, Eigen::Dynamic> avg_results;
   Eigen::Array <double,3,1> GlobBTwist; // Glob Boundary Twist Angles
   Eigen::Array<T, -1, -1> ldos_map;
+  Eigen::Array<T, -1, -1> localized_wavepacket;
   double kpm_iteration_time;
   
   bool calculate_arpes;
   bool calculate_ldos;
   bool calculate_wavepacket;
+  bool calculate_localized_wavepacket;
   bool calculate_dos;
   bool calculate_conddc;
   bool calculate_condopt;
