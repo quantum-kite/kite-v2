@@ -60,7 +60,6 @@ Eigen::Array<std::complex<T>, -1, 1> build_exponential(const T t)
 template <typename T, unsigned D>
 Eigen::Array<T, -1, 1> filter_state_by_window(
   KPM_Vector<T, D> &phi,
-  const Eigen::Array<T, -1, 1> &psi0,
   const std::array<value_type, 2> &energy_window,
   value_type energy_scale,
   value_type energy_shift)
@@ -75,7 +74,7 @@ Eigen::Array<T, -1, 1> filter_state_by_window(
 
   const Eigen::Array<T, -1, 1> coefs = build_window<value_type>(Emin_clamped, Emax_clamped);
 
-  Eigen::Array<T, -1, 1> filtered(psi0.size());
+  Eigen::Array<T, -1, 1> filtered(phi.v.col(0).size());
   filtered.setZero();
 
   for (unsigned n = 0, N = coefs.size(); n < N; ++n) {
@@ -176,14 +175,15 @@ void Simulation<T, D>::localized_wavepacket(
     global.set({pos_[0], pos_[1], pos_[2]});
   else if constexpr(D == 3)
     global.set({pos_[0], pos_[1], pos_[2], pos_[3]});
-  phi.build_site(global.index);
+  phi.build_site(global.index); // Does it set index = 0?
   phi.Exchange_Boundaries();
 
-  Eigen::Array<T, -1, 1> psi0 = phi.v.col(0);
-  psi0 = filter_state_by_window(phi, psi0, energy_window, energy_scale, energy_shift);
-  phi.v.col(0) = psi0;
-  phi.set_index(0);
-  phi.Exchange_Boundaries();
+  if (!(energy_window[0] == 0. && energy_window[1] == 0.)) {
+    psi0 = filter_state_by_window(phi, energy_window, energy_scale, energy_shift);
+    phi.v.col(0) = psi0;
+    phi.set_index(0);
+    phi.Exchange_Boundaries();
+  }
 
   results.col(0) = phi.v.col(0);
 

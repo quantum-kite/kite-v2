@@ -71,4 +71,13 @@ public:
   void calc_ldos();
   void ldos(const int, const value_type, const value_type, const int);
   void store_ldos(const Eigen::Array<T, -1, -1> &);
+
+  void calc_localized_wavepacket();
+  void localized_wavepacket(
+          const value_type t,
+          const unsigned measurements,
+          const std::array<unsigned, D + 1> &pos_,
+          const std::array<value_type, 2> &energy_window
+  );
+  void store_localized_wavepacket(const Eigen::Array<T, -1, -1>& results_);
 };
