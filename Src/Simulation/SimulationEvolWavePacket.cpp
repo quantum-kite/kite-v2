@@ -30,7 +30,7 @@ template <typename T>
 Eigen::Array<T, -1, 1> build_window(const T min, const T max)
 {
   const T width = max - min;
-  const unsigned number_polynomials = std::ceil(64 / width);
+  const unsigned number_polynomials = std::ceil(256 / width);
   Eigen::Array<T, -1, 1> coefs(number_polynomials);
   coefs(0) = jackson<T>(0, number_polynomials) * (std::asin(max) - std::asin(min));
   for (unsigned n = 1; n < number_polynomials; ++n)
