@@ -685,10 +685,10 @@ class Calculation:
         time : float
             Total dimensionless time over which the wave packet is evolved.
             Together with 'num_measures', it determines the time step between measurements.
-        num_measures : int 
+        num_measures : int
             Number of time evolution steps.
-        initial_pos : np.array 
-            Initial position of the localized wave packet.
+        initial_pos : np.array
+            Initial position of the localized wave packet. [n_x, n_y[, n_z], n_orbital]
         energy_window : np.array 
             Localized packet will be filtered to only keep eigenstates with energy inside this window.
         """
@@ -1737,7 +1737,7 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
         grpc_p = grpc.create_group('localized_wave_packet')
         grpc_p.create_dataset('Time', 
                               data = np.asarray(calculation.get_localized_wave_packet[0]['time']), 
-                              dtype = np.float64
+                              dtype = np.float32
         )
         grpc_p.create_dataset('Measurements', 
                               data = np.asarray(calculation.get_localized_wave_packet[0]['num_measures']), 
@@ -1745,17 +1745,19 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
         )
         grpc_p.create_dataset('InitialPos', 
                               data=np.asmatrix(calculation.get_localized_wave_packet[0]['initial_pos'])
-                              .astype(np.float32)
+                              .astype(np.int32)
         )
 
         energy_window = calculation.get_localized_wave_packet[0]['energy_window']
 
         # If no window is provided the C++ code does not perform the filtering
-        if energy_window:
-            grpc_p.create_dataset('EnergyWindow', 
-                                data=np.asmatrix(energy_window)
-                                .astype(np.float32)
-            )
+        if energy_window == None:
+            energy_window = np.array([0,0])
+
+        grpc_p.create_dataset('EnergyWindow', 
+                            data=np.asmatrix(energy_window)
+                            .astype(np.float32)
+        )
 
     if calculation.get_conductivity_dc:
         grpc_p = grpc.create_group('conductivity_dc')

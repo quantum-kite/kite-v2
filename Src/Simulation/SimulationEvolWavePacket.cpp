@@ -58,6 +58,35 @@ Eigen::Array<std::complex<T>, -1, 1> build_exponential(const T t)
 }
 
 template <typename T, unsigned D>
+Eigen::Array<T, -1, 1> filter_state_by_window(
+  KPM_Vector<T, D> &phi,
+  const Eigen::Array<T, -1, 1> &psi0,
+  const std::array<value_type, 2> &energy_window,
+  value_type energy_scale,
+  value_type energy_shift)
+{
+  const value_type Emin = (energy_window[0] - energy_shift) / energy_scale;
+  const value_type Emax = (energy_window[1] - energy_shift) / energy_scale;
+
+  const value_type Emin_clamped =
+    std::max<value_type>(-1.0, std::min<value_type>(1.0, Emin));
+  const value_type Emax_clamped =
+    std::max<value_type>(-1.0, std::min<value_type>(1.0, Emax));
+
+  const Eigen::Array<T, -1, 1> coefs = build_window<value_type>(Emin_clamped, Emax_clamped);
+
+  Eigen::Array<T, -1, 1> filtered(psi0.size());
+  filtered.setZero();
+
+  for (unsigned n = 0, N = coefs.size(); n < N; ++n) {
+    phi.cheb_iteration(n);
+    filtered += coefs(n) * phi.v.col(phi.get_index()).array();
+  }
+
+  return filtered.normalized();
+}
+
+template <typename T, unsigned D>
 void Simulation<T, D>::calc_localized_wavepacket()
 {
   debug_message("Entered Simulation::calc_localized_wavepacket\n");
@@ -65,12 +94,12 @@ void Simulation<T, D>::calc_localized_wavepacket()
 #pragma omp master
   {
     H5::H5File *file = new H5::H5File(name, H5F_ACC_RDONLY);
-    Global.calculate_evol_wave = false;
+    Global.calculate_localized_wavepacket = false;
     try {
       int dummy_variable;
       get_hdf5<
         int>(&dummy_variable, file, (char *)"/Calculation/localized_wave_packet/Measurements");
-      Global.calculate_evol_wave = true;
+      Global.calculate_localized_wavepacket = true;
     } catch (H5::Exception &e) {
       debug_message("localized_wavepacket: no need to calculate it.\n");
     }
@@ -86,27 +115,31 @@ void Simulation<T, D>::calc_localized_wavepacket()
 #pragma omp master
     std::cout << "Calculating time evolution of wave packet.\n";
 #pragma omp barrier
-    double time;
+    value_type time;
     unsigned n_measures;
+    std::array<unsigned, D + 1> pos;
+    std::array<value_type, 2> energy_window;
 #pragma omp critical
     {
       H5::H5File *file = new H5::H5File(name, H5F_ACC_RDONLY);
-      get_hdf5<double>(&time, file, (char *)"/Calculation/localized_wave_packet/Time");
-      get_hdf5<
-        unsigned>(&n_measures, file, (char *)"/Calculation/localized_wave_packet/Measurements");
+      get_hdf5<value_type>(&time, file, (char *)"/Calculation/localized_wave_packet/Time");
+      get_hdf5<unsigned>(&n_measures, file, (char *)"/Calculation/localized_wave_packet/Measurements");
+      get_hdf5<unsigned>(pos.data(), file, (char *)"/Calculation/localized_wave_packet/InitialPos");
+      get_hdf5<value_type>(energy_window.data(), file, (char *)"/Calculation/localized_wave_packet/EnergyWindow");
 
       file->close();
       delete file;
     }
-    localized_wavepacket(time, n_measures);
+    localized_wavepacket(time, n_measures, pos, energy_window);
   }
 }
 
 template <typename T, unsigned D>
 void Simulation<T, D>::localized_wavepacket(
-  const std::array<unsigned, D + 1> &pos_,
   const value_type t,
-  const unsigned measurements
+  const unsigned measurements,
+  const std::array<unsigned, D + 1> &pos_,
+  const std::array<value_type, 2> &energy_window
 )
 {
   debug_message("Entered localized_wavepacket\n");
@@ -122,9 +155,10 @@ void Simulation<T, D>::localized_wavepacket(
   }
 #pragma omp barrier
   Coordinates<std::ptrdiff_t, D + 1> global(r.Lt);
-  const value_type size = r.Sizet - r.SizetVacancies;
   const value_type dt = t / measurements;
   const value_type step = dt * energy_scale;
+
+  // The scaled times enter the coefficients
   std::complex<value_type> phase = std::exp(std::complex<value_type>(0.0, - energy_shift * dt));
   const Eigen::Array<T, -1, 1> coefs = build_exponential<value_type>(step) * phase;
 
@@ -145,7 +179,11 @@ void Simulation<T, D>::localized_wavepacket(
   phi.build_site(global.index);
   phi.Exchange_Boundaries();
 
-  // TODO: Spectrum filtering
+  Eigen::Array<T, -1, 1> psi0 = phi.v.col(0);
+  psi0 = filter_state_by_window(phi, psi0, energy_window, energy_scale, energy_shift);
+  phi.v.col(0) = psi0;
+  phi.set_index(0);
+  phi.Exchange_Boundaries();
 
   results.col(0) = phi.v.col(0);
 
@@ -169,7 +207,7 @@ void Simulation<T, D>::localized_wavepacket(
 template <typename T, unsigned D>
 void Simulation<T, D>::store_localized_wavepacket(const Eigen::Array<T, -1, -1> &results_)
 {
-  debug_message("Entered store_wavepacket\n");
+  debug_message("Entered store_localized_wavepacket\n");
   Coordinates<std::size_t, D + 1> global(r.Lt);
   Coordinates<std::size_t, D + 1> local(r.Ld);
 #pragma omp master
