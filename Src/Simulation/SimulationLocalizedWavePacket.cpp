@@ -168,6 +168,7 @@ void Simulation<T, D>::localized_wavepacket(
 
       phi.v.col(0) = filtered;
       phi.empty_ghosts(0);
+#pragma omp barrier
 #pragma omp master
       Global.soma = 0;
 #pragma omp critical // Each thread will compute the norm of its domain as if it is an independent vector
