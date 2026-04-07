@@ -69,6 +69,7 @@ T jackson(const int n_, const int polynomials_)
 template <typename T>
 Eigen::Array<T, -1, 1> build_window(const T energy_, const T width_)
 {
+  std::cout << "entered build_window\n";
   const T min = energy_ - 0.5 * width_;
   const T max = energy_ + 0.5 * width_;
   const unsigned number_polynomials = std::ceil(64 / width_);

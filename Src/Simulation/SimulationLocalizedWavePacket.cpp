@@ -16,7 +16,6 @@ class KPM_Vector;
 #include "KPM_VectorBasis.hpp"
 #include "KPM_Vector.hpp"
 #include "Loop.hpp"
-#include <typeinfo>
 
 template <typename T>
 T jackson(const int n_, const int polynomials_)
@@ -28,7 +27,7 @@ T jackson(const int n_, const int polynomials_)
 }
 
 template <typename T>
-Eigen::Array<T, -1, 1> build_window(const T min, const T max)
+Eigen::Array<T, -1, 1> build_window_here(const T min, const T max)
 {
   const T width = max - min;
   const unsigned number_polynomials = std::ceil(256 / width);
@@ -56,42 +55,6 @@ Eigen::Array<std::complex<T>, -1, 1> build_exponential(const T t)
   for (unsigned n = 0; n < N_pols; ++n)
     moments(n) = (n == 0 ? T(1) : T(2)) * mi_pow[n % 4] * T(std::cyl_bessel_j(n, t));
   return moments;
-}
-
-template <typename T, unsigned D, typename Scalar>
-Eigen::Array<T, -1, 1> filter_state_by_window(
-  KPM_Vector<T, D> &phi,
-  const std::array<Scalar, 2> &energy_window,
-  Scalar energy_scale,
-  Scalar energy_shift)
-{
-  const Scalar Emin = (energy_window[0] - energy_shift) / energy_scale;
-  const Scalar Emax = (energy_window[1] - energy_shift) / energy_scale;
-
-  const Scalar Emin_clamped =
-    std::max<Scalar>(-1.0, std::min<Scalar>(1.0, Emin));
-  const Scalar Emax_clamped =
-    std::max<Scalar>(-1.0, std::min<Scalar>(1.0, Emax));
-
-  std::cout << "Ran0\n";
-
-  const Eigen::Array<Scalar, -1, 1> coefs = build_window<Scalar>(Emin_clamped, Emax_clamped);
-
-  std::cout << "Ran1\n";
-
-  Eigen::Array<T, -1, 1> filtered(phi.v.col(0).size());
-  filtered.setZero();
-
-  std::cout << "Ran2\n";
-
-  for (unsigned n = 0, N = coefs.size(); n < N; ++n) {
-    phi.cheb_iteration(n);
-    filtered += coefs(n) * phi.v.col(phi.get_index()).array();
-  }
-
-  std::cout << "Ran3\n";
-
-  return filtered.matrix().normalized();
 }
 
 template <typename T, unsigned D>
@@ -134,8 +97,6 @@ void Simulation<T, D>::calc_localized_wavepacket()
       get_hdf5<unsigned>(&n_measures, file, (char *)"/Calculation/localized_wave_packet/Measurements");
       get_hdf5<unsigned>(pos.data(), file, (char *)"/Calculation/localized_wave_packet/InitialPos");
       get_hdf5<value_type>(energy_window.data(), file, (char *)"/Calculation/localized_wave_packet/EnergyWindow");
-
-      std::cout << energy_window[0] << " " << energy_window[1] << "\n";
 
       file->close();
       delete file;
@@ -191,10 +152,23 @@ void Simulation<T, D>::localized_wavepacket(
     phi.Exchange_Boundaries();
 
     if (!(energy_window[0] == 0. && energy_window[1] == 0.)) {
-      Eigen::Array<T, -1, 1> psi0 = filter_state_by_window
-        <T, D, value_type>
-        (phi, energy_window, energy_scale, energy_shift);
-      phi.v.col(0) = psi0;
+      value_type Emin = (energy_window[0] - energy_shift) / energy_scale;
+      value_type Emax = (energy_window[1] - energy_shift) / energy_scale;
+      Emin = std::max<value_type>(-1.0, std::min<value_type>(1.0, Emin));
+      Emax = std::max<value_type>(-1.0, std::min<value_type>(1.0, Emax));
+      const Eigen::Array<value_type, -1, 1> coefs = build_window_here<value_type>(Emin, Emax);
+
+      Eigen::Array<T, -1, 1> filtered(r.Sized);
+      filtered.setZero();
+
+      for (unsigned n = 0, N = coefs.size(); n < N; ++n) {
+        phi.cheb_iteration(n);
+        filtered += coefs(n) * phi.v.col(phi.get_index()).array();
+      }
+
+      phi.v.col(0) = filtered;
+      phi.empty_ghosts(0);
+      phi.v.col(0) = phi.v.col(0).normalized();
       phi.set_index(0);
       phi.Exchange_Boundaries();
     }
@@ -208,9 +182,6 @@ void Simulation<T, D>::localized_wavepacket(
         phi.cheb_iteration(n);
         ket += coefs(n) * phi.v.col(phi.get_index()).array();
       }
-
-      // if ((i + 1) % 8 == 0)
-      //   ket.matrix().normalize();
 
       results.col(i + 1) = ket;
       phi.v.col(0) = ket;
