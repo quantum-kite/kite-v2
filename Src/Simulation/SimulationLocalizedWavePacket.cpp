@@ -49,7 +49,7 @@ Eigen::Array<std::complex<T>, -1, 1> build_exponential(const T t)
      {0.0, 1.0}
   }};
   const unsigned N_pols =
-    std::max<unsigned>(8, static_cast<unsigned>(std::ceil(2 * t)));
+    std::max<unsigned>(32, static_cast<unsigned>(std::ceil(2 * t)));
   Eigen::Array<std::complex<T>, -1, 1> moments(N_pols);
 
   for (unsigned n = 0; n < N_pols; ++n)
@@ -148,7 +148,7 @@ void Simulation<T, D>::localized_wavepacket(
       global.set({pos_[0], pos_[1], pos_[2]});
     else if constexpr(D == 3)
       global.set({pos_[0], pos_[1], pos_[2], pos_[3]});
-    phi.build_site(global.index); // Does it set index = 0?
+    phi.build_site(global.index);
     phi.Exchange_Boundaries();
 
     if (!(energy_window[0] == 0. && energy_window[1] == 0.)) {
