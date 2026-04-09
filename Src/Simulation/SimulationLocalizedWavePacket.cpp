@@ -46,20 +46,15 @@ template <typename T>
 Eigen::Array<std::complex<T>, -1, 1> build_exponential(const T t)
 {
   static constexpr std::array<std::complex<T>, 4> mi_pow = {
-    {
-     {1.0, 0.0},
-     {0.0, -1.0},
-     {-1.0, 0.0},
-     {0.0, 1.0}
-    }
+    {{1.0, 0.0}, {0.0, -1.0}, {-1.0, 0.0}, {0.0, 1.0}}
   };
   const unsigned N_pols =
     std::max<unsigned>(32, static_cast<unsigned>(std::ceil(2 * t)));
   Eigen::Array<std::complex<T>, -1, 1> moments(N_pols);
 
-  for (unsigned n = 0; n < N_pols; ++n)
-    moments(n) =
-      (n == 0 ? T(1) : T(2)) * mi_pow[n % 4] * T(std::cyl_bessel_j(n, t));
+  moments(0) = mi_pow[0] * static_cast<T>(std::cyl_bessel_j(0, t));
+  for (unsigned n = 1; n < N_pols; ++n)
+    moments(n) = mi_pow[n % 4] * static_cast<T>(2.0 * std::cyl_bessel_j(n, t));
   return moments;
 }
 
@@ -149,16 +144,13 @@ void Simulation<T, D>::localized_wavepacket(
     const value_type dt = t / measurements;
     const value_type step = dt * energy_scale;
 
-    // The scaled times enter the coefficients
-    std::complex<value_type> phase =
-      std::exp(std::complex<value_type>(0.0, -energy_shift * dt));
-    const Eigen::Array<std::complex<value_type>, -1, 1> coefs =
-      build_exponential<value_type>(step) * phase;
+    Eigen::Array<T, -1, 1> coefs = build_exponential<value_type>(step);
+    const T arg{0.0, -energy_shift * dt};
+    coefs *= std::exp(arg);
 
     KPM_Vector<T, D> phi(2, *this);
     Eigen::Array<T, -1, 1> ket(r.Sized);
-    Eigen::Array<T, -1, -1>
-      results(r.Sized, measurements + 1); // Stores initial wavepacket
+    Eigen::Array<T, -1, -1> results(r.Sized, measurements + 1);
     results.setZero();
 
     h.generate_disorder();
@@ -188,7 +180,6 @@ void Simulation<T, D>::localized_wavepacket(
         phi.cheb_iteration(n);
         filtered += coefs(n) * phi.v.col(phi.get_index()).array();
       }
-
       phi.v.col(0) = filtered;
       phi.empty_ghosts(0);
 #pragma omp barrier
@@ -259,6 +250,19 @@ void Simulation<T, D>::store_localized_wavepacket(
 #pragma omp barrier
   debug_message("Left localized_wavepacket\n");
 }
+
+#define INSTANTIATE_REAL(type)                                                 \
+  template Eigen::Array<type, -1, 1>                                           \
+  build_window_here<type>(const type, const type);                             \
+  template type jackson<type>(const int, const int);                           \
+  template Eigen::Array<std::complex<type>, -1, 1> build_exponential(          \
+    const type                                                                 \
+  );
+
+INSTANTIATE_REAL(float)
+INSTANTIATE_REAL(double)
+INSTANTIATE_REAL(long double)
+#undef INSTANTIATE_REAL
 
 #define instantiate(type, dim) template class Simulation<type, dim>;
 #include "instantiate.hpp"

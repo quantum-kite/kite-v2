@@ -60,23 +60,6 @@ GlobalSimulation<T,D>::GlobalSimulation( char *name ) : rglobal(name){
   debug_message("Left global_simulation\n");
 }
 
-template class GlobalSimulation<float ,1u>;
-template class GlobalSimulation<double ,1u>;
-template class GlobalSimulation<long double ,1u>;
-template class GlobalSimulation<std::complex<float> ,1u>;
-template class GlobalSimulation<std::complex<double> ,1u>;
-template class GlobalSimulation<std::complex<long double> ,1u>;
 
-template class GlobalSimulation<float ,3u>;
-template class GlobalSimulation<double ,3u>;
-template class GlobalSimulation<long double ,3u>;
-template class GlobalSimulation<std::complex<float> ,3u>;
-template class GlobalSimulation<std::complex<double> ,3u>;
-template class GlobalSimulation<std::complex<long double> ,3u>;
-
-template class GlobalSimulation<float ,2u>;
-template class GlobalSimulation<double ,2u>;
-template class GlobalSimulation<long double ,2u>;
-template class GlobalSimulation<std::complex<float> ,2u>;
-template class GlobalSimulation<std::complex<double> ,2u>;
-template class GlobalSimulation<std::complex<long double> ,2u>;
+#define instantiate(type, dim) template class GlobalSimulation<type, dim>;
+#include "instantiate.hpp"
