@@ -89,6 +89,9 @@ build/
 # formatters
 .clang-format
 sync/
+Src/GTAGS
+Src/GPATH
+Src/GRTAGS
 
 # except the test folders
 !tests/*/*REF.h5

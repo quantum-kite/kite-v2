@@ -180,20 +180,20 @@ void Simulation<T, DIM>::calc_ARPES(){
       weight    = Eigen::Matrix<    T,-1,  1>::Zero(dim_w[1], dim_w[0]);
 
       // The weights have to be read in doubles before being cast into type T
-      Eigen::Matrix<double, -1, 1> weight_test;
-      weight_test = Eigen::Matrix<double, -1, 1>::Zero(r.Orb, 1);
-      
+      Eigen::Matrix<T, -1, 1> weight_test;
+      weight_test = Eigen::Matrix<T, -1, 1>::Zero(r.Orb, 1);
+
       get_hdf5    <int>(&NumDisorder,       file, (char *) "/Calculation/arpes/NumDisorder");
       get_hdf5    <int>(&NumMoments,        file, (char *) "/Calculation/arpes/NumMoments" );
-      get_hdf5 <double>(weight_test.data(), file, (char *) "/Calculation/arpes/OrbitalWeights");
+      get_hdf5 <T>(weight_test.data(), file, (char *) "/Calculation/arpes/OrbitalWeights");
       get_hdf5 <double>(k_vectors.data(),   file, (char *) "/Calculation/arpes/k_vector");
 
       file->close();  
       delete file;
 
       for(unsigned i = 0; i < r.Orb; i++)
-        weight(i) = T(weight_test(i));
-      
+        weight(i) = weight_test(i);
+
       //std::cout << "weights: " << weight << "\n";
 
 }
