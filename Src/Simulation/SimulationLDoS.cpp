@@ -69,7 +69,6 @@ T jackson(const int n_, const int polynomials_)
 template <typename T>
 Eigen::Array<T, -1, 1> build_window(const T energy_, const T width_)
 {
-  std::cout << "entered build_window\n";
   const T min = energy_ - 0.5 * width_;
   const T max = energy_ + 0.5 * width_;
   const unsigned number_polynomials = std::ceil(64 / width_);
@@ -124,7 +123,7 @@ void Simulation<T, D>::calc_ldos()
       get_hdf5<value_type>(&energy, file, (char *)"/Calculation/ldos_map/Energy");
       get_hdf5<value_type>(&sigma, file, (char *)"/Calculation/ldos_map/Sigma");
       get_hdf5<int>(&coef_id, file, (char *)"/Calculation/ldos_map/Coef_ID");
-      
+
       file->close();
       delete file;
     }
