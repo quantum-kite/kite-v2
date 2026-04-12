@@ -141,11 +141,12 @@ void Simulation<T, D>::localized_wavepacket(
     }
 #pragma omp barrier
     Coordinates<std::ptrdiff_t, D + 1> global(r.Lt);
-    const value_type dt = t / measurements;
-    const value_type step = dt * energy_scale;
+    const value_type measure_tau = energy_scale * t / measurements;
+    const unsigned divisions = std::ceil(measure_tau / 32);
+    const value_type tau = measure_tau / divisions;
 
-    Eigen::Array<T, -1, 1> coefs = build_exponential<value_type>(step);
-    const T arg{0.0, -energy_shift * dt};
+    Eigen::Array<T, -1, 1> coefs = build_exponential<value_type>(tau);
+    const T arg{0.0, -energy_shift * (tau / energy_scale)};
     coefs *= std::exp(arg);
 
     KPM_Vector<T, D> phi(2, *this);
@@ -194,15 +195,17 @@ void Simulation<T, D>::localized_wavepacket(
     }
     results.col(0) = phi.v.col(0);
     for (unsigned i = 0; i < measurements; ++i) {
-      ket.setZero();
-      for (unsigned n = 0, N = coefs.size(); n < N; ++n) {
-        phi.cheb_iteration(n);
-        ket += coefs(n) * phi.v.col(phi.get_index()).array();
+      for (unsigned j = 0; j < divisions; ++j) {
+        ket.setZero();
+        for (unsigned n = 0, N = coefs.size(); n < N; ++n) {
+          phi.cheb_iteration(n);
+          ket += coefs(n) * phi.v.col(phi.get_index()).array();
+        }
+        phi.v.col(0) = ket;
+        phi.set_index(0);
+        phi.Exchange_Boundaries();
       }
-      results.col(i + 1) = ket;
-      phi.v.col(0) = ket;
-      phi.set_index(0);
-      phi.Exchange_Boundaries();
+      results.col(i + 1) = phi.v.col(0);
     }
     store_localized_wavepacket(results);
   }
