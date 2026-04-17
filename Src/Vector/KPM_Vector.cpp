@@ -80,6 +80,12 @@ void inline KPM_Vector<T,D>::mult_regular_hoppings(const  std::size_t & j0, cons
 }
 
 template <typename T, unsigned D>
+void KPM_Vector<T, D>::mult_position(const unsigned dir_, KPM_Vector<T, D> *kpm_final_)
+{
+  (void) dir_;
+}
+
+template <typename T, unsigned D>
 template <unsigned MULT, bool VELOCITY>
 void KPM_Vector<T,D>::KPM_MOTOR (KPM_Vector<T,D> * kpm_final,  unsigned axis){
   (void) axis;

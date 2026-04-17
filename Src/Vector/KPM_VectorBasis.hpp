@@ -31,6 +31,7 @@ public:
   template <unsigned MULT>
   void     Multiply();
   void     Velocity(KPM_Vector<T,D> * kpm_final, std::vector<std::vector<unsigned>> & indices, int axis);
+  void     Position(const unsigned, KPM_Vector<T, D> *);
   void     cheb_iteration(unsigned );
   
   template <unsigned MULT, bool VELOCITY>  

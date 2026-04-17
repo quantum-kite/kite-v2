@@ -42,6 +42,8 @@ struct GLOBAL_VARIABLES {
   bool calculate_condopt2;
   bool calculate_singleshot;
   bool calculate_ldos_map;
+  bool calculate_custom_density;
+  bool calculate_custom_conddc;
 
   GLOBAL_VARIABLES();
   void addbond ( std::size_t, std::ptrdiff_t, T );

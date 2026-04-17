@@ -59,8 +59,28 @@ typename std::enable_if<!is_tt<std::complex, T>::value, void>::type get_hdf5(T *
   dataset.read(l, DataTypeFor<T>::value);
 }
 
+void my_get_hdf5(
+  std::vector<std::string> &v_,
+  const H5::H5File &file_,
+  const std::string &group_
+)
+{
+  const H5::DataSet dataset = file_.openDataSet(group_);
+  const H5::DataSpace dataspace = dataset.getSpace();
+  const H5::StrType str_type = dataset.getStrType();
 
+  hsize_t dims[1];
+  dataspace.getSimpleExtentDims(dims, nullptr);
+  const size_t num_elements = dims[0];
+  v_.resize(num_elements);
 
+  std::vector<char *> stream_data(num_elements, nullptr);
+  dataset.read(stream_data.data(), str_type);
+  for (size_t i = 0; i < num_elements; ++i) {
+    v_[i] = stream_data[i];
+    free(stream_data[i]);
+  }
+}
 
 template <typename T>
 typename std::enable_if<!is_tt<std::complex, T>::value, void>::type

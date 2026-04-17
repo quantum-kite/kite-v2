@@ -57,6 +57,7 @@ public:
   template < unsigned MULT> 
   void inline mult_local_disorder(const  std::size_t & j0, const  std::size_t & io);
   void inline mult_regular_hoppings(const  std::size_t & j0, const  std::size_t & io);
+  void mult_position(const unsigned, KPM_Vector<T, D> *);
   template <unsigned MULT, bool VELOCITY>
   void KPM_MOTOR(KPM_Vector<T,D> * kpm_final,  unsigned axis);
   void measure_wave_packet(T * bra, T * ket, T * results);  

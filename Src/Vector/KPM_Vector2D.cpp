@@ -511,6 +511,34 @@ void inline KPM_Vector <T, 2>::mult_regular_hoppings(const  std::size_t & j0, co
 }
 
 template <typename T>
+void KPM_Vector<T, 2>::mult_position(
+  const unsigned dir_,
+  KPM_Vector<T, 2> *kpm_final_
+)
+{
+  phi0 = kpm_final_->v.col(kpm_final_->get_index()).data();
+  Coordinates<std::ptrdiff_t, 3> global(r.Lt);
+  Coordinates<std::ptrdiff_t, 3> local(r.Ld);
+  Eigen::Map<Eigen::Matrix<std::ptrdiff_t, 2, 1>> v_global(global.coord);
+  const value_type dr = r.rLat(dir_, 0);
+  const Eigen::Matrix<double, 2, 1> org_global(0.5 * r.Lt[0], 0.5 * r.Lt[1]);
+
+  for (unsigned io = 0, Io = r.Orb; io < Io; ++io) {
+    const value_type r_orb = r.rOrb(dir_, io);
+    for (unsigned i1 = NGHOSTS, I1 = r.Ld[1] - NGHOSTS; i1 < I1; ++i1) {
+      local.set({NGHOSTS, i1, io});
+      r.convertCoordinates(global, local);
+      const Eigen::Matrix<double, 2, 1> v_shift =
+        v_global.template cast<double>() - org_global;
+      const value_type r0 = r.rLat.row(dir_) * v_shift + r_orb;
+      for (std::size_t i0 = 0, I0 = r.ld[0]; i0 < I0; ++i0)
+        phi0[local.index + i0] *= (r0 + i0 * dr);
+    }
+  }
+  kpm_final_->Exchange_Boundaries();
+}
+
+template <typename T>
 template <unsigned MULT, bool VELOCITY>
 void KPM_Vector <T, 2>::KPM_MOTOR(KPM_Vector<T,2> *kpm_final, unsigned axis)
 {

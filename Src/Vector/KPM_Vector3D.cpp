@@ -740,6 +740,33 @@ void KPM_Vector <T, 3>::build_regular_phases(int i2min, unsigned axis) {
     }  
 }
 
+template <typename T>
+void KPM_Vector<T, 3>::mult_position(
+  const unsigned dir_,
+  KPM_Vector<T, 3> *kpm_final_
+)
+{
+  phi0 = kpm_final_->v.col(kpm_final_->get_index()).data();
+  Coordinates<std::ptrdiff_t, 4> global(r.Lt);
+  Coordinates<std::ptrdiff_t, 4> local(r.Ld);
+  Eigen::Map<Eigen::Matrix<std::ptrdiff_t, 3, 1>> v_global(global.coord);
+  const std::array<double, 2> dr{r.rLat(dir_, 0), r.rLat(dir_, 1)};
+
+  for (unsigned io = 0, Io = r.Orb; io < Io; ++io)
+    for (unsigned i2 = NGHOSTS, I2 = r.Ld[2] - NGHOSTS; i2 < I2; ++i2) {
+      local.set({NGHOSTS, NGHOSTS, i2, io});
+      r.convertCoordinates(global, local);
+      value_type r0 = r.rLat.row(dir_) * v_global.template cast<double>() +
+                      r.rOrb(dir_, global.coord[2]);
+      for (unsigned i1 = 0, I1 = r.ld[1]; i1 < I1; ++i1) {
+        const unsigned local_index = local.index + i1 * r.Ld[0];
+        for (std::size_t i0 = 0, I0 = r.ld[0]; i0 < I0; ++i0)
+          phi0[local_index + i0] *= (r0 + i0 * dr[0]);
+        r0 += i1 * dr[1];
+      }
+    }
+  kpm_final_->Exchange_Boundaries();
+}
 
 template <typename T>
 template <unsigned MULT, bool VELOCITY>

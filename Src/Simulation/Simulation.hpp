@@ -20,7 +20,8 @@ public:
   GLOBAL_VARIABLES <T> & Global;
   char                 * name;
   Hamiltonian<T,D>       h;
-  
+  std::unordered_map<char, unsigned> components_map;
+
   Simulation(char *, GLOBAL_VARIABLES <T> &);
 
   //void Measure_Gamma(measurement_queue);
@@ -68,16 +69,58 @@ public:
   void ARPES(int NDisorder, int NMoments, Eigen::Array<double, -1, -1> & k_vectors, Eigen::Matrix<T, -1, 1> & weight);
   void store_ARPES(Eigen::Array<T, -1, -1> *);
 
+  // Custom Rank One
+  static herr_t
+  getMembers(H5::Group &group, const std::string &name, void *op_data);
+  void calc_custom_one();
+  void custom_one(
+    const int,
+    const int,
+    const int,
+    const Eigen::Array<T, -1, 1> &,
+    const std::vector<Eigen::Matrix<std::complex<double>, -1, -1>> &,
+    const std::vector<std::string> &
+  );
+  void store_custom_one(const Eigen::Matrix<T, -1, 1> &, const unsigned);
+  void multiply_orb_mtx(
+    const Eigen::Matrix<std::complex<double>, -1, -1> &,
+    const KPM_Vector<T, D> *,
+    KPM_Vector<T, D> *
+  );
+  void act_with_stream(
+    const std::vector<std::string> &,
+    const std::vector<Eigen::Matrix<std::complex<double>, -1, -1>> &,
+    const Eigen::Array<T, -1, 1> &,
+    const std::vector<KPM_Vector<T, D> *> &,
+    const unsigned
+  );
+  // Custom Rank Two
+  void calc_custom_two();
+  void custom_two(
+    const int,
+    const int,
+    const std::vector<int> &,
+    const std::vector<std::vector<std::string>> &,
+    const std::vector<Eigen::Array<T, -1, 1>> &,
+    const std::vector<Eigen::Matrix<std::complex<double>, -1, -1>> &
+  );
+  void store_custom_two(
+    Eigen::Array<T, -1, -1> &,
+    const unsigned,
+    const std::vector<int> &
+  );
+  // LDoS
   void calc_ldos();
   void ldos(const int, const value_type, const value_type, const int);
   void store_ldos(const Eigen::Array<T, -1, -1> &);
 
+  // Wave-Packet Time Evol
   void calc_localized_wavepacket();
   void localized_wavepacket(
-          const value_type t,
-          const unsigned measurements,
-          const std::array<unsigned, D + 1> &pos_,
-          const std::array<value_type, 2> &energy_window
+    const value_type t,
+    const unsigned measurements,
+    const std::array<unsigned, D + 1> &pos_,
+    const std::array<value_type, 2> &energy_window
   );
-  void store_localized_wavepacket(const Eigen::Array<T, -1, -1>& results_);
+  void store_localized_wavepacket(const Eigen::Array<T, -1, -1> &results_);
 };

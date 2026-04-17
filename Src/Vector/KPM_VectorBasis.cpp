@@ -90,6 +90,16 @@ void KPM_VectorBasis<T,D>::Velocity(KPM_Vector<T,D> * kpm_final,  std::vector<st
     }
 }
 
+template <typename T, unsigned D>
+void KPM_VectorBasis<T, D>::Position(
+  const unsigned dir_,
+  KPM_Vector<T, D> *kpm_final_
+)
+{
+  KPM_Vector<T, D> *child = static_cast<KPM_Vector<T, D> *>(this);
+  child->mult_position(dir_, kpm_final_);
+}
+
 template<typename T, unsigned D>
 void KPM_VectorBasis<T,D>::cheb_iteration(unsigned n)
 {
