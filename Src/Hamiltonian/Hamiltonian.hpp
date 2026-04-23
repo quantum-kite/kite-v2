@@ -39,15 +39,6 @@ public:
   // Some checks
   bool twists_set;
 
-  // Custom user-defined local potential. This can be read from the
-  // HDF file, or defined in runtime with a function in the ../lib
-  // directory
-  Eigen::Array<T,-1,-1> custom_local;
-  bool is_custom_local_set;
-  bool print_custom;
-  void generate_custom_local();
-  Eigen::Array<T,-1,-1> fetch_type1();
-
   /*   Structural disorder    */
   std::vector <bool>                   cross_mozaic;
   std::vector <std::size_t>            cross_mozaic_indexes;
@@ -55,7 +46,7 @@ public:
   Vacancy_Operator<T,D>                hV;
   Eigen::Array<double,D,1> BoundTwist; // Vector Containing Boundary Twist Angles
 
-  // Custom Potential Redux
+  // Custom Potential
   unsigned check_local_potential;
   value_type custom_pot;
   void assign_local_potential(const unsigned, const unsigned);

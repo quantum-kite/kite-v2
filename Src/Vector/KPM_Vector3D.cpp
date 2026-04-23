@@ -670,15 +670,6 @@ void inline KPM_Vector <T, 3>::mult_local_disorder(const  std::size_t & ind_i, c
           for(std::size_t j0 = j1; j0 < j1 + TILE ; j0++)
             phi0[j0] += value_type(MULT + 1) * phiM1[j0] * h.U_Orbital.at(io);
     }
-
-  // Custom local disorder
-  if(h.is_custom_local_set){
-      for(std::size_t j2 = ind_i; j2 < ind_f; j2 += tile[2] )
-        for(std::size_t j1 = j2; j1 < j2 + tile[1] * TILE; j1 += tile[1] )
-          for(std::size_t j0 = j1; j0 < j1 + TILE ; j0++)
-            phi0[j0] += value_type(MULT + 1) * phiM1[j0] * h.custom_local(j0);
-  }
-  
 }
 
 
