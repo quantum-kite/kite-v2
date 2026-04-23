@@ -271,7 +271,7 @@ void Hamiltonian<T, D>::distribute_AndersonDisorder()
       const unsigned off = io * r.Nd;
       for (unsigned i = 0; i < r.Nd; ++i) {
         assign_local_potential(i, io);
-        U_Anderson[i + off] += custom_pot;
+        U_Anderson[i + off] += custom_pot / EnergyScale;
       }
     }
   }
