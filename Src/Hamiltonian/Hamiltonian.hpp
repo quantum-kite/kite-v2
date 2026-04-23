@@ -54,7 +54,12 @@ public:
   std::vector < Defect_Operator<T,D>>  hd;
   Vacancy_Operator<T,D>                hV;
   Eigen::Array<double,D,1> BoundTwist; // Vector Containing Boundary Twist Angles
-  
+
+  // Custom Potential Redux
+  unsigned check_local_potential;
+  value_type custom_pot;
+  void assign_local_potential(const unsigned, const unsigned);
+
   Hamiltonian(char *name,  LatticeStructure<D> & rr, GLOBAL_VARIABLES <T> &  );
   void generate_disorder();
   void generate_twists();

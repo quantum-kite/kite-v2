@@ -198,6 +198,10 @@ void Hamiltonian<T,D>::build_Anderson_disorder() {
       get_hdf5<double> (mu.data(), file, (char *) "/Hamiltonian/Disorder/OnsiteDisorderMeanValue");   // read the the mean value
       get_hdf5<double> (sigma.data(), file, (char *) "/Hamiltonian/Disorder/OnsiteDisorderMeanStdv"); // read the the variance
 
+      get_hdf5<unsigned>(
+        &check_local_potential, file,
+        (char *)"/Hamiltonian/CustomLocalPotential"
+      );
     }
     catch (...){}
     delete file;
@@ -247,32 +251,37 @@ void Hamiltonian<T,D>::build_velocity(std::vector<unsigned> & components, unsign
     i->build_velocity(components, n);
 }
 
-
-
-template <typename T, unsigned D>  
-void Hamiltonian<T,D>::distribute_AndersonDisorder()
+template <typename T, unsigned D>
+void Hamiltonian<T, D>::distribute_AndersonDisorder()
 {
-    
+
   /*
    * Gaussian      : 1
    * Uniform       : 2
    * Deterministic : 3
    */
-    
+
   int sum = 0;
   for (unsigned i = 0; i < model.size(); i++)
-    if(model.at(i) == 1 )
-      {
-        for(unsigned j = 0; j < r.Nd; j++)
-          U_Anderson.at(sum + j) = rnd.gaussian(mu.at(i), sigma.at(i)) ;
-        sum += r.Nd;
+    if (model.at(i) == 1) {
+      for (unsigned j = 0; j < r.Nd; j++)
+        U_Anderson.at(sum + j) = rnd.gaussian(mu.at(i), sigma.at(i));
+      sum += r.Nd;
+    } else if (model.at(i) == 2) {
+      for (unsigned j = 0; j < r.Nd; j++)
+        U_Anderson.at(sum + j) = rnd.uniform(mu.at(i), sigma.at(i));
+      sum += r.Nd;
+    }
+  if (check_local_potential) {
+    U_Anderson.resize(r.Orb * r.Nd);
+    for (unsigned io = 0; io < r.Orb; ++io) {
+      const unsigned off = io * r.Nd;
+      for (unsigned i = 0; i < r.Nd; ++i) {
+        assign_local_potential(i, io);
+        U_Anderson[i + off] += custom_pot;
       }
-    else if ( model.at(i) == 2 )
-      {
-        for(unsigned j = 0; j < r.Nd; j++)
-          U_Anderson.at(sum + j) = rnd.uniform(mu.at(i), sigma.at(i)) ;
-        sum += r.Nd;
-      }
+    }
+  }
 }
 
 template <typename T, unsigned D>

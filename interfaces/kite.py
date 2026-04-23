@@ -913,7 +913,7 @@ class Calculation:
 class Configuration:
     def __init__(self, divisions=(1, 1, 1), length=(1, 1, 1), boundaries=('open', 'open', 'open'),
                  is_complex=False, precision=1, spectrum_range=None, angles=(0, 0, 0), custom_local=False,
-                 custom_local_print=False):
+                 custom_local_print=False, custom_potential=0):
         """Define basic parameters used in the calculation
 
        Parameters
@@ -937,6 +937,7 @@ class Configuration:
             Energy scale which defines the scaling factor of all the energy related parameters. The scaling is done
             automatically in the background after this definition. If the term is not specified, a rough estimate of the
             bounds is found.
+        custom_potential: Flag to use local potential
        """
 
         if spectrum_range:
@@ -961,6 +962,7 @@ class Configuration:
         self._Twists = np.array(angles, dtype=np.float64)
         self._custom_local = custom_local
         self._print_custom_local = custom_local_print
+        self._check_custom_potential = custom_potential
 
         self._length = length
         self._htype = np.float32
@@ -1347,6 +1349,8 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
     grp.create_dataset('CustomLocalEnergy', data=localEn, dtype=int)
     # custom pot
     grp.create_dataset('PrintCustomLocalEnergy', data=printlocalEn, dtype=int)
+    # custom pot redux
+    grp.create_dataset('CustomLocalPotential', data=config._check_custom_potential, dtype=int)
 
     if complx:
         # hoppings
