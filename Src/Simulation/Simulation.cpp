@@ -28,6 +28,9 @@ Simulation<T,D>::Simulation(char *filename, GLOBAL_VARIABLES <T> & Global1): r(f
   // Initializes the Hamiltonian h, an instance of Lattice Structure r, 
   // and an instance of GLOBAL_VARIABLES Global1
   ghosts.resize(Global.ghosts.size()/r.n_threads);
+  components_map['x'] = 0;
+  components_map['y'] = 1;
+  components_map['z'] = 2;
 }
 
 
