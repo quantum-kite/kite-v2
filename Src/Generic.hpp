@@ -8,30 +8,15 @@
 #define EIGEN_DONT_PARALLELIZE
 #define EIGEN_STACK_ALLOCATION_LIMIT 0
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <omp.h>
-#include <time.h>
 #include <Eigen/Dense>
 #include "H5Cpp.h"
-#include <H5Group.h>
-#include <complex>
 #include <random>
 #include <vector>
 #include <iostream>
 #include <fstream>
-#include <algorithm>
-#include <typeinfo>
-#include <type_traits>
-#include <complex>
-#include <iostream>
 #include <chrono>
-#include <thread>
-#include <cmath>
-#include <math.h>
-#include <initializer_list>
 
-  
 // Set of compilation parameters chosen in the Makefile
 // MEMORY is the number of KPM vectors stored in the memory while calculating Gamma2D
 // TILE is the size of the memory blocks used in the program

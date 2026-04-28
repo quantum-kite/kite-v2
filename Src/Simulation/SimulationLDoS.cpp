@@ -153,7 +153,8 @@ void Simulation<T, D>::ldos(
     const value_type target = energy_ / energy_scale;
     const value_type sigma = sigma_ / energy_scale;
     const value_type size = r.Sizet - r.SizetVacancies;
-    const value_type factor = (coef_id_) ? 1.0 : std::sqrt(8 * M_PI) * sigma;
+    const value_type factor =
+      (coef_id_) ? 1.0 : std::sqrt(8 * M_PI) * sigma / energy_scale;
     const value_type fwhm = (coef_id_) ? sigma : std::sqrt(2) * sigma;
     const Eigen::Array<value_type, -1, 1> coefs =
       (coef_id_) ? build_window<value_type>(target, fwhm)
