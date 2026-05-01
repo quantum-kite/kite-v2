@@ -119,6 +119,7 @@ public:
   void localized_wavepacket(
     const value_type t,
     const unsigned measurements,
+    const unsigned num_spectral_moments,
     const std::array<value_type, D + 1> &pos_,
     const std::array<value_type, 2> &energy_window,
     const std::array<value_type, D> &k0_,
@@ -128,9 +129,10 @@ public:
   );
   void store_localized_wavepacket(
     const Eigen::Array<T, -1, -1>& states,
+    const Eigen::Array<value_type, -1, 1>& spectral_moments,
     const Eigen::Array<value_type, -1, -1>& moments1,
     const Eigen::Array<value_type, -1, -1>& moments2,
-    const Eigen::Array<T, 1, -1>& return_amplitudes,
+    const Eigen::Array<T, -1, 1>& return_amplitudes,
     const Eigen::Array<T, -1, -1>& propagator_amplitudes
   );
 };

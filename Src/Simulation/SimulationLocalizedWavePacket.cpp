@@ -266,6 +266,29 @@ std::vector<std::size_t> build_local_probe_indices(
   return local_probe_indices;
 }
 
+template<typename T, unsigned D, typename V>
+Eigen::Array<V, -1, 1> spectral_function(LatticeStructure<D>& r,
+                                         Simulation<T, D>& sim,
+                                         unsigned num_moments,
+                                         const Eigen::Array<T, -1, 1>& psi
+) {
+  Eigen::Array<V, -1, 1> moments(num_moments);
+  KPM_Vector<T, D> phi(2, sim);
+  phi.initiate_phases();
+  phi.set_index(0);
+  phi.v.col(0) = psi;
+  phi.Exchange_Boundaries();
+
+  for (unsigned n = 0; n < num_moments; ++n) {
+    phi.cheb_iteration(n);
+    moments(n) = static_cast<V>(std::real(
+      no_ghost_dot<T, D>(r, psi, phi.v.col(phi.get_index()).array())
+      ));
+  }
+
+  return moments;
+}
+
 template <typename T, unsigned D>
 void Simulation<T, D>::calc_localized_wavepacket()
 {
@@ -299,6 +322,7 @@ void Simulation<T, D>::calc_localized_wavepacket()
 #pragma omp barrier
     value_type time;
     unsigned num_measures;
+    unsigned num_spectral_moments;
     std::array<value_type, D + 1> pos;
     std::array<value_type, D> k0;
     value_type width;
@@ -314,6 +338,10 @@ void Simulation<T, D>::calc_localized_wavepacket()
       get_hdf5<unsigned>(
         &num_measures, file,
         (char *)"/Calculation/localized_wave_packet/Measurements"
+      );
+      get_hdf5<unsigned>(
+        &num_spectral_moments, file,
+        (char *)"/Calculation/localized_wave_packet/NumSpectralMoments"
       );
       get_hdf5<value_type>(
         pos.data(), file,
@@ -347,7 +375,7 @@ void Simulation<T, D>::calc_localized_wavepacket()
       file->close();
       delete file;
     }
-    localized_wavepacket(time, num_measures, pos, energy_window, k0, width, 
+    localized_wavepacket(time, num_measures, num_spectral_moments, pos, energy_window, k0, width, 
                          static_cast<std::size_t>(num_probes), 
                          prop_coords.template cast<std::size_t>());
   }
@@ -357,6 +385,7 @@ template <typename T, unsigned D>
 void Simulation<T, D>::localized_wavepacket(
   const value_type t,
   const unsigned measurements,
+  const unsigned num_spectral_moments,
   const std::array<value_type, D + 1> &pos_,
   const std::array<value_type, 2> &energy_window,
   const std::array<value_type, D> &k0_,
@@ -392,9 +421,10 @@ void Simulation<T, D>::localized_wavepacket(
     KPM_Vector<T, D> phi(2, *this);
     Eigen::Array<T, -1, 1> ket(r.Sized);
     Eigen::Array<T, -1, -1> states(r.Sized, measurements + 1);
+    Eigen::Array<value_type, -1, 1> spectral_moments(num_spectral_moments);
     Eigen::Array<value_type, -1, -1> moments1(D, measurements + 1);
     Eigen::Array<value_type, -1, -1> moments2(D * D, measurements + 1);
-    Eigen::Array<T, 1, -1> return_amplitudes(measurements + 1);
+    Eigen::Array<T, -1, 1> return_amplitudes(measurements + 1);
     Eigen::Array<T, -1, -1> propagators(num_probes, measurements + 1);
     propagators.setZero();
     const auto local_probe_indices = build_local_probe_indices<D>(r, num_probes, prop_coords);
@@ -402,19 +432,25 @@ void Simulation<T, D>::localized_wavepacket(
     h.generate_disorder();
     h.generate_twists();
     INITIATE_PACKET;
+
     states.col(0) = phi.v.col(0);
+    spectral_moments = spectral_function<T, D, value_type>(r, *this, num_spectral_moments, phi.v.col(0));
     const auto [m1, m2] = pos_moments<T, D, value_type>(r, phi.v.col(0));
     moments1.col(0) = m1;
     moments2.col(0) = m2;
     return_amplitudes(0) = no_ghost_dot<T, D>(r, states.col(0), phi.v.col(0));
 
-    for (std::size_t p = 0; p < num_probes; ++p) {
-      const auto idx = local_probe_indices[p];
+    auto update_propagators_local = [&](unsigned i) {
+      for (std::size_t p = 0; p < num_probes; ++p) {
+        const auto idx = local_probe_indices[p];
 
-      if (idx != r.Sized) {
-        propagators(p, 0) = phi.v(idx, 0);
+        if (idx != r.Sized) {
+          propagators(p, i) = phi.v(idx, 0);
+        }
       }
-    }
+    };
+
+    update_propagators_local(0);
 
     for (unsigned i = 0; i < measurements; ++i) {
       for (unsigned j = 0; j < divisions; ++j) {
@@ -432,25 +468,20 @@ void Simulation<T, D>::localized_wavepacket(
       moments1.col(i + 1) = m1;
       moments2.col(i + 1) = m2;
       return_amplitudes(i + 1) = no_ghost_dot<T, D>(r, states.col(0), phi.v.col(0));
-      for (std::size_t p = 0; p < num_probes; ++p) {
-        const auto idx = local_probe_indices[p];
-
-        if (idx != r.Sized) {
-          propagators(p, i + 1) = phi.v(idx, 0);
-        }
-      }
+      update_propagators_local(i + 1);
     }
 
-    store_localized_wavepacket(states, moments1, moments2, return_amplitudes, propagators);
+    store_localized_wavepacket(states, spectral_moments, moments1, moments2, return_amplitudes, propagators);
   }
 }
 
 template <typename T, unsigned D>
 void Simulation<T, D>::store_localized_wavepacket(
   const Eigen::Array<T, -1, -1>& states,
+  const Eigen::Array<value_type, -1, 1>& spectral_moments,
   const Eigen::Array<value_type, -1, -1>& moments1,
   const Eigen::Array<value_type, -1, -1>& moments2,
-  const Eigen::Array<T, 1, -1>& return_amplitudes,
+  const Eigen::Array<T, -1, 1>& return_amplitudes,
   const Eigen::Array<T, -1, -1>& propagator_amplitudes
 ) {
   debug_message("Entered store_localized_wavepacket\n");
@@ -460,27 +491,25 @@ void Simulation<T, D>::store_localized_wavepacket(
 #pragma omp master
   {
     Global.localized_wavepacket.resize(r.Sizet, states.cols());
+    Global.results_5.resize(spectral_moments.rows(), 1); 
     Global.results_1.resize(D, moments1.cols());
     Global.results_2.resize(D * D, moments2.cols());
-    Global.results_3.resize(1, return_amplitudes.cols());
+    Global.results_3.resize(return_amplitudes.rows(), 1);
     Global.results_4.resize(propagator_amplitudes.rows(), propagator_amplitudes.cols());
     Global.results_1.setZero();
     Global.results_2.setZero();
     Global.results_3.setZero();
     Global.results_4.setZero();
+    Global.results_5.setZero();
   }
 #pragma omp barrier
 #pragma omp critical
   {
-    for (unsigned i = 0; i < moments1.cols(); ++i) {
-      Global.results_1.col(i) += moments1.col(i).template cast<T>();
-      Global.results_2.col(i) += moments2.col(i).template cast<T>();
-      Global.results_3(i) += return_amplitudes(i);
-    }
-
-    for (unsigned i = 0; i < propagator_amplitudes.cols(); ++i) {
-      Global.results_4.col(i) += propagator_amplitudes.col(i);
-    }
+    Global.results_1 += moments1.template cast<T>();
+    Global.results_2 += moments2.template cast<T>();
+    Global.results_3 += return_amplitudes;
+    Global.results_4 += propagator_amplitudes;
+    Global.results_5 += spectral_moments.template cast<T>();
   }
 #pragma omp barrier
 #pragma omp master
@@ -519,18 +548,21 @@ void Simulation<T, D>::store_localized_wavepacket(
     Eigen::Array<value_type, -1, -1> results_1_real = Global.results_1.real();
     Eigen::Array<value_type, -1, -1> results_2_real = Global.results_2.real();
     Eigen::Array<value_type, -1, -1> results_3_real = Global.results_3.real();
+    Eigen::Array<value_type, -1, -1> results_5_real = Global.results_5.real();
     H5::H5File *file = new H5::H5File(name, H5F_ACC_RDWR);
     const std::string name1("Calculation/localized_wave_packet/States");
     const std::string name2("Calculation/localized_wave_packet/StatesMean");
     const std::string name3("Calculation/localized_wave_packet/StatesCovariance");
     const std::string name4("Calculation/localized_wave_packet/ReturnProbability");
     const std::string name5("Calculation/localized_wave_packet/PropagatorAmplitude");
+    const std::string name6("Calculation/localized_wave_packet/SpectralMoments");
     write_hdf5(Global.localized_wavepacket, file, name1);
     write_hdf5(results_1_real, file, name2);
     write_hdf5(results_2_real, file, name3);
     write_hdf5(results_3_real, file, name4);
     if (propagator_amplitudes.rows() > 0)
       write_hdf5(Global.results_4, file, name5);
+    write_hdf5(results_5_real, file, name6);
 
     file->close();
     delete file;

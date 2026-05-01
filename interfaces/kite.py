@@ -678,11 +678,15 @@ class Calculation:
              'timestep': timestep, 'num_disorder': num_disorder, 'spinor': spinor, 'width': width, 'k_vector': k_vector,
              'mean_value': mean_value, 'probing_point': probing_point})
 
-    def localized_wave_packet(self, time, num_measures, initial_pos, 
-                              width = -1., 
+    def localized_wave_packet(self,
+                              time,
+                              num_measures,
+                              initial_pos,
+                              num_moments = 0,
+                              width = -1.,
+                              energy_window = [0.,0.],
                               initial_wavevector = None, 
-                              energy_window = None,
-                              probes = None
+                              probes = 0
                     ):
         """Calculate the time evolution function of a localized wave packet with spectrum filtering
 
@@ -693,6 +697,8 @@ class Calculation:
             Together with 'num_measures', it determines the time step between measurements.
         num_measures : int
             Number of times the evolved state is probed.
+        num_moments: int
+            Number of Chebyshev moments to calculate for the spectral function of the propagated state.
         initial_pos : np.array
             Initial position of the localized wave packet in lattice coordinates. [n_x, n_y[, n_z], n_orbital]
         width : float
@@ -705,7 +711,9 @@ class Calculation:
             List of positions expressed in lattice coordinates where the propagator is calculated.
         """
 
-        self._localized_wave_packet.append({'time': time, 'num_measures': num_measures,
+        self._localized_wave_packet.append({'time': time, 
+                                            'num_measures': num_measures,
+                                            'num_moments': num_moments,
                                             'initial_pos': initial_pos,
                                             'width': width, 'initial_wavevector': initial_wavevector,
                                             'energy_window': energy_window,
@@ -1774,6 +1782,10 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
         grpc_p.create_dataset('InitialPos', 
                               data=initial_pos.astype(np.float32)
         )
+        grpc_p.create_dataset('Measurements', 
+                              data = np.asarray(calculation.get_localized_wave_packet[0]['num_moments']), 
+                              dtype = np.uint32
+        )
         grpc_p.create_dataset('Width', 
                               data = np.asarray(width), 
                               dtype = np.float32
@@ -1784,10 +1796,6 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
         )
 
         energy_window = calculation.get_localized_wave_packet[0]['energy_window']
-
-        # If no window is provided the C++ code does not perform the filtering
-        if energy_window == None:
-            energy_window = np.array([0,0])
 
         grpc_p.create_dataset('EnergyWindow', 
                             data=np.asarray(energy_window)

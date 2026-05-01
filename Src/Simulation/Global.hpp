@@ -34,6 +34,7 @@ struct GLOBAL_VARIABLES {
   Eigen::Array<T, -1, -1> results_2;
   Eigen::Array<T, -1, -1> results_3;
   Eigen::Array<T, -1, -1> results_4;
+  Eigen::Array<T, -1, -1> results_5;
   double kpm_iteration_time;
   
   bool calculate_arpes;
