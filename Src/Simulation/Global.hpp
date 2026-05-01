@@ -30,6 +30,10 @@ struct GLOBAL_VARIABLES {
   Eigen::Array <double,3,1> GlobBTwist; // Glob Boundary Twist Angles
   Eigen::Array<T, -1, -1> ldos_map;
   Eigen::Array<T, -1, -1> localized_wavepacket;
+  Eigen::Array<T, -1, -1> results_1;
+  Eigen::Array<T, -1, -1> results_2;
+  Eigen::Array<T, -1, -1> results_3;
+  Eigen::Array<T, -1, -1> results_4;
   double kpm_iteration_time;
   
   bool calculate_arpes;

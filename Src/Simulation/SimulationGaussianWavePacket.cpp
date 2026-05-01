@@ -92,7 +92,7 @@ void Simulation<T,D>::Gaussian_Wave_Packet(){
   H5::DataSpace * dataspace;
   hsize_t dim[2];
   Eigen::Matrix <double,-1, -1> k_vector;
-  Eigen::Matrix <double ,1, 2> vb;
+  Eigen::Matrix <double ,1, D> vb;
   Eigen::Matrix <T,-1, -1>        spinor;
 
   ident <<  one, zero,
@@ -119,7 +119,7 @@ void Simulation<T,D>::Gaussian_Wave_Packet(){
 
     k_vector  = Eigen::Matrix<double,-1, -1>::Zero(dim[1],dim[0]);
     spinor    = Eigen::Matrix<     T,-1, -1>::Zero(r.Orb,dim[0]);
-    vb = Eigen::Matrix<     double,1, 2>::Zero(2);
+    vb = Eigen::Matrix<     double,1, D>::Zero(D);
     get_hdf5    <int>(&NumDisorder,    file, (char *) "/Calculation/gaussian_wave_packet/NumDisorder");
     get_hdf5    <int>(&NumMoments,     file, (char *) "/Calculation/gaussian_wave_packet/NumMoments" );
     get_hdf5    <int>(&NumPoints,      file, (char *) "/Calculation/gaussian_wave_packet/NumPoints"  );

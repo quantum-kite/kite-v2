@@ -36,8 +36,10 @@ template <typename T, unsigned D>
 T KPM_Vector<T,D>::get_point(){return v(0,0);}
 
 template <typename T, unsigned D>
-void KPM_Vector<T,D>::build_wave_packet(Eigen::Matrix<double,-1,-1> & k, Eigen::Matrix<T,-1,-1> & psi0, double & sigma,
-                                        Eigen::Matrix<double, 1, 2> & vb){
+void KPM_Vector<T,D>::build_wave_packet(const Eigen::Matrix<double,-1,-1> & k, 
+                                        const Eigen::Matrix<T,-1,-1> & psi0, 
+                                        const double sigma,
+                                        const Eigen::Matrix<double, 1, D> & vb){
   (void) sigma;
   (void) k;
   (void) psi0;

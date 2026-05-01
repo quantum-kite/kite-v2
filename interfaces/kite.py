@@ -498,7 +498,8 @@ class Calculation:
 
     @property
     def get_localized_wave_packet(self):
-        """Returns the requested wave packet time evolution function, with a localized wavepacket with spectrum filtering
+        """Returns the requested wave packet time evolution function, with a localized or 
+        gaussian wavepacket with spectrum filtering
         ."""
         return self._localized_wave_packet
 
@@ -677,7 +678,12 @@ class Calculation:
              'timestep': timestep, 'num_disorder': num_disorder, 'spinor': spinor, 'width': width, 'k_vector': k_vector,
              'mean_value': mean_value, 'probing_point': probing_point})
 
-    def localized_wave_packet(self, time, num_measures, initial_pos, energy_window = None):
+    def localized_wave_packet(self, time, num_measures, initial_pos, 
+                              width = -1., 
+                              initial_wavevector = None, 
+                              energy_window = None,
+                              probes = None
+                    ):
         """Calculate the time evolution function of a localized wave packet with spectrum filtering
 
         Parameters
@@ -686,15 +692,24 @@ class Calculation:
             Total dimensionless time over which the wave packet is evolved.
             Together with 'num_measures', it determines the time step between measurements.
         num_measures : int
-            Number of time evolution steps.
+            Number of times the evolved state is probed.
         initial_pos : np.array
-            Initial position of the localized wave packet. [n_x, n_y[, n_z], n_orbital]
+            Initial position of the localized wave packet in lattice coordinates. [n_x, n_y[, n_z], n_orbital]
+        width : float
+            Width of the gaussian envelope in real space.
+        initial_wavevector : np.array
+            Wavevector the gaussian is centered around, in reciprocal lattice coordinates.
         energy_window : np.array 
             Localized packet will be filtered to only keep eigenstates with energy inside this window.
+        probes : np.array
+            List of positions expressed in lattice coordinates where the propagator is calculated.
         """
 
-        self._localized_wave_packet.append({'time': time, 'num_measures': num_measures, 
-                               'initial_pos': initial_pos, 'energy_window': energy_window})
+        self._localized_wave_packet.append({'time': time, 'num_measures': num_measures,
+                                            'initial_pos': initial_pos,
+                                            'width': width, 'initial_wavevector': initial_wavevector,
+                                            'energy_window': energy_window,
+                                            'probes': probes})
 
     def conductivity_dc(self, direction, num_points, num_moments, num_random, num_disorder=1, temperature=0):
         """Calculate the DC conductivity for a given direction
@@ -1739,17 +1754,33 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
 
     if calculation.get_localized_wave_packet:
         grpc_p = grpc.create_group('localized_wave_packet')
+
+        initial_pos = np.asarray(calculation.get_localized_wave_packet[0]['initial_pos'])
+        width = calculation.get_localized_wave_packet[0]['width']
+        wavevector = calculation.get_localized_wave_packet[0]['initial_wavevector']
+        if width > 0 and wavevector is None:
+            raise SystemExit('Provide a valid wavevector for the gaussian wave packet.')
+        if wavevector is None:
+            wavevector = np.zeros(len(initial_pos))
+
         grpc_p.create_dataset('Time', 
                               data = np.asarray(calculation.get_localized_wave_packet[0]['time']), 
                               dtype = np.float32
         )
         grpc_p.create_dataset('Measurements', 
                               data = np.asarray(calculation.get_localized_wave_packet[0]['num_measures']), 
-                              dtype = np.int32
+                              dtype = np.uint32
         )
         grpc_p.create_dataset('InitialPos', 
-                              data=np.asarray(calculation.get_localized_wave_packet[0]['initial_pos'])
-                              .astype(np.int32)
+                              data=initial_pos.astype(np.float32)
+        )
+        grpc_p.create_dataset('Width', 
+                              data = np.asarray(width), 
+                              dtype = np.float32
+        )
+        grpc_p.create_dataset('InitialWaveVector', 
+                              data=np.asarray(wavevector)
+                              .astype(np.float32)
         )
 
         energy_window = calculation.get_localized_wave_packet[0]['energy_window']
@@ -1761,6 +1792,36 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
         grpc_p.create_dataset('EnergyWindow', 
                             data=np.asarray(energy_window)
                             .astype(np.float32)
+        )
+
+        probes = calculation.get_localized_wave_packet[0]['probes']
+
+        if probes is None:
+            probes = np.zeros((1, len(initial_pos)), dtype=np.uint64)
+        else:
+            probes = np.asarray(probes, dtype=np.uint64)
+
+            if probes.ndim == 1:
+                probes = probes.reshape(1, -1)
+
+            if probes.shape[1] != len(initial_pos):
+                raise SystemExit(
+                    f"Each probe must have {len(initial_pos)} coordinates, "
+                    f"but got shape {probes.shape}."
+                )
+
+        n_probes = probes.shape[0]
+
+        grpc_p.create_dataset(
+            'NumProbes',
+            data=np.asarray(n_probes),
+            dtype=np.uint64
+        )
+
+        grpc_p.create_dataset(
+            'ProbeCoordinates',
+            data=probes.T,
+            dtype=np.uint64
         )
 
     if calculation.get_conductivity_dc:

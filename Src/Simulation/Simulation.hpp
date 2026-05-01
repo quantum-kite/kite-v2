@@ -119,8 +119,18 @@ public:
   void localized_wavepacket(
     const value_type t,
     const unsigned measurements,
-    const std::array<unsigned, D + 1> &pos_,
-    const std::array<value_type, 2> &energy_window
+    const std::array<value_type, D + 1> &pos_,
+    const std::array<value_type, 2> &energy_window,
+    const std::array<value_type, D> &k0_,
+    const value_type width,
+    const std::size_t num_probes,
+    const Eigen::Array<std::size_t, -1, D + 1>& prop_coords
   );
-  void store_localized_wavepacket(const Eigen::Array<T, -1, -1> &results_);
+  void store_localized_wavepacket(
+    const Eigen::Array<T, -1, -1>& states,
+    const Eigen::Array<value_type, -1, -1>& moments1,
+    const Eigen::Array<value_type, -1, -1>& moments2,
+    const Eigen::Array<T, 1, -1>& return_amplitudes,
+    const Eigen::Array<T, -1, -1>& propagator_amplitudes
+  );
 };
