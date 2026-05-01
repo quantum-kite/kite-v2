@@ -475,7 +475,7 @@ void Simulation<T, D>::store_localized_wavepacket(
     for (unsigned i = 0; i < moments1.cols(); ++i) {
       Global.results_1.col(i) += moments1.col(i).template cast<T>();
       Global.results_2.col(i) += moments2.col(i).template cast<T>();
-      Global.results_3.col(i) += return_amplitudes(i);
+      Global.results_3(i) += return_amplitudes(i);
     }
 
     for (unsigned i = 0; i < propagator_amplitudes.cols(); ++i) {
