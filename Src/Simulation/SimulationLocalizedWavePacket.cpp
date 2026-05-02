@@ -562,7 +562,8 @@ void Simulation<T, D>::store_localized_wavepacket(
     write_hdf5(results_3_real, file, name4);
     if (propagator_amplitudes.rows() > 0)
       write_hdf5(Global.results_4, file, name5);
-    write_hdf5(results_5_real, file, name6);
+    if (spectral_moments.rows() > 0)
+      write_hdf5(results_5_real, file, name6);
 
     file->close();
     delete file;

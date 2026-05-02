@@ -686,7 +686,7 @@ class Calculation:
                               width = -1.,
                               energy_window = [0.,0.],
                               initial_wavevector = None, 
-                              probes = 0
+                              probes = None
                     ):
         """Calculate the time evolution function of a localized wave packet with spectrum filtering
 
@@ -1782,7 +1782,7 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
         grpc_p.create_dataset('InitialPos', 
                               data=initial_pos.astype(np.float32)
         )
-        grpc_p.create_dataset('Measurements', 
+        grpc_p.create_dataset('NumSpectralMoments', 
                               data = np.asarray(calculation.get_localized_wave_packet[0]['num_moments']), 
                               dtype = np.uint32
         )
@@ -1805,7 +1805,7 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
         probes = calculation.get_localized_wave_packet[0]['probes']
 
         if probes is None:
-            probes = np.zeros((1, len(initial_pos)), dtype=np.uint64)
+            probes = np.empty((0, len(initial_pos)), dtype=np.uint64)
         else:
             probes = np.asarray(probes, dtype=np.uint64)
 
@@ -1826,11 +1826,12 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
             dtype=np.uint64
         )
 
-        grpc_p.create_dataset(
-            'ProbeCoordinates',
-            data=probes.T,
-            dtype=np.uint64
-        )
+        if n_probes > 0:
+            grpc_p.create_dataset(
+                'ProbeCoordinates',
+                data=probes.T,
+                dtype=np.uint64
+            )
 
     if calculation.get_conductivity_dc:
         grpc_p = grpc.create_group('conductivity_dc')
