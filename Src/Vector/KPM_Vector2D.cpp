@@ -315,8 +315,10 @@ void KPM_Vector <T, 2>::build_planewave(Eigen::Matrix<double,-1,1> & k, Eigen::M
 
 
 template <typename T>
-void KPM_Vector <T, 2>::build_wave_packet(Eigen::Matrix<double,-1,-1> & k, Eigen::Matrix<T,-1,-1> & psi0, double & sigma,
-                                          Eigen::Matrix<double, 1, 2> & vb)
+void KPM_Vector <T, 2>::build_wave_packet(const Eigen::Matrix<double,-1,-1> & k, 
+                                          const Eigen::Matrix<T,-1,-1> & psi0, 
+                                          const double sigma,
+                                          const Eigen::Matrix<double, 1, 2> & vb)
 {
   index = 0;
   Coordinates<std::size_t, 3> x(r.Ld), z(r.Lt);
@@ -349,9 +351,6 @@ void KPM_Vector <T, 2>::build_wave_packet(Eigen::Matrix<double,-1,-1> & k, Eigen
       {
         x.set({i0,i1,std::size_t(0)});
         r.convertCoordinates(z,x);
-        double n1 = (double(z.coord[1]) - double(vb(0, 1)))/sigma;
-        double n0 = (double(z.coord[0]) - double(vb(0, 0)))/sigma;
-        double gauss = n0*n0 * a00 + n1*n1 * a11 + 2*n0*n1*a01;
         sum.setZero();
         va = vv.cast<double>().transpose();
 	  
@@ -359,6 +358,9 @@ void KPM_Vector <T, 2>::build_wave_packet(Eigen::Matrix<double,-1,-1> & k, Eigen
           {
             for(unsigned io = 0; io < r.Orb; io++)
               {
+                double n1 = (double(z.coord[1]) + vOrb(1, io) - double(vb(0, 1)))/sigma;
+                double n0 = (double(z.coord[0]) + vOrb(0, io) - double(vb(0, 0)))/sigma;
+                double gauss = n0*n0 * a00 + n1*n1 * a11 + 2*n0*n1*a01;
                 double xx = (va  + vOrb.col(io).transpose() ) * k.col(ik);
                 sum(io, 0) += psi0(io,ik) * exp(assign_value(-0.5*gauss,  2.*M_PI * (xx + 0.*phase(0,ik) )));
               }

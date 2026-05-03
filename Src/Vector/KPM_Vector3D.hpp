@@ -43,8 +43,10 @@ public:
   void initiate_vector();
   void initiate_phases();
   T get_point();
-  void build_wave_packet(Eigen::Matrix<double,-1,-1> & k, Eigen::Matrix<T,-1,-1> & psi0, double & sigma,
-                         Eigen::Matrix<double,1,2> & vb);
+  void build_wave_packet(const Eigen::Matrix<double,-1,-1> &k, 
+                         const Eigen::Matrix<T,-1,-1> &psi0, 
+                         const double sigma,
+                         const Eigen::Matrix<double,1,3> &vb);
   template < unsigned MULT,bool VELOCITY> 
   void build_regular_phases(int i1, unsigned axis);
   template < unsigned MULT> 
