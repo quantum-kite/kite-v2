@@ -533,9 +533,9 @@ class Calculation:
         return self._custom_two
 
     @property
-    def get_local_chern(self):
+    def get_chern_map(self):
         """Returns the requested Local Chern number"""
-        return self._local_chern
+        return self._local_chern_map
 
     def __init__(self, configuration=None):
 
@@ -558,7 +558,7 @@ class Calculation:
         self._custom_operator_collection     = {}
         self._custom_one                     = []
         self._custom_two                     = []
-        self._local_chern                    = []
+        self._local_chern_map                = []
 
         self._avail_dir_full = {'xx': 0, 'yy': 1, 'zz': 2, 'xy': 3, 'xz': 4, 'yx': 5, 'yz': 6, 'zx': 7, 'zy': 8}
         self._avail_dir_nonl = {'xxx': 0, 'xxy': 1, 'xxz': 2, 'xyx': 3, 'xyy': 4, 'xyz': 5, 'xzx': 6, 'xzy': 7,
@@ -905,10 +905,10 @@ class Calculation:
 
         self._custom_two.append({'rank' : len(stream_), 'num_moments': stream_[0].moment, 'num_random' : num_random_, 'num_disorder' : num_disorder_, 'operators' : operators, 'coefs' : coefs, 'temperature': temperature_, 'num_points' : num_points_})
 
-    def local_chern(self, num_disorder_, beta_, miu_):
+    def local_chern_map(self, num_vectors_, beta_, miu_):
         """Calculate the local chern using KITEx for a set of disorder realizations, at a fixed temperature and fermi energy
         """
-        self._local_chern.append({'num_disorder' : num_disorder_, 'beta' : beta_, 'miu' : miu_})
+        self._local_chern_map.append({'num_vectors' : num_vectors_, 'beta' : beta_, 'miu' : miu_})
 
 class Configuration:
     def __init__(self, divisions=(1, 1, 1), length=(1, 1, 1), boundaries=('open', 'open', 'open'),
@@ -1922,11 +1922,11 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
         for label, operator in calculation._custom_operator_collection.items():
             grpc_op.create_dataset(label, data = np.asarray(operator).astype(config.type))
 
-    if calculation.get_local_chern:
-        grpc_p = grpc.create_group('LocalChern')
-        grpc_p.create_dataset('NumDisorder', data = np.asarray(calculation._local_chern[0]['num_disorder']), dtype = np.int32)
-        grpc_p.create_dataset('Beta', data = np.asarray(calculation._local_chern[0]['beta']), dtype = np.float64)
-        grpc_p.create_dataset('Miu', data = np.asarray(calculation._local_chern[0]['miu']), dtype = np.float64)
+    if calculation._local_chern_map:
+        grpc_p = grpc.create_group('STLCM')
+        grpc_p.create_dataset('NumVectors', data = np.asarray(calculation._local_chern_map[0]['num_vectors']), dtype = np.int32)
+        grpc_p.create_dataset('Beta', data = np.asarray(calculation._local_chern_map[0]['beta']), dtype = np.float64)
+        grpc_p.create_dataset('Miu', data = np.asarray(calculation._local_chern_map[0]['miu']), dtype = np.float64)
 
     print('\n##############################################################################\n')
     print('OUTPUT:\n')

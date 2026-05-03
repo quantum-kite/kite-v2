@@ -114,6 +114,11 @@ public:
   void ldos(const int, const value_type, const value_type, const int);
   void store_ldos(const Eigen::Array<T, -1, -1> &);
 
+  // LCM
+  void calc_st_lcm();
+  void st_lcm(const unsigned, const value_type, const value_type);
+  void store_lcm(const Eigen::Array<T, -1, 1> &);
+
   // Wave-Packet Time Evol
   void calc_localized_wavepacket();
   void localized_wavepacket(
