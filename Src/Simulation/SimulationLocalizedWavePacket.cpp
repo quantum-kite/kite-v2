@@ -16,6 +16,12 @@ class KPM_Vector;
 #include "KPM_VectorBasis.hpp"
 #include "KPM_Vector.hpp"
 #include "Loop.hpp"
+#include <stdexcept>
+
+
+// First entry: Row index of the probe in ProbeCoordinates
+// Second entry: Coordinate index in local domain with ghosts
+using LocalProbe = std::pair<std::size_t, std::size_t>;
 
 #define INITIATE_PACKET                                                        \
 do {                                                                           \
@@ -98,8 +104,10 @@ T jackson(const int n_, const int polynomials_)
 }
 
 template <typename T>
-Eigen::Array<T, -1, 1> build_window_here(const T min, const T max)
-{
+Eigen::Array<T, -1, 1> build_window_here(const T min, const T max) {
+  if (!(max > min))
+    throw std::runtime_error("Invalid energy window.");
+
   const T width = max - min;
   const unsigned number_polynomials = std::ceil(256 / width);
   Eigen::Array<T, -1, 1> coefs(number_polynomials);
@@ -211,15 +219,13 @@ T no_ghost_dot(
 }
 
 template <unsigned D>
-std::vector<std::size_t> build_local_probe_indices(
+std::vector<LocalProbe>
+build_local_probe_indices(
   LatticeStructure<D>& r,
-  const std::size_t num_probes,
   const Eigen::Array<std::size_t, -1, D + 1>& probe_coords
 ) {
-  const std::size_t invalid = r.Sized;
-
-  std::vector<std::size_t> local_probe_indices(num_probes);
-  std::fill(local_probe_indices.begin(), local_probe_indices.end(), invalid);
+  const auto num_probes{static_cast<std::size_t>(probe_coords.rows())};
+  std::vector<std::pair<std::size_t, std::size_t>> local_probe_indices;
 
   for (std::size_t p = 0; p < num_probes; ++p) {
     Coordinates<std::size_t, D + 1> total_coords(r.Lt);
@@ -259,7 +265,7 @@ std::vector<std::size_t> build_local_probe_indices(
 
     if (thread.index == r.thread_id) {
       r.convertCoordinates(thread_coords_gh, thread_coords);
-      local_probe_indices[p] = thread_coords_gh.index;
+      local_probe_indices.push_back({p, thread_coords_gh.index});
     }
   }
 
@@ -328,7 +334,7 @@ void Simulation<T, D>::calc_localized_wavepacket()
     value_type width;
     std::array<value_type, 2> energy_window;
     unsigned long num_probes;
-    Eigen::Array<unsigned long, -1, D + 1> prop_coords;
+    Eigen::Array<unsigned long, -1, D + 1> probe_coords;
 #pragma omp critical
     {
       H5::H5File *file = new H5::H5File(name, H5F_ACC_RDONLY);
@@ -364,10 +370,10 @@ void Simulation<T, D>::calc_localized_wavepacket()
         (char *)"/Calculation/localized_wave_packet/NumProbes"
       );
 
-      prop_coords.resize(num_probes, D + 1);
+      probe_coords.resize(num_probes, D + 1);
       if (num_probes > 0) {
         get_hdf5<unsigned long>(
-          prop_coords.data(), file,
+          probe_coords.data(), file,
           (char *)"/Calculation/localized_wave_packet/ProbeCoordinates"
         );
       }
@@ -375,9 +381,9 @@ void Simulation<T, D>::calc_localized_wavepacket()
       file->close();
       delete file;
     }
-    localized_wavepacket(time, num_measures, num_spectral_moments, pos, energy_window, k0, width, 
-                         static_cast<std::size_t>(num_probes), 
-                         prop_coords.template cast<std::size_t>());
+    localized_wavepacket(time, num_measures, num_spectral_moments, pos, energy_window, k0, width,
+                         num_probes,
+                         probe_coords.template cast<std::size_t>());
   }
 }
 
@@ -390,8 +396,8 @@ void Simulation<T, D>::localized_wavepacket(
   const std::array<value_type, 2> &energy_window,
   const std::array<value_type, D> &k0_,
   const value_type width,
-  const std::size_t num_probes,
-  const Eigen::Array<std::size_t, -1, D + 1>& prop_coords
+  const std::size_t num_global_probes,
+  const Eigen::Array<std::size_t, -1, D + 1>& probe_lattice_coords
 )
 {
   if constexpr (is_tt<std::complex, T>::value) {
@@ -420,37 +426,32 @@ void Simulation<T, D>::localized_wavepacket(
 
     KPM_Vector<T, D> phi(2, *this);
     Eigen::Array<T, -1, 1> ket(r.Sized);
-    Eigen::Array<T, -1, -1> states(r.Sized, measurements + 1);
     Eigen::Array<value_type, -1, 1> spectral_moments(num_spectral_moments);
     Eigen::Array<value_type, -1, -1> moments1(D, measurements + 1);
     Eigen::Array<value_type, -1, -1> moments2(D * D, measurements + 1);
     Eigen::Array<T, -1, 1> return_amplitudes(measurements + 1);
-    Eigen::Array<T, -1, -1> propagators(num_probes, measurements + 1);
-    propagators.setZero();
-    const auto local_probe_indices = build_local_probe_indices<D>(r, num_probes, prop_coords);
+    const std::vector<LocalProbe> local_probes = build_local_probe_indices<D>(r, probe_lattice_coords);
+    Eigen::Array<T, -1, -1> local_propagators(local_probes.size(), measurements + 1);
 
     h.generate_disorder();
     h.generate_twists();
     INITIATE_PACKET;
+    Eigen::Array<T, -1, 1> initial_state = phi.v.col(0);
 
-    states.col(0) = phi.v.col(0);
-    spectral_moments = spectral_function<T, D, value_type>(r, *this, num_spectral_moments, phi.v.col(0));
+    if (num_spectral_moments > 0)
+      spectral_moments = spectral_function<T, D, value_type>(r, *this, num_spectral_moments, phi.v.col(0));
     const auto [m1, m2] = pos_moments<T, D, value_type>(r, phi.v.col(0));
     moments1.col(0) = m1;
     moments2.col(0) = m2;
-    return_amplitudes(0) = no_ghost_dot<T, D>(r, states.col(0), phi.v.col(0));
+    return_amplitudes(0) = no_ghost_dot<T, D>(r, initial_state, phi.v.col(0));
 
-    auto update_propagators_local = [&](unsigned i) {
-      for (std::size_t p = 0; p < num_probes; ++p) {
-        const auto idx = local_probe_indices[p];
-
-        if (idx != r.Sized) {
-          propagators(p, i) = phi.v(idx, 0);
-        }
+    auto update_local_propagators = [&](unsigned m) {
+      for (std::size_t i = 0; i < local_probes.size(); ++i) {
+        local_propagators(i, m) = phi.v(local_probes[i].second, 0);
       }
     };
 
-    update_propagators_local(0);
+    update_local_propagators(0);
 
     for (unsigned i = 0; i < measurements; ++i) {
       for (unsigned j = 0; j < divisions; ++j) {
@@ -463,39 +464,40 @@ void Simulation<T, D>::localized_wavepacket(
         phi.set_index(0);
         phi.Exchange_Boundaries();
       }
-      states.col(i + 1) = phi.v.col(0);
       const auto [m1, m2] = pos_moments<T, D, value_type>(r, phi.v.col(0));
       moments1.col(i + 1) = m1;
       moments2.col(i + 1) = m2;
-      return_amplitudes(i + 1) = no_ghost_dot<T, D>(r, states.col(0), phi.v.col(0));
-      update_propagators_local(i + 1);
+      return_amplitudes(i + 1) = no_ghost_dot<T, D>(r, initial_state, phi.v.col(0));
+      update_local_propagators(i + 1);
     }
 
-    store_localized_wavepacket(states, spectral_moments, moments1, moments2, return_amplitudes, propagators);
+    store_localized_wavepacket(spectral_moments, moments1, moments2, return_amplitudes, 
+                               local_propagators, local_probes, num_global_probes);
   }
 }
 
 template <typename T, unsigned D>
 void Simulation<T, D>::store_localized_wavepacket(
-  const Eigen::Array<T, -1, -1>& states,
   const Eigen::Array<value_type, -1, 1>& spectral_moments,
   const Eigen::Array<value_type, -1, -1>& moments1,
   const Eigen::Array<value_type, -1, -1>& moments2,
   const Eigen::Array<T, -1, 1>& return_amplitudes,
-  const Eigen::Array<T, -1, -1>& propagator_amplitudes
+  const Eigen::Array<T, -1, -1>& propagator_amplitudes,
+  const std::vector<LocalProbe>& propagator_coords,
+  const std::size_t num_global_probes
 ) {
   debug_message("Entered store_localized_wavepacket\n");
   Coordinates<std::size_t, D + 1> global(r.Lt);
   Coordinates<std::size_t, D + 1> local(r.Ld);
+  const std::size_t num_local_probes{propagator_coords.size()};
 #pragma omp barrier
 #pragma omp master
   {
-    Global.localized_wavepacket.resize(r.Sizet, states.cols());
     Global.results_5.resize(spectral_moments.rows(), 1); 
     Global.results_1.resize(D, moments1.cols());
     Global.results_2.resize(D * D, moments2.cols());
     Global.results_3.resize(return_amplitudes.rows(), 1);
-    Global.results_4.resize(propagator_amplitudes.rows(), propagator_amplitudes.cols());
+    Global.results_4.resize(num_global_probes, propagator_amplitudes.cols());
     Global.results_1.setZero();
     Global.results_2.setZero();
     Global.results_3.setZero();
@@ -508,8 +510,11 @@ void Simulation<T, D>::store_localized_wavepacket(
     Global.results_1 += moments1.template cast<T>();
     Global.results_2 += moments2.template cast<T>();
     Global.results_3 += return_amplitudes;
-    Global.results_4 += propagator_amplitudes;
     Global.results_5 += spectral_moments.template cast<T>();
+
+    for (std::size_t p = 0; p < num_local_probes; ++p) {
+      Global.results_4.row(propagator_coords[p].first) = propagator_amplitudes.row(p);
+    }
   }
 #pragma omp barrier
 #pragma omp master
@@ -523,26 +528,6 @@ void Simulation<T, D>::store_localized_wavepacket(
     Global.results_3 = Global.results_3.cwiseAbs2();
   }
 #pragma omp barrier
-
-  std::array<unsigned, D> idx;
-  std::array<unsigned, D> start;
-  std::array<unsigned, D> final;
-  for (unsigned d = 0; d < D; ++d) {
-    start[d] = NGHOSTS;
-    final[d] = r.Ld[D - 1 - d] - NGHOSTS;
-  }
-  for (unsigned io = 0, Io = r.Orb; io < Io; ++io) {
-    auto body = [&](const std::array<unsigned, D> &i) {
-      if constexpr (D == 2)
-        local.set({i[1], i[0], io});
-      else if constexpr (D == 3)
-        local.set({i[2], i[1], i[0], io});
-      r.convertCoordinates(global, local);
-      Global.localized_wavepacket.row(global.index) = states.row(local.index);
-    };
-    UnitCellLoop<D>::run(idx, start, final, body);
-  }
-#pragma omp barrier
 #pragma omp master
   {
     Eigen::Array<value_type, -1, -1> results_1_real = Global.results_1.real();
@@ -550,17 +535,15 @@ void Simulation<T, D>::store_localized_wavepacket(
     Eigen::Array<value_type, -1, -1> results_3_real = Global.results_3.real();
     Eigen::Array<value_type, -1, -1> results_5_real = Global.results_5.real();
     H5::H5File *file = new H5::H5File(name, H5F_ACC_RDWR);
-    const std::string name1("Calculation/localized_wave_packet/States");
     const std::string name2("Calculation/localized_wave_packet/StatesMean");
     const std::string name3("Calculation/localized_wave_packet/StatesCovariance");
     const std::string name4("Calculation/localized_wave_packet/ReturnProbability");
     const std::string name5("Calculation/localized_wave_packet/PropagatorAmplitude");
     const std::string name6("Calculation/localized_wave_packet/SpectralMoments");
-    write_hdf5(Global.localized_wavepacket, file, name1);
     write_hdf5(results_1_real, file, name2);
     write_hdf5(results_2_real, file, name3);
     write_hdf5(results_3_real, file, name4);
-    if (propagator_amplitudes.rows() > 0)
+    if (num_global_probes > 0)
       write_hdf5(Global.results_4, file, name5);
     if (spectral_moments.rows() > 0)
       write_hdf5(results_5_real, file, name6);

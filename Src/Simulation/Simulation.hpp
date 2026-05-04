@@ -133,11 +133,12 @@ public:
     const Eigen::Array<std::size_t, -1, D + 1>& prop_coords
   );
   void store_localized_wavepacket(
-    const Eigen::Array<T, -1, -1>& states,
     const Eigen::Array<value_type, -1, 1>& spectral_moments,
     const Eigen::Array<value_type, -1, -1>& moments1,
     const Eigen::Array<value_type, -1, -1>& moments2,
     const Eigen::Array<T, -1, 1>& return_amplitudes,
-    const Eigen::Array<T, -1, -1>& propagator_amplitudes
+    const Eigen::Array<T, -1, -1>& propagator_amplitudes,
+    const std::vector<std::pair<std::size_t, std::size_t>>& propagator_coords,
+    const std::size_t num_global_probes
   );
 };

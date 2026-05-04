@@ -1769,7 +1769,12 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
         if width > 0 and wavevector is None:
             raise SystemExit('Provide a valid wavevector for the gaussian wave packet.')
         if wavevector is None:
-            wavevector = np.zeros(len(initial_pos))
+            wavevector = np.zeros(len(initial_pos) - 1)
+        if wavevector.shape != (len(initial_pos) - 1,):
+            raise SystemExit(
+                f"InitialWaveVector must have {len(initial_pos) - 1} components, "
+                f"but got shape {wavevector.shape}."
+            )
 
         grpc_p.create_dataset('Time', 
                               data = np.asarray(calculation.get_localized_wave_packet[0]['time']), 

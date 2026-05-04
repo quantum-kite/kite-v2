@@ -15,6 +15,7 @@ class KPM_Vector;
 #include "KPM_VectorBasis.hpp"
 #include "KPM_Vector.hpp"
 #include "Loop.hpp"
+#include <stdexcept>
 
 template <typename T>
 T gauss_first(const unsigned n_, const T mu_, const T sigma_)
