@@ -50,6 +50,7 @@ struct GLOBAL_VARIABLES {
   bool calculate_ldos_map;
   bool calculate_custom_density;
   bool calculate_custom_conddc;
+  bool calculate_custom_ss_two;
   bool calculate_st_lcm;
 
   GLOBAL_VARIABLES();

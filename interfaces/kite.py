@@ -534,7 +534,12 @@ class Calculation:
         return self._custom_two
 
     @property
-    def get_local_chern(self):
+    def get_custom_ss_two(self):
+        """Returns the trace with custom operators."""
+        return self._custom_ss_two
+
+    @property
+    def get_chern_map(self):
         """Returns the requested Local Chern number"""
         return self._local_chern
 
@@ -559,7 +564,8 @@ class Calculation:
         self._custom_operator_collection     = {}
         self._custom_one                     = []
         self._custom_two                     = []
-        self._local_chern                    = []
+        self._custom_ss_two                  = []
+        self._local_chern_map                = []
 
         self._avail_dir_full = {'xx': 0, 'yy': 1, 'zz': 2, 'xy': 3, 'xz': 4, 'yx': 5, 'yz': 6, 'zx': 7, 'zy': 8}
         self._avail_dir_nonl = {'xxx': 0, 'xxy': 1, 'xxz': 2, 'xyx': 3, 'xyy': 4, 'xyz': 5, 'xzx': 6, 'xzy': 7,
@@ -928,7 +934,48 @@ class Calculation:
 
         self._custom_two.append({'rank' : len(stream_), 'num_moments': stream_[0].moment, 'num_random' : num_random_, 'num_disorder' : num_disorder_, 'operators' : operators, 'coefs' : coefs, 'temperature': temperature_, 'num_points' : num_points_})
 
-    def local_chern(self, num_disorder_, beta_, miu_):
+
+    def custom_singleshot_two(self, stream_, num_random_, num_disorder_, energies_, gamma_):
+        """Calculate the rank two (Tr[Tn Ja Tm Jb]) custom operator trace
+        Parameters
+        ----------
+        stream_: [list]
+            List of operators
+        num_moments_ : int
+            Number of Moments used for each spectral expansion.
+        num_random_ : int
+            Number of random vectors to use for the stochastic evaluation of trace.
+        num_disorder_ : int
+            Number of different disorder realisations.
+        energy: list
+            List of energies where the singleshot traces should be evaluated
+        gamma : list
+            List of spectral resolutions where the singleshot traces should be evaluated
+        """
+        # Check for Equal number of moments
+        if (len(stream_) != 2):
+            raise ValueError("Stream has to have two streams, [A, B]")
+        if (stream_[0].moment != stream_[1].moment):
+            raise ValueError("For now, KITE only supports equal moments in Tn, Tm.")
+
+        coefs       = []
+        operators   = []
+        for i, vertex in enumerate(stream_):
+            if not vertex.stream:
+                raise ValueError("The vertex cannot be empty.")
+            coefs.append([])
+            operators.append([])
+            for operator_sequence in vertex.stream:
+                if not isinstance(operator_sequence, list):
+                    raise TypeError("The operator sequence must be a list")
+                if not isinstance(operator_sequence[0], numbers.Number):
+                    raise ValueError("The first element must be a numeric type")
+                coefs[i].append(operator_sequence[0]) # numerical factor
+                operators[i].append(operator_sequence[1]) # operator streams
+
+        self._custom_ss_two.append({'rank' : len(stream_), 'num_moments': stream_[0].moment, 'num_random' : num_random_, 'num_disorder' : num_disorder_, 'operators' : operators, 'coefs' : coefs, 'energies': energies_, 'gamma' : gamma_})
+
+    def local_chern_map(self, num_vectors_, beta_, miu_):
         """Calculate the local chern using KITEx for a set of disorder realizations, at a fixed temperature and fermi energy
         """
         self._local_chern.append({'num_disorder' : num_disorder_, 'beta' : beta_, 'miu' : miu_})
@@ -1997,11 +2044,28 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
         for label, operator in calculation._custom_operator_collection.items():
             grpc_op.create_dataset(label, data = np.asarray(operator).astype(config.type))
 
-    if calculation.get_local_chern:
-        grpc_p = grpc.create_group('LocalChern')
-        grpc_p.create_dataset('NumDisorder', data = np.asarray(calculation._local_chern[0]['num_disorder']), dtype = np.int32)
-        grpc_p.create_dataset('Beta', data = np.asarray(calculation._local_chern[0]['beta']), dtype = np.float64)
-        grpc_p.create_dataset('Miu', data = np.asarray(calculation._local_chern[0]['miu']), dtype = np.float64)
+    if calculation.get_custom_ss_two:
+        grpc_p = grpc.create_group('CustomSingleTwo')
+        grpc_op = grpc.create_group('CustomSingleTwo/CustomOperators')
+        grpc_p.create_dataset('NumVectors', data = np.asarray(calculation._custom_ss_two[0]['num_random']), dtype = np.int32)
+        grpc_p.create_dataset('NumDisorder', data = np.asarray(calculation._custom_ss_two[0]['num_disorder']), dtype = np.int32)
+        grpc_p.create_dataset('Energies', data = np.asarray(calculation._custom_ss_two[0]['energies']).flatten(), dtype = np.float64)
+        grpc_p.create_dataset('Gamma', data = np.asarray(calculation._custom_ss_two[0]['gamma']).flatten(), dtype = np.float64)
+        grpc_p.create_dataset('NumMoments', data = np.asarray(calculation._custom_ss_two[0]['num_moments']), dtype = np.int32)
+        for i in range(calculation._custom_ss_two[0]['rank']):
+            grpc_vtx = grpc_p.create_group(f'Vertex{i:01d}')
+            grpc_vtx.create_dataset('Coefficients', data = np.asarray(calculation._custom_ss_two[0]['coefs'][i]).astype(np.complex64))
+            grpc_vtx.create_dataset('NumCoefficients', data = len(calculation._custom_ss_two[0]['coefs'][i]), dtype = np.int32)
+            grpc_vtx.create_dataset('Operators', data = calculation._custom_ss_two[0]['operators'][i], dtype = hp.string_dtype(encoding='utf-8'))
+
+        for label, operator in calculation._custom_operator_collection.items():
+            grpc_op.create_dataset(label, data = np.asarray(operator).astype(config.type))
+
+    if calculation._local_chern_map:
+        grpc_p = grpc.create_group('STLCM')
+        grpc_p.create_dataset('NumVectors', data = np.asarray(calculation._local_chern_map[0]['num_vectors']), dtype = np.int32)
+        grpc_p.create_dataset('Beta', data = np.asarray(calculation._local_chern_map[0]['beta']), dtype = np.float64)
+        grpc_p.create_dataset('Miu', data = np.asarray(calculation._local_chern_map[0]['miu']), dtype = np.float64)
 
     print('\n##############################################################################\n')
     print('OUTPUT:\n')

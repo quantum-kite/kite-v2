@@ -57,6 +57,7 @@ GlobalSimulation<T,D>::GlobalSimulation( char *name ) : rglobal(name){
     simul.calc_ldos();
     simul.calc_custom_one();
     simul.calc_custom_two();
+    simul.calc_custom_ss_two();
 
   }
   debug_message("Left global_simulation\n");
