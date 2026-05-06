@@ -1,23 +1,20 @@
-#include "Generic.hpp"
 #include "ComplexTraits.hpp"
-#include "myHDF5.hpp"
-#include "Global.hpp"
-#include "Random.hpp"
 #include "Coordinates.hpp"
+#include "Generic.hpp"
+#include "Global.hpp"
 #include "LatticeStructure.hpp"
-template <typename T, unsigned D>
-class Hamiltonian;
-template <typename T, unsigned D>
-class KPM_Vector;
-#include "queue.hpp"
-#include "Simulation.hpp"
+#include "Random.hpp"
+#include "myHDF5.hpp"
+template <typename T, unsigned D> class Hamiltonian;
+template <typename T, unsigned D> class KPM_Vector;
 #include "Hamiltonian.hpp"
-#include "KPM_VectorBasis.hpp"
 #include "KPM_Vector.hpp"
+#include "KPM_VectorBasis.hpp"
+#include "Simulation.hpp"
+#include "queue.hpp"
 
 template <typename T>
-std::complex<T> green(const unsigned n_, const std::complex<T> z_)
-{
+std::complex<T> green(const unsigned n_, const std::complex<T> z_) {
   using cplx = std::complex<T>;
   constexpr cplx I{0.0, 1.0};
   const T norm = -2.0 / (1.0 + static_cast<unsigned>(n_ == 0));
@@ -28,8 +25,7 @@ std::complex<T> green(const unsigned n_, const std::complex<T> z_)
 }
 
 template <typename T>
-std::complex<T> dgreen(const unsigned n_, const std::complex<T> z_)
-{
+std::complex<T> dgreen(const unsigned n_, const std::complex<T> z_) {
   using cplx = std::complex<T>;
   constexpr cplx I{0.0, 1.0};
   const T norm = 2.0 / (1.0 + static_cast<unsigned>(n_ == 0));
@@ -40,9 +36,7 @@ std::complex<T> dgreen(const unsigned n_, const std::complex<T> z_)
   return norm * (static_cast<T>(n_) - I * z_ / sqr) * power / sq;
 }
 
-template <typename T, unsigned D>
-void Simulation<T, D>::calc_custom_ss_two()
-{
+template <typename T, unsigned D> void Simulation<T, D>::calc_custom_ss_two() {
   debug_message("Entered Simulation::calc_custom_single_two\n");
   std::string base_grp = "/Calculation/CustomSingleTwo/";
   std::string tmp = base_grp + "NumMoments";
@@ -57,8 +51,7 @@ void Simulation<T, D>::calc_custom_ss_two()
       Global.calculate_custom_ss_two = true;
     } catch (H5::Exception &e) {
       debug_message(
-        "CustomSingleTwo: no need to calculate Custom Singleshot Two.\n"
-      );
+          "CustomSingleTwo: no need to calculate Custom Singleshot Two.\n");
     }
     file->close();
     delete file;
@@ -85,9 +78,8 @@ void Simulation<T, D>::calc_custom_ss_two()
       H5::H5File *file = new H5::H5File(name, H5F_ACC_RDONLY);
       H5::H5File my_file = H5::H5File(name, H5F_ACC_RDONLY);
       debug_message(
-        "Custom Single Two: checking if we need to calculate Custom Single "
-        "Two.\n"
-      );
+          "Custom Single Two: checking if we need to calculate Custom Single "
+          "Two.\n");
       tmp = base_grp + "NumDisorder";
       get_hdf5<int>(&number_samples, file, tmp);
       tmp = base_grp + "NumVectors";
@@ -130,35 +122,29 @@ void Simulation<T, D>::calc_custom_ss_two()
       hsize_t n = grp.getNumObjs();
       for (hsize_t i = 0; i < n; ++i) {
         H5std_string memberName = grp.getObjnameByIdx(i);
-        if (
-          auto err =
-            this->getMembers(grp, std::string(memberName), &orb_operators)
-        ) {
+        if (auto err = this->getMembers(grp, std::string(memberName),
+                                        &orb_operators)) {
         }
       }
       file->close();
       delete file;
     }
 #pragma omp barrier
-    custom_ss_two(
-      number_samples, number_vectors, energies, gammas, number_moments, stream,
-      coefs, orb_operators
-    );
+    custom_ss_two(number_samples, number_vectors, energies, gammas,
+                  number_moments, stream, coefs, orb_operators);
   }
 }
 
 template <typename T, unsigned D>
 void Simulation<T, D>::custom_ss_two(
-  const int samples_,
-  const int vectors_,
-  const Eigen::Array<value_type, -1, 1> &energies_,
-  const Eigen::Array<value_type, -1, 1> &gammas_,
-  const std::vector<int> &number_moments_,
-  const std::vector<std::vector<std::string>> &stream_,
-  const std::vector<Eigen::Array<T, -1, 1>> &coeffs_,
-  const std::vector<Eigen::Matrix<std::complex<double>, -1, -1>> &operators_
-)
-{
+    const int samples_, const int vectors_,
+    const Eigen::Array<value_type, -1, 1> &energies_,
+    const Eigen::Array<value_type, -1, 1> &gammas_,
+    const std::vector<int> &number_moments_,
+    const std::vector<std::vector<std::string>> &stream_,
+    const std::vector<Eigen::Array<T, -1, 1>> &coeffs_,
+    const std::vector<Eigen::Matrix<std::complex<double>, -1, -1>>
+        &operators_) {
   if constexpr (is_tt<std::complex, T>::value) {
     constexpr T I{0.0, 1.0};
     value_type energy_scale;
@@ -187,17 +173,17 @@ void Simulation<T, D>::custom_ss_two(
       for (unsigned a = 0, A = number_moments_[1]; a < A; ++a)
         coefs[i][1](a) = dgreen<value_type>(a, zz);
     }
-    std::array<Eigen::Array<T, -1, 1>, 2> ket =
-      {Eigen::Array<T, -1, 1>(r.Sized), Eigen::Array<T, -1, 1>(r.Sized)};
+    std::array<Eigen::Array<T, -1, 1>, 2> ket = {
+        Eigen::Array<T, -1, 1>(r.Sized), Eigen::Array<T, -1, 1>(r.Sized)};
     Eigen::Array<T, -1, 1> bra(r.Sized);
     Eigen::Array<T, -1, 1> psi(r.Sized);
     Eigen::Array<T, -1, -1> result(en_size, gammas_.size());
     result.setZero();
-    std::array<KPM_Vector<T, D>, 4> vectors =
-      {KPM_Vector<T, D>(1, *this), KPM_Vector<T, D>(1, *this),
-       KPM_Vector<T, D>(1, *this), KPM_Vector<T, D>(2, *this)};
-    std::vector<KPM_Vector<T, D> *> vector_ptrs =
-      {&vectors[0], &vectors[1], &vectors[2], &vectors[3]};
+    std::array<KPM_Vector<T, D>, 4> vectors = {
+        KPM_Vector<T, D>(1, *this), KPM_Vector<T, D>(1, *this),
+        KPM_Vector<T, D>(1, *this), KPM_Vector<T, D>(2, *this)};
+    std::vector<KPM_Vector<T, D> *> vector_ptrs = {&vectors[0], &vectors[1],
+                                                   &vectors[2], &vectors[3]};
 
     unsigned average = 0;
     for (int disorder = 0; disorder < samples_; ++disorder) {
@@ -257,10 +243,7 @@ void Simulation<T, D>::custom_ss_two(
 
 template <typename T, unsigned D>
 void Simulation<T, D>::store_custom_ss_two(
-  const Eigen::Array<T, -1, -1> &result_,
-  const unsigned avr_
-)
-{
+    const Eigen::Array<T, -1, -1> &result_, const unsigned avr_) {
   debug_message("Entered store_gamma\n");
 #pragma omp master
   {
@@ -274,8 +257,8 @@ void Simulation<T, D>::store_custom_ss_two(
 #pragma omp master
   {
     const std::array<std::string, 2> names{
-      "/Calculation/CustomSingleTwo/Result", "/Calculation/CustomSingleTwo/Avr"
-    };
+        "/Calculation/CustomSingleTwo/Result",
+        "/Calculation/CustomSingleTwo/Avr"};
     Eigen::Array<value_type, -1, -1> avr_arr;
     avr_arr.resize(1, 1);
     avr_arr(0) = avr_;
@@ -299,8 +282,8 @@ void Simulation<T, D>::store_custom_ss_two(
 #include "instantiate.hpp"
 
 #define INSTANTIATE_GREEN(type)                                                \
-  template std::complex<type>                                                  \
-  dgreen(const unsigned, const std::complex<type>);                            \
+  template std::complex<type> dgreen(const unsigned,                           \
+                                     const std::complex<type>);                \
   template std::complex<type> green(const unsigned, const std::complex<type>);
 
 INSTANTIATE_GREEN(float)
