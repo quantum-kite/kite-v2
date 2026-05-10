@@ -39,7 +39,7 @@ def main(onsite=(0, 0), t=1):
     """Prepare the input file for KITEx"""
     lattice = haldane(onsite, t)
 
-    nx = ny = 2
+    nx = ny = 1
     lx = ly = 32
     mode = "open"
     configuration = kite.Configuration(
@@ -51,16 +51,17 @@ def main(onsite=(0, 0), t=1):
         spectrum_range=[-5, 5],
     )
     calculation = kite.Calculation(configuration)
-    A = custom.Vertex(32, [[1.0j, "vy"]])
-    B = custom.Vertex(32, [[1.0j, "vx"]])
+    A = custom.Vertex(32, [[1.0j, "rx"]])
+    B = custom.Vertex(64, [[1.0j, "ry"]])
     calculation.custom_singleshot_two(
         stream_=[A, B],
         num_random_=1,
         num_disorder_=1,
-        energies_=[0.25, 0.0, -0.50],
-        gamma_=[0.1, 0.2],
+        sigma_=[0.1],
+        energies_=[0.0],
+        gamma_=[0.1],
     )
-    output_file = "haldane-single.h5"
+    output_file = "single.h5"
     kite.config_system(lattice, configuration, calculation, filename=output_file)
     return output_file
 

@@ -92,7 +92,7 @@ void Simulation<T, D>::calc_custom_ss_two()
 {
   debug_message("Entered Simulation::calc_custom_single_two\n");
   std::string base_grp = "/Calculation/CustomSingleTwo/";
-  std::string tmp = base_grp + "NumMoments";
+  std::string tmp = base_grp + "NumDisorder";
 #pragma omp barrier
 #pragma omp master
   {
@@ -150,10 +150,7 @@ void Simulation<T, D>::calc_custom_ss_two()
         targets[i].resize(dims[0]);
         get_hdf5<value_type>(targets[i].data(), file, tmp);
       }
-      std::string path = base_grp + "/NumMoments";
-      for (unsigned i = 0; i < 2; ++i)
-        get_hdf5<int>(&number_moments[i], file, path);
-
+      std::string path;
       for (unsigned i = 0; i < 2; ++i) {
         const std::string base = base_grp + "Vertex" + std::to_string(i);
         path = base + "/NumCoefficients";
@@ -164,6 +161,8 @@ void Simulation<T, D>::calc_custom_ss_two()
         get_hdf5<T>(coefs.at(i).data(), file, path);
         path = base + "/Operators";
         my_get_hdf5(stream.at(i), my_file, path);
+	path = base + "/NumMoments";
+        get_hdf5<int>(&number_moments[i], file, path);
       }
 
       tmp = base_grp + "CustomOperators/";

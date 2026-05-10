@@ -1,12 +1,3 @@
-/*
-  This file calculates all kinds of two-dimensional gamma matrices such
-  as Tr[Tn v^b Tm v^a] = G_nm. The matrices are stored as
-  | G_00   G_01   G_02   ...   G_0M |
-  | G_10   G_11   G_12   ...   G_1M |
-  | G_20   G_21   G_22   ...   G_2M |
-  | ...    ...    ...    ...   ...  |
-  | G_N0   G_N1   G_N2   ...   G_NM |
- */
 #include "Generic.hpp"
 #include "ComplexTraits.hpp"
 #include "myHDF5.hpp"
@@ -29,7 +20,7 @@ void Simulation<T, D>::calc_custom_two()
 {
   debug_message("Entered Simulation::calc_custom_two\n");
   std::string base_grp = "/Calculation/CustomTwo/";
-  std::string tmp = base_grp + "NumMoments";
+  std::string tmp = base_grp + "NumDisorder";
 #pragma omp barrier
 #pragma omp master
   {
@@ -72,9 +63,7 @@ void Simulation<T, D>::calc_custom_two()
       tmp = base_grp + "NumVectors";
       get_hdf5<int>(&number_vectors, file, tmp);
 
-      std::string path = base_grp + "/NumMoments";
-      for (unsigned i = 0; i < 2; ++i)
-        get_hdf5<int>(&number_moments[i], file, path);
+      std::string path;
       for (unsigned i = 0; i < 2; ++i) {
         const std::string base = base_grp + "Vertex" + std::to_string(i);
         path = base + "/NumCoefficients";
@@ -85,6 +74,8 @@ void Simulation<T, D>::calc_custom_two()
         get_hdf5<T>(coefs.at(i).data(), file, path);
         path = base + "/Operators";
         my_get_hdf5(stream.at(i), my_file, path);
+        path = base + "/NumMoments";
+        get_hdf5<int>(&number_moments[i], file, path);
       }
       tmp = base_grp + "CustomOperators/";
       H5::Group grp;
@@ -155,20 +146,20 @@ void Simulation<T, D>::custom_two(
       kpm_trc_3.initiate_phases();
       kpm_trc_1.set_index(0);
 
-      act_with_stream(stream_.at(0), operators_, coeffs_.at(0), vectors, 0);
+      act_with_stream(stream_[0], operators_, coeffs_[0], vectors, 0);
       vectors.at(0) = &kpm_trc_1;
       vectors.at(3) = &kpm_trc_3;
-      for (int n = 0, N = number_moments_.at(0); n < N; n += MEMORY) {
+      for (int n = 0, N = number_moments_[0]; n < N; n += MEMORY) {
         for (int i = n; i < n + MEMORY; ++i) {
           kpm_trc_1.cheb_iteration(i);
           act_with_stream(
-            stream_.at(1), operators_, coeffs_.at(1), vectors, i % MEMORY
+            stream_[1], operators_, coeffs_[1], vectors, i % MEMORY
           );
           kpm_trc_3.empty_ghosts(i % MEMORY);
         }
         kpm_trc_2.set_index(0);
         kpm_trc_2.v.col(0) = kpm_trc_0.v.col(0);
-        for (int m = 0, M = number_moments_.at(1); m < M; m += MEMORY) {
+        for (int m = 0, M = number_moments_[1]; m < M; m += MEMORY) {
           for (int i = m; i < m + MEMORY; i++)
             kpm_trc_2.cheb_iteration(i);
           tmp.setZero();
@@ -275,7 +266,7 @@ void Simulation<T, D>::store_custom_two(
 {
   debug_message("Entered store_gamma\n");
   Eigen::Array<T, -1, -1> general_gamma = Eigen::Map<Eigen::Array<
-    T, -1, -1>>(gamma_.data(), number_moments_.at(0), number_moments_.at(1));
+    T, -1, -1>>(gamma_.data(), number_moments_[1], number_moments_[0]);
 #pragma omp master
   {
     Global.general_gamma.resize(general_gamma.rows(), general_gamma.cols());
@@ -283,8 +274,13 @@ void Simulation<T, D>::store_custom_two(
   }
 #pragma omp barrier
 #pragma omp critical
-  Global.general_gamma.matrix() +=
-    0.5 * (general_gamma.matrix() + general_gamma.matrix().adjoint());
+  {
+    if (number_moments_[0] == number_moments_[1])
+      Global.general_gamma.matrix() +=
+        0.5 * (general_gamma.matrix() + general_gamma.matrix().adjoint());
+    else
+      Global.general_gamma.matrix() += general_gamma.matrix();
+  }
 #pragma omp barrier
 #pragma omp master
   {
