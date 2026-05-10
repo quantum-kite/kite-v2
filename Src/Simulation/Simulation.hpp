@@ -114,8 +114,7 @@ public:
   void custom_ss_two(
     const int,
     const int,
-    const Eigen::Array<value_type, -1, 1> &,
-    const Eigen::Array<value_type, -1, 1> &,
+    const std::array<Eigen::Array<value_type, -1, 1>, 3> &,
     const std::vector<int> &,
     const std::vector<std::vector<std::string>> &,
     const std::vector<Eigen::Array<T, -1, 1>> &,
