@@ -914,8 +914,6 @@ class Calculation:
         # Check for Equal number of moments
         if (len(stream_) != 2):
             raise ValueError("Stream has to have two streams, [A, B]")
-        if (stream_[0].moment != stream_[1].moment):
-            raise ValueError("For now, KITE only supports equal moments in Tn, Tm.")
 
         coefs       = []
         operators   = []
@@ -955,8 +953,6 @@ class Calculation:
         # Check for Equal number of moments
         if (len(stream_) != 2):
             raise ValueError("Stream has to have two streams, [A, B]")
-        if (stream_[0].moment != stream_[1].moment):
-            raise ValueError("For now, KITE only supports equal moments in Tn, Tm.")
 
         coefs       = []
         operators   = []
