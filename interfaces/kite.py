@@ -935,7 +935,7 @@ class Calculation:
         self._custom_two.append({'rank' : len(stream_), 'num_moments': stream_[0].moment, 'num_random' : num_random_, 'num_disorder' : num_disorder_, 'operators' : operators, 'coefs' : coefs, 'temperature': temperature_, 'num_points' : num_points_})
 
 
-    def custom_singleshot_two(self, stream_, num_random_, num_disorder_, energies_, gamma_):
+    def custom_singleshot_two(self, stream_, num_random_, num_disorder_, gamma_, sigma_, energies_):
         """Calculate the rank two (Tr[Tn Ja Tm Jb]) custom operator trace
         Parameters
         ----------
@@ -973,7 +973,7 @@ class Calculation:
                 coefs[i].append(operator_sequence[0]) # numerical factor
                 operators[i].append(operator_sequence[1]) # operator streams
 
-        self._custom_ss_two.append({'rank' : len(stream_), 'num_moments': stream_[0].moment, 'num_random' : num_random_, 'num_disorder' : num_disorder_, 'operators' : operators, 'coefs' : coefs, 'energies': energies_, 'gamma' : gamma_})
+        self._custom_ss_two.append({'rank' : len(stream_), 'num_moments': stream_[0].moment, 'num_random' : num_random_, 'num_disorder' : num_disorder_, 'operators' : operators, 'coefs' : coefs, 'energies': energies_, 'gamma' : gamma_, 'sigma' : sigma_})
 
     def local_chern_map(self, num_vectors_, beta_, miu_):
         """Calculate the local chern using KITEx for a set of disorder realizations, at a fixed temperature and fermi energy
@@ -2051,6 +2051,7 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
         grpc_p.create_dataset('NumDisorder', data = np.asarray(calculation._custom_ss_two[0]['num_disorder']), dtype = np.int32)
         grpc_p.create_dataset('Energies', data = np.asarray(calculation._custom_ss_two[0]['energies']).flatten(), dtype = np.float64)
         grpc_p.create_dataset('Gamma', data = np.asarray(calculation._custom_ss_two[0]['gamma']).flatten(), dtype = np.float64)
+        grpc_p.create_dataset('Sigma', data = np.asarray(calculation._custom_ss_two[0]['sigma']).flatten(), dtype = np.float64)
         grpc_p.create_dataset('NumMoments', data = np.asarray(calculation._custom_ss_two[0]['num_moments']), dtype = np.int32)
         for i in range(calculation._custom_ss_two[0]['rank']):
             grpc_vtx = grpc_p.create_group(f'Vertex{i:01d}')

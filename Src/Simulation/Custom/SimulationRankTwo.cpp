@@ -92,8 +92,10 @@ void Simulation<T, D>::calc_custom_two()
       hsize_t n = grp.getNumObjs();
       for (hsize_t i = 0; i < n; ++i) {
         H5std_string memberName = grp.getObjnameByIdx(i);
-        if (auto err =
-              this->getMembers(grp, std::string(memberName), &orb_operators)) {
+        if (
+          auto err =
+            this->getMembers(grp, std::string(memberName), &orb_operators)
+        ) {
         }
       }
       file->close();
