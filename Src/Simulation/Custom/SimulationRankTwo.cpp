@@ -123,13 +123,7 @@ void Simulation<T, D>::custom_two(
 
   KPM_Vector<T, D> kpm_trc_0(1, *this);
   KPM_Vector<T, D> kpm_trc_1(2, *this);
-  KPM_Vector<T, D> kpm_aux_0(1, *this);
-  KPM_Vector<T, D> kpm_aux_1(1, *this);
-  std::vector<KPM_Vector<T, D> *> vectors;
-  vectors.push_back(&kpm_trc_0);
-  vectors.push_back(&kpm_aux_0);
-  vectors.push_back(&kpm_aux_1);
-  vectors.push_back(&kpm_trc_1);
+  std::array<KPM_Vector<T, D> *, 2> vectors{&kpm_trc_0, &kpm_trc_1};
   KPM_Vector<T, D> kpm_trc_2(MEMORY, *this);
   KPM_Vector<T, D> kpm_trc_3(MEMORY, *this);
   unsigned average = 0;
@@ -141,14 +135,14 @@ void Simulation<T, D>::custom_two(
     for (int disorder = 0; disorder < samples_; ++disorder) {
       h.generate_disorder();
       for (unsigned i = 0, I = vectors.size(); i < I; ++i)
-        vectors.at(i)->initiate_phases();
+        vectors[i]->initiate_phases();
       kpm_trc_2.initiate_phases();
       kpm_trc_3.initiate_phases();
       kpm_trc_1.set_index(0);
 
       act_with_stream(stream_[0], operators_, coeffs_[0], vectors, 0);
-      vectors.at(0) = &kpm_trc_1;
-      vectors.at(3) = &kpm_trc_3;
+      vectors[0] = &kpm_trc_1;
+      vectors[1] = &kpm_trc_3;
       for (int n = 0, N = number_moments_[0]; n < N; n += MEMORY) {
         for (int i = n; i < n + MEMORY; ++i) {
           kpm_trc_1.cheb_iteration(i);
@@ -174,8 +168,8 @@ void Simulation<T, D>::custom_two(
         }
       }
       ++average;
-      vectors.at(0) = &kpm_trc_0;
-      vectors.at(3) = &kpm_trc_1;
+      vectors[0] = &kpm_trc_0;
+      vectors[1] = &kpm_trc_1;
     }
   }
   store_custom_two(gamma, average, number_moments_);

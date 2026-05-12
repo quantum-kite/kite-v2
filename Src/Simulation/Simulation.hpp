@@ -91,7 +91,7 @@ public:
     const std::vector<std::string> &,
     const std::vector<Eigen::Matrix<std::complex<double>, -1, -1>> &,
     const Eigen::Array<T, -1, 1> &,
-    const std::vector<KPM_Vector<T, D> *> &,
+    std::array<KPM_Vector<T, D> *, 2> &,
     const unsigned
   );
   // Custom Rank Two
@@ -120,10 +120,7 @@ public:
     const std::vector<Eigen::Array<T, -1, 1>> &,
     const std::vector<Eigen::Matrix<std::complex<double>, -1, -1>> &
   );
-  void store_custom_ss_two(
-    const Eigen::Array<T, -1, -1> &,
-    const unsigned
-  );
+  void store_custom_ss_two(const Eigen::Array<T, -1, -1> &, const unsigned);
   // LDoS
   void calc_ldos();
   void ldos(const int, const value_type, const value_type, const int);

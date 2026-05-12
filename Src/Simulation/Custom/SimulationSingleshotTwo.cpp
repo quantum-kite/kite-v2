@@ -161,7 +161,7 @@ void Simulation<T, D>::calc_custom_ss_two()
         get_hdf5<T>(coefs.at(i).data(), file, path);
         path = base + "/Operators";
         my_get_hdf5(stream.at(i), my_file, path);
-	path = base + "/NumMoments";
+        path = base + "/NumMoments";
         get_hdf5<int>(&number_moments[i], file, path);
       }
 
@@ -239,30 +239,25 @@ void Simulation<T, D>::custom_ss_two(
     Eigen::Array<T, -1, 1> psi(r.Sized);
     Eigen::Array<T, -1, -1> result(dims[2], dims[0] * dims[1]);
     result.setZero();
-    std::array<KPM_Vector<T, D>, 4> vectors =
-      {KPM_Vector<T, D>(1, *this), KPM_Vector<T, D>(1, *this),
-       KPM_Vector<T, D>(1, *this), KPM_Vector<T, D>(2, *this)};
-    std::vector<KPM_Vector<T, D> *> vector_ptrs =
-      {&vectors[0], &vectors[1], &vectors[2], &vectors[3]};
+    std::array<KPM_Vector<T, D>, 2> vecs =
+      {KPM_Vector<T, D>(1, *this), KPM_Vector<T, D>(2, *this)};
+    std::array<KPM_Vector<T, D> *, 2> ptrs = {&vecs[0], &vecs[1]};
 
     unsigned average = 0;
     for (int disorder = 0; disorder < samples_; ++disorder) {
       h.generate_disorder();
       for (int vec = 0; vec < vectors_; ++vec) {
         h.generate_twists();
-        vectors[0].initiate_vector();
-        bra = vectors[0].v.col(0).conjugate();
-        vectors[0].Exchange_Boundaries();
-        for (auto &vec : vectors)
+        vecs[0].initiate_vector();
+        vecs[0].empty_ghosts(0);
+        bra = vecs[0].v.col(0).conjugate();
+        for (auto &vec : vecs)
           vec.initiate_phases();
-        vectors[3].set_index(0);
+        vecs[1].set_index(0);
 
-        // Act with stream[0]
-        act_with_stream(stream_[0], operators_, coeffs_[0], vector_ptrs, 0);
-        psi = vectors[3].v.col(0);
-
-        const value_type weight = 1.0 / static_cast<value_type>(average + 1);
-
+        act_with_stream(stream_[0], operators_, coeffs_[0], ptrs, 0);
+        psi = vecs[1].v.col(0);
+        const value_type weight = 1.0 / (average + 1);
         for (unsigned j = 0, J = dims[0] * dims[1]; j < J; ++j) {
           const unsigned idx_gamma = j % dims[0];
           const unsigned idx_sigma = j / dims[0];
@@ -270,29 +265,25 @@ void Simulation<T, D>::custom_ss_two(
             const std::array<Eigen::Index, 2>
               broad_id{idx_gamma + i * dims[0], idx_sigma + i * dims[1]};
             for (unsigned p = 0; p < 2; ++p) {
-              vectors[3].set_index(0);
-              vectors[3].v.col(0) = psi;
+              vecs[1].set_index(0);
+              vecs[1].v.col(0) = psi;
               ket[p].setZero();
               const unsigned id_0 = p % 2;
               const unsigned id_1 = (p + 1) % 2;
               for (unsigned n = 0, N = num_pol_[id_0]; n < N; ++n) {
-                vectors[3].cheb_iteration(n);
-                const unsigned idx_read = vectors[3].get_index();
+                vecs[1].cheb_iteration(n);
+                const unsigned idx_read = vecs[1].get_index();
                 const T coef = coefs[id_0](n, broad_id[id_0]);
-                ket[p] += coef * vectors[3].v.col(idx_read).array();
+                ket[p] += coef * vecs[1].v.col(idx_read).array();
               }
-              vectors[0].v.col(0) = ket[p];
-              act_with_stream(
-                stream_[1], operators_, coeffs_[1], vector_ptrs, 0
-              );
-              vectors[3].set_index(0);
-              vectors[3].Exchange_Boundaries();
+              vecs[0].v.col(0) = ket[p];
+              act_with_stream(stream_[1], operators_, coeffs_[1], ptrs, 0);
               ket[p].setZero();
               for (unsigned n = 0, N = num_pol_[id_1]; n < N; ++n) {
-                vectors[3].cheb_iteration(n);
-                const unsigned idx_read = vectors[3].get_index();
+                vecs[1].cheb_iteration(n);
+                const unsigned idx_read = vecs[1].get_index();
                 const T coef = std::conj(coefs[id_1](n, broad_id[id_1]));
-                ket[p] += coef * vectors[3].v.col(idx_read).array();
+                ket[p] += coef * vecs[1].v.col(idx_read).array();
               }
             }
             T res = (bra * ket[0] + (bra * ket[1]).conjugate()).sum();

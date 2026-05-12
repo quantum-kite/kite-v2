@@ -99,30 +99,32 @@ void Simulation<T, D>::multiply_orb_mtx(
   v_2_->Exchange_Boundaries();
 }
 
-/*
-  We need two auxiliary vectors since Velocity cannot act on the same KPM_Vector
-  vectors[initial_vector, 2 iterators, final_vector]
- */
 template <typename T, unsigned D>
 void Simulation<T, D>::act_with_stream(
   const std::vector<std::string> &stream_,
   const std::vector<Eigen::Matrix<std::complex<double>, -1, -1>>
     &orb_operators_,
   const Eigen::Array<T, -1, 1> &coeffs_,
-  const std::vector<KPM_Vector<T, D> *> &vectors_,
+  std::array<KPM_Vector<T, D> *, 2> &vectors_,
   const unsigned write_idx_
 )
 {
-  for (unsigned i = 1, I = vectors_.size() - 1; i < I; ++i)
-    vectors_.at(i)->v.col(0).setZero();
-  vectors_.at(3)->v.col(write_idx_).setZero();
-  const unsigned read_idx = vectors_.at(0)->get_index();
+  vectors_[1]->set_index(write_idx_);
+  vectors_[1]->v.col(write_idx_).setZero();
+  std::array<KPM_Vector<T, D>, 2>
+    aux{KPM_Vector<T, D>(1, *this), KPM_Vector<T, D>(1, *this)};
+  for (auto &vv : aux) {
+    vv.v.col(0).setZero();
+    vv.initiate_phases();
+  }
 
+  const unsigned read_idx = vectors_[0]->get_index();
+  vectors_[0]->Exchange_Boundaries();
   for (unsigned i = 0, I = stream_.size(); i < I; ++i) {
     const std::string stream = stream_.at(i);
     std::vector<std::string> operators;
     split_string(stream, '.', operators);
-    vectors_.at(1)->v.col(0) = vectors_.at(0)->v.col(read_idx);
+    aux[0].v.col(0) = vectors_[0]->v.col(read_idx);
     for (auto op = operators.rbegin(), Op = operators.rend(); op != Op; ++op) {
       if ((*op)[0] == 'v') {
         std::vector<unsigned> velocity_components;
@@ -132,23 +134,20 @@ void Simulation<T, D>::act_with_stream(
         collection_velocity_components.push_back(velocity_components);
 
         h.build_velocity(velocity_components, 0);
-        vectors_.at(1)
-          ->Velocity(vectors_.at(2), collection_velocity_components, 0);
-
+        aux[0].Velocity(&aux[1], collection_velocity_components, 0);
       } else if ((*op)[0] == 'r') {
-        vectors_.at(2)->v.col(0) = vectors_.at(1)->v.col(0);
-        vectors_.at(1)->Position(components_map[(*op)[1]], vectors_.at(2));
-
+        aux[1].v.col(0) = aux[0].v.col(0);
+        aux[0].Position(components_map[(*op)[1]], &aux[1]);
       } else if ((*op)[0] == 'l')
         multiply_orb_mtx(
-          orb_operators_.at(std::stoi(std::string(1, (*op)[1]))),
-          vectors_.at(1), vectors_.at(2)
+          orb_operators_[std::stoi(std::string(1, (*op)[1]))], &aux[0], &aux[1]
         );
-      vectors_.at(1)->v.col(0) = vectors_.at(2)->v.col(0);
-      vectors_.at(2)->v.col(0).setZero();
+      aux[0].v.col(0) = aux[1].v.col(0);
+      aux[1].v.col(0).setZero();
     }
-    vectors_.at(3)->v.col(write_idx_) += coeffs_(i) * vectors_.at(1)->v.col(0);
+    vectors_[1]->v.col(write_idx_) += coeffs_(i) * aux[0].v.col(0);
   }
+  vectors_[1]->Exchange_Boundaries();
 }
 
 template <typename T, unsigned D>
@@ -207,9 +206,10 @@ void Simulation<T, D>::calc_custom_one()
       hsize_t n = grp.getNumObjs();
       for (hsize_t i = 0; i < n; ++i) {
         H5std_string memberName = grp.getObjnameByIdx(i);
-        if (auto err = this->getMembers(
-              grp, std::string(memberName), &operator_collection
-            )) {
+        if (
+          auto err =
+            this->getMembers(grp, std::string(memberName), &operator_collection)
+        ) {
           std::cerr << "getMembers failed for " << memberName << "\n";
         }
       }
@@ -249,13 +249,7 @@ void Simulation<T, D>::custom_one(
   Eigen::Matrix<T, 2, 1> tmp = Eigen::Matrix<T, 2, 1>::Zero();
   KPM_Vector<T, D> kpm_trc_0(1, *this);
   KPM_Vector<T, D> kpm_trc_1(2, *this);
-  KPM_Vector<T, D> kpm_aux_0(1, *this);
-  KPM_Vector<T, D> kpm_aux_1(1, *this);
-  std::vector<KPM_Vector<T, D> *> vectors;
-  vectors.push_back(&kpm_trc_0);
-  vectors.push_back(&kpm_aux_0);
-  vectors.push_back(&kpm_aux_1);
-  vectors.push_back(&kpm_trc_1);
+  std::array<KPM_Vector<T, D> *, 2> vectors{&kpm_trc_0, &kpm_trc_1};
   unsigned average = 0;
   for (int rand_v = 0; rand_v < number_random_vectors_; ++rand_v) {
     h.generate_twists();
