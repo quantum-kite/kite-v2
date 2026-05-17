@@ -692,7 +692,9 @@ class Calculation:
                               width = -1.,
                               energy_window = [0.,0.],
                               initial_wavevector = None, 
-                              probes = None
+                              probes = None,
+                              sample_start = -1,
+                              sample_L = -1
                     ):
         """Calculate the time evolution function of a localized wave packet with spectrum filtering
 
@@ -715,15 +717,21 @@ class Calculation:
             Localized packet will be filtered to only keep eigenstates with energy inside this window.
         probes : np.array
             List of positions expressed in lattice coordinates where the propagator is calculated.
+        sample_start : The disordered sample is situated from x = sample_start to x = sample_start + sample_L,
+            sitting between clean leads.
+        sample_L : Length of the disordered sample.
         """
 
         self._localized_wave_packet.append({'time': time, 
                                             'num_measures': num_measures,
                                             'num_moments': num_moments,
                                             'initial_pos': initial_pos,
-                                            'width': width, 'initial_wavevector': initial_wavevector,
+                                            'width': width, 
+                                            'initial_wavevector': initial_wavevector,
                                             'energy_window': energy_window,
-                                            'probes': probes})
+                                            'probes': probes,
+                                            'sample_start': sample_start,
+                                            'sample_L': sample_L})
 
     def conductivity_dc(self, direction, num_points, num_moments, num_random, num_disorder=1, temperature=0):
         """Calculate the DC conductivity for a given direction
@@ -1880,6 +1888,27 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
                 data=probes.T,
                 dtype=np.uint64
             )
+
+        sample_start = int(calculation.get_localized_wave_packet[0]['sample_start'])
+        sample_L = int(calculation.get_localized_wave_packet[0]['sample_L'])
+
+        if sample_start < 0 or sample_L < 0:
+            raise SystemExit(
+                "For localized_wave_packet with clean leads, provide valid "
+                "sample_start and sample_L values."
+            )
+
+        grpc_p.create_dataset(
+            'SampleStart',
+            data=np.asarray(sample_start),
+            dtype=np.uint64
+        )
+
+        grpc_p.create_dataset(
+            'SampleLength',
+            data=np.asarray(sample_L),
+            dtype=np.uint64
+        )
 
     if calculation.get_conductivity_dc:
         grpc_p = grpc.create_group('conductivity_dc')

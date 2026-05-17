@@ -142,10 +142,12 @@ public:
     const std::array<value_type, D> &k0_,
     const value_type width,
     const std::size_t num_probes,
-    const Eigen::Array<std::size_t, -1, D + 1>& prop_coords
+    const Eigen::Array<std::size_t, -1, D + 1>& prop_coords,
+    const std::size_t sample_start,
+    const std::size_t sample_L
   );
   void store_localized_wavepacket(
-    const Eigen::Array<value_type, -1, 1>& spectral_moments,
+    const Eigen::Array<value_type, -1, -1>& spectral_moments,
     const Eigen::Array<value_type, -1, -1>& moments1,
     const Eigen::Array<value_type, -1, -1>& moments2,
     const Eigen::Array<T, -1, 1>& return_amplitudes,
