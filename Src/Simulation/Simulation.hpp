@@ -94,6 +94,21 @@ public:
     std::array<KPM_Vector<T, D> *, 2> &,
     const unsigned
   );
+
+// Custom Rank One - Local
+  void calc_custom_one_local();
+  void custom_one_local(
+    const int,
+    const int,
+    const int,
+    const std::vector<int> &,
+    const std::vector<int> &,
+    const Eigen::Array<T, -1, 1> &,
+    const std::vector<Eigen::Matrix<std::complex<double>, -1, -1>> &,
+    const std::vector<std::string> &
+  );
+  void store_custom_one_local(const Eigen::Matrix<T, -1, -1> &, const unsigned);
+
   // Custom Rank Two
   void calc_custom_two();
   void custom_two(

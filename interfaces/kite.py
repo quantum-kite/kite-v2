@@ -529,6 +529,11 @@ class Calculation:
         return self._custom_one
 
     @property
+    def get_custom_one_local(self):
+        """Returns the requested local-custom functions."""
+        return self._custom_one_local
+
+    @property
     def get_custom_two(self):
         """Returns the trace with custom operators."""
         return self._custom_two
@@ -563,6 +568,7 @@ class Calculation:
         self._orbital_index_collection       = {}
         self._custom_operator_collection     = {}
         self._custom_one                     = []
+        self._custom_one_local               = []
         self._custom_two                     = []
         self._custom_ss_two                  = []
         self._local_chern_map                = []
@@ -901,6 +907,35 @@ class Calculation:
             coefs.append(operator_sequence[0]) # numerical factor
             operators.append(operator_sequence[1]) # operator streams
         self._custom_one.append({'num_moments': stream_.moment, 'num_random' : num_random_, 'num_disorder' : num_disorder_, 'operators' : operators, 'coefs' : coefs})
+
+    def custom_one_local(self, stream_, energy_, position_, sublattice_, num_disorder_=1):
+        """Calculate the local density of states as a function of energy
+
+        Parameters
+        ----------
+        energy : list or np.array
+            List of energy points at which the LDOS will be calculated.
+        num_moments : int
+            Number of polynomials in the Chebyshev expansion.
+        num_disorder : int
+            Number of different disorder realisations.
+        position : list
+            Relative index of the unit cell where the LDOS will be calculated.
+        sublattice : str or list
+            Name of the sublattice at which the LDOS will be calculated.
+        """
+        coefs       = []
+        operators   = []
+        if not stream_.stream:
+            raise ValueError("The vertex cannot be empty.")
+        for operator_sequence in stream_.stream:
+            if not isinstance(operator_sequence, list):
+                raise TypeError("The operator sequence must be a list")
+            if not isinstance(operator_sequence[0], numbers.Number):
+                raise ValueError("The first element must be a numeric type")
+            coefs.append(operator_sequence[0]) # numerical factor
+            operators.append(operator_sequence[1]) # operator streams
+        self._custom_one_local.append({'energy': energy_, 'num_moments': stream_.moment, 'position': np.asmatrix(position_), 'sublattice': sublattice_, 'num_disorder': num_disorder_, 'operators' : operators, 'coefs' : coefs})
 
     def custom_two(self, stream_, num_random_, num_disorder_, num_points_, temperature_):
         """Calculate the rank two (Tr[Tn Ja Tm Jb]) custom operator trace
@@ -2048,6 +2083,111 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
         grpc_p.create_dataset('Coefficients', data = np.asarray(calculation._custom_one[0]['coefs']).astype(np.complex64))
         grpc_p.create_dataset('NumCoefficients', data = len(calculation._custom_one[0]['coefs']), dtype = np.int32)
         grpc_p.create_dataset('Operators', data = calculation._custom_one[0]['operators'], dtype = hp.string_dtype(encoding='utf-8'))
+
+        for label, operator in calculation._custom_operator_collection.items():
+            grpc_op.create_dataset(label, data = np.asarray(operator).astype(config.type))
+
+    if calculation.get_custom_one_local:
+        grpc_p = grpc.create_group('CustomOneLocal')
+        grpc_op = grpc.create_group('CustomOneLocal/CustomOperators')
+
+        single_local = calculation._custom_one_local[0]
+        moments = single_local['num_moments']
+        energy = single_local['energy']
+        position = single_local['position']
+        sublattice = single_local['sublattice']
+        dis = single_local['num_disorder']
+        coeffs = single_local['coefs']
+        operat = single_local['operators']
+
+        if len(calculation.get_custom_one_local) > 1:
+            raise SystemExit('Only a single function request of each type is currently allowed. Please use another '
+                             'configuration file for the same functionality.')
+
+        position = np.squeeze(position)
+        len_pos = np.array(position).shape[0]
+
+        if isinstance(sublattice, list):
+            len_sub = len(sublattice)
+        else:
+            len_sub = 1
+            sublattice = [sublattice]
+
+        if len_pos != len_sub and (len_pos != 1 and len_sub != 1):
+            raise SystemExit('Number of sublattices and number of positions should either have the same '
+                             'length or should be specified as a single value! Choose them accordingly.')
+
+        names, sublattices_all = zip(*lattice.sublattices.items())
+
+        orbitals = []
+        system_l = config._length
+        Lx = system_l[0]
+        Ly = 1
+        Lz = 1
+
+        if len(system_l) == 2:
+            Ly = system_l[1]
+        elif len(system_l) == 3:
+            Ly = system_l[1]
+            Lz = system_l[2]
+
+        for item in position:
+            if item.shape[1] != space_size:
+                raise SystemExit('The probing position for the Local-Custom should be selected with the '
+                                 'relative index of length {}'.format(space_size))
+
+        if space_size == 1:
+            if not all(0 <= np.squeeze(np.asarray(item))[0] < Lx for item in position):
+                raise SystemExit('The probing position for the Local-Custom should be selected within the relative '
+                                 'coordinates [[0, {}],[0, {}],[0, {}]] with the relative index '
+                                 'of length {}'.format(Lx - 1, Ly - 1, Lz - 1, space_size))
+        if space_size == 2:
+            if not all(0 <= np.squeeze(np.asarray(item))[0] < Lx and 0 <= np.squeeze(np.asarray(item))[1] < Ly
+                       for item in position):
+                raise SystemExit('The probing position for the Local-Custom should be selected within the relative '
+                                 'coordinates [[0, {}],[0, {}],[0, {}]] with the relative index '
+                                 'of length {}'.format(Lx - 1, Ly - 1, Lz - 1, space_size))
+
+        if space_size == 3:
+            if not all(0 <= np.squeeze(np.asarray(item))[0] < Lx and 0 <= np.squeeze(np.asarray(item))[1] < Ly
+                       and 0 <= np.squeeze(np.asarray(item))[2] < Lz for item in position):
+                raise SystemExit('The probing position for the Local-Custom should be selected within the relative '
+                                 'coordinates [[0, {}],[0, {}],[0, {}]] with the relative index '
+                                 'of length {}'.format(Lx - 1, Ly - 1, Lz - 1, space_size))
+
+        fixed_positions = np.asarray(np.dot(position, np.array([1, Lx, Lx * Ly], dtype=np.int32)[0:space_size]),
+                          dtype=np.int32).reshape(-1)
+        for sub in sublattice:
+
+            if sub not in names:
+                raise SystemExit('Desired sublattice for Local-Custom calculation doesn\'t exist in the chosen lattice! ')
+
+            indx = names.index(sub)
+            lattice_sub = sublattices_all[indx]
+            sub_id = lattice_sub.alias_id
+            it = np.nditer(lattice_sub.energy, flags=['multi_index'])
+            while not it.finished:
+                orbit = int(orbitals_before[sub_id] + it.multi_index[0])
+                orbitals.append(orbit)
+                it.iternext()
+        if len(calculation.get_custom_one_local) > 1:
+            raise SystemExit('Only a single function request of each type is currently allowed. Please use another '
+                             'configuration file for the same functionality.')
+        grpc_p.create_dataset('NumMoments', data=moments, dtype=np.int32)
+        grpc_p.create_dataset('Energy', data=(np.asarray(energy) - config.energy_shift) / config.energy_scale, dtype=np.float32)
+
+        if len_sub != len_pos:
+            grpc_p.create_dataset('Orbitals', data=np.tile(np.asarray(orbitals),len_pos).reshape(-1), dtype=np.int32)
+            grpc_p.create_dataset('FixPosition', data=np.repeat(np.asarray(fixed_positions),len_sub), dtype=np.int32)
+        else:
+            grpc_p.create_dataset('Orbitals', data=np.asarray(orbitals), dtype=np.int32)
+            grpc_p.create_dataset('FixPosition', data=np.asarray(fixed_positions), dtype=np.int32)
+        grpc_p.create_dataset('NumDisorder', data=dis, dtype=np.int32)
+
+        grpc_vtx = grpc_p.create_group(f'Vertex0')
+        grpc_vtx.create_dataset('Coefficients', data = np.asarray(coeffs).astype(np.complex64))
+        grpc_vtx.create_dataset('NumCoefficients', data = len(coeffs), dtype = np.int32)
+        grpc_vtx.create_dataset('Operators', data = operat, dtype = hp.string_dtype(encoding='utf-8'))
 
         for label, operator in calculation._custom_operator_collection.items():
             grpc_op.create_dataset(label, data = np.asarray(operator).astype(config.type))
