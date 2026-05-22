@@ -15,74 +15,8 @@ class KPM_Vector;
 #include "KPM_VectorBasis.hpp"
 #include "KPM_Vector.hpp"
 #include "Loop.hpp"
-#include <stdexcept>
-
-template <typename T>
-T gauss_first(const unsigned n_, const T mu_, const T sigma_)
-{
-  const T numerator = n_ * mu_ * sigma_ * sigma_ *
-                      (n_ * n_ * sigma_ * sigma_ / (1 - mu_ * mu_) - 3);
-  const T denominator = std::pow(1 - mu_ * mu_, -1.5);
-  return numerator * denominator;
-}
-
-template <typename T>
-T gauss_second(const unsigned n_, const T mu_, const T sigma_)
-{
-  const T term_1 = 7 * mu_ * mu_ - 4;
-  const T tmp = 1 - mu_ * mu_;
-  const T term_2 = 3 - 6 * n_ * n_ * sigma_ * sigma_ / tmp +
-                   std::pow(n_ * sigma_, 4) / (tmp * tmp);
-  const T denominator = 1 / (24 * tmp);
-  return sigma_ * sigma_ * term_1 * term_2 * denominator;
-}
-
-template <typename T>
-Eigen::Array<T, -1, 1> build_gaussian(const T energy_, const T width_)
-{
-  const unsigned number_polynomials = std::ceil(6.0 / width_);
-  Eigen::Array<T, -1, 1> coefs(number_polynomials);
-  coefs(0) = 1 - gauss_second(0, energy_, width_);
-
-  for (int n = 1; n < number_polynomials; ++n) {
-    const T gaussian =
-      std::exp(-0.5 * n * n * width_ * width_ / (1 - energy_ * energy_));
-    const T cossine = std::cos(n * std::acos(energy_));
-    const T sine = std::sin(n * std::acos(energy_));
-    coefs(n) = 2 * gaussian *
-               (cossine * (1 - gauss_second(n, energy_, width_)) -
-                0.5 * sine * gauss_first(n, energy_, width_));
-  }
-  const T prefactor = 1 / (M_PI * std::sqrt(1 - energy_ * energy_));
-  coefs *= prefactor;
-  return coefs;
-}
-
-template <typename T>
-T jackson(const int n_, const int polynomials_)
-{
-  const T arg = M_PI / (polynomials_ + 1);
-  const T term1 = (polynomials_ - n_ + 1) * std::cos(arg * n_);
-  const T term2 = std::sin(arg * n_) / std::tan(arg);
-  return (term1 + term2) / (polynomials_ + 1);
-}
-
-template <typename T>
-Eigen::Array<T, -1, 1> build_window(const T energy_, const T width_)
-{
-  const T min = energy_ - 0.5 * width_;
-  const T max = energy_ + 0.5 * width_;
-  const unsigned number_polynomials = std::ceil(64 / width_);
-  Eigen::Array<T, -1, 1> coefs(number_polynomials);
-  const T diff = std::asin(max) - std::asin(min);
-  coefs(0) = jackson<T>(0, number_polynomials) * diff;
-  for (unsigned n = 1; n < number_polynomials; ++n)
-    coefs(n) = 2 * jackson<T>(n, number_polynomials) *
-               (std::sin(n * std::acos(min)) - std::sin(n * std::acos(max))) /
-               n;
-  coefs /= M_PI;
-  return coefs;
-}
+// #include <stdexcept>
+#include "Coefficients.hpp"
 
 template <typename T, unsigned D>
 void Simulation<T, D>::calc_ldos()
@@ -121,7 +55,8 @@ void Simulation<T, D>::calc_ldos()
     {
       H5::H5File *file = new H5::H5File(name, H5F_ACC_RDONLY);
       get_hdf5<int>(&vectors, file, (char *)"/Calculation/ldos_map/NumVectors");
-      get_hdf5<value_type>(&energy, file, (char *)"/Calculation/ldos_map/Energy");
+      get_hdf5<
+        value_type>(&energy, file, (char *)"/Calculation/ldos_map/Energy");
       get_hdf5<value_type>(&sigma, file, (char *)"/Calculation/ldos_map/Sigma");
       get_hdf5<int>(&coef_id, file, (char *)"/Calculation/ldos_map/Coef_ID");
 
@@ -157,9 +92,10 @@ void Simulation<T, D>::ldos(
     const value_type factor =
       (coef_id_) ? 1.0 : std::sqrt(8 * M_PI) * sigma / energy_scale;
     const value_type fwhm = (coef_id_) ? sigma : std::sqrt(2) * sigma;
+    Coefficients<value_type> cfs;
     const Eigen::Array<value_type, -1, 1> coefs =
-      (coef_id_) ? build_window<value_type>(target, fwhm)
-                 : build_gaussian<value_type>(target, fwhm);
+      (coef_id_) ? cfs.build_window(target, fwhm)
+                 : cfs.build_gaussian(target, fwhm);
 
     KPM_Vector<T, D> phi(2, *this);
     Eigen::Array<T, -1, 1> ket(r.Sized);
@@ -189,7 +125,8 @@ void Simulation<T, D>::ldos(
 
       prv = results.col(0);
       results.col(0) += weight * (map - results.col(0));
-      results.col(1) += weight * ((map - prv) * (map - results.col(0)) - results.col(1));
+      results.col(1) +=
+        weight * ((map - prv) * (map - results.col(0)) - results.col(1));
     }
     results.col(1) = results.col(1).sqrt() / std::sqrt(vectors_);
     store_ldos(results);
@@ -236,19 +173,6 @@ void Simulation<T, D>::store_ldos(const Eigen::Array<T, -1, -1> &results_)
 #pragma omp barrier
   debug_message("Left store_ldos\n");
 }
-
-#define INSTANTIATE_GAUSS(type)                                                \
-  template type gauss_first<type>(const unsigned, const type, const type);     \
-  template type gauss_second<type>(const unsigned, const type, const type);    \
-  template Eigen::Array<type, -1, 1>                                           \
-  build_window<type>(const type, const type);                                  \
-  template type jackson<type>(const int, const int);                           \
-  template Eigen::Array<type, -1, 1> build_gaussian(const type, const type);
-
-INSTANTIATE_GAUSS(float)
-INSTANTIATE_GAUSS(double)
-INSTANTIATE_GAUSS(long double)
-#undef INSTANTIATE_GAUSS
 
 #define instantiate(type, dim) template class Simulation<type, dim>;
 #include "instantiate.hpp"
