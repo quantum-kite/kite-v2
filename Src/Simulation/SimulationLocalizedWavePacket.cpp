@@ -16,7 +16,9 @@ class KPM_Vector;
 #include "KPM_VectorBasis.hpp"
 #include "KPM_Vector.hpp"
 #include "Loop.hpp"
+#include "Coefficients.hpp"
 #include <stdexcept>
+#include <algorithm>
 
 
 // First entry: Row index of the probe in ProbeCoordinates
@@ -60,14 +62,22 @@ do {                                                                           \
                                                                                \
   const bool filter = energy_window[0] != 0. || energy_window[1] != 0.;        \
   if (filter) {                                                                \
-    value_type Emin = (energy_window[0] - energy_shift) / energy_scale;        \
-    value_type Emax = (energy_window[1] - energy_shift) / energy_scale;        \
-                                                                               \
-    Emin = std::max<value_type>(-1.0, std::min<value_type>(1.0, Emin));        \
-    Emax = std::max<value_type>(-1.0, std::min<value_type>(1.0, Emax));        \
+    const auto Emin =                                                          \
+      std::clamp<value_type>((energy_window[0] - energy_shift) / energy_scale, \
+        -1,                                                                    \
+         1                                                                     \
+    );                                                                         \
+    const auto Emax =                                                          \
+      std::clamp<value_type>((energy_window[1] - energy_shift) / energy_scale, \
+        -1,                                                                    \
+         1                                                                     \
+    );                                                                         \
                                                                                \
     const Eigen::Array<value_type, -1, 1> coefs =                              \
-      build_window_here<value_type>(Emin, Emax);                               \
+      Coefficients::build_window<value_type>(                                  \
+        (Emin + Emax) * 0.5,                                                   \
+        std::abs(Emax - Emin)                                                  \
+    );                                                                         \
                                                                                \
     Eigen::Array<T, -1, 1> filtered(r.Sized);                                  \
     filtered.setZero();                                                        \
@@ -93,49 +103,6 @@ do {                                                                           \
   phi.set_index(0);                                                            \
   phi.Exchange_Boundaries();                                                   \
 } while (0)
-
-template <typename T>
-T jackson(const int n_, const int polynomials_)
-{
-  const T arg = M_PI / (polynomials_ + 1);
-  const T term1 = (polynomials_ - n_ + 1) * std::cos(arg * n_);
-  const T term2 = std::sin(arg * n_) / std::tan(arg);
-  return (term1 + term2) / (polynomials_ + 1);
-}
-
-template <typename T>
-Eigen::Array<T, -1, 1> build_window_here(const T min, const T max) {
-  if (!(max > min))
-    throw std::runtime_error("Invalid energy window.");
-
-  const T width = max - min;
-  const unsigned number_polynomials = std::ceil(256 / width);
-  Eigen::Array<T, -1, 1> coefs(number_polynomials);
-  coefs(0) =
-    jackson<T>(0, number_polynomials) * (std::asin(max) - std::asin(min));
-  for (unsigned n = 1; n < number_polynomials; ++n)
-    coefs(n) = 2 * jackson<T>(n, number_polynomials) *
-               (std::sin(n * std::acos(min)) - std::sin(n * std::acos(max))) /
-               n;
-  coefs /= M_PI;
-  return coefs;
-}
-
-template <typename T>
-Eigen::Array<std::complex<T>, -1, 1> build_exponential(const T t)
-{
-  static constexpr std::array<std::complex<T>, 4> mi_pow = {
-    {{1.0, 0.0}, {0.0, -1.0}, {-1.0, 0.0}, {0.0, 1.0}}
-  };
-  const unsigned N_pols =
-    std::max<unsigned>(32, static_cast<unsigned>(std::ceil(2 * t)));
-  Eigen::Array<std::complex<T>, -1, 1> moments(N_pols);
-
-  moments(0) = mi_pow[0] * static_cast<T>(std::cyl_bessel_j(0, t));
-  for (unsigned n = 1; n < N_pols; ++n)
-    moments(n) = mi_pow[n % 4] * static_cast<T>(2.0 * std::cyl_bessel_j(n, t));
-  return moments;
-}
 
 template <unsigned D, bool Global, typename F>
 void for_each_orbital(
@@ -464,7 +431,7 @@ void Simulation<T, D>::localized_wavepacket(
     const auto divisions =
         std::max<unsigned>(1, static_cast<unsigned>(std::ceil(measure_tau / value_type{32})));
     const value_type tau = measure_tau / divisions;
-    Eigen::Array<T, -1, 1> coefs = build_exponential<value_type>(tau);
+    Eigen::Array<T, -1, 1> coefs = Coefficients::build_cplx_exp<value_type>(tau);
     const T arg{0.0, -energy_shift * (tau / energy_scale)};
     coefs *= std::exp(arg);
 
@@ -601,19 +568,6 @@ void Simulation<T, D>::store_localized_wavepacket(
 #pragma omp barrier
   debug_message("Left localized_wavepacket\n");
 }
-
-#define INSTANTIATE_REAL(type)                                                 \
-  template Eigen::Array<type, -1, 1>                                           \
-  build_window_here<type>(const type, const type);                             \
-  template type jackson<type>(const int, const int);                           \
-  template Eigen::Array<std::complex<type>, -1, 1> build_exponential(          \
-    const type                                                                 \
-  );
-
-INSTANTIATE_REAL(float)
-INSTANTIATE_REAL(double)
-INSTANTIATE_REAL(long double)
-#undef INSTANTIATE_REAL
 
 #define instantiate(type, dim) template class Simulation<type, dim>;
 #include "instantiate.hpp"

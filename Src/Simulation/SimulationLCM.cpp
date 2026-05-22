@@ -15,34 +15,7 @@ class KPM_Vector;
 #include "KPM_VectorBasis.hpp"
 #include "KPM_Vector.hpp"
 #include "Loop.hpp"
-
-template <typename T>
-Eigen::Array<T, -1, 1> build_fermi(const T beta_, const T mu_)
-{
-  const unsigned N = std::ceil(3.0 * beta_);
-  Eigen::Array<T, -1, 1> x(N);
-  Eigen::Array<T, -1, 1> f(N);
-  Eigen::Array<T, -1, 1> ac(N);
-  Eigen::Array<T, -1, 1> coef(N);
-  for (unsigned i = 0; i < N; i++) {
-    x(i) = std::cos(0.5 * M_PI * (2 * i + 1) / N);
-    if (beta_ * (x(i) - mu_) > 200)
-      f(i) = 0.0;
-    else if (beta_ * (x(i) - mu_) < -200)
-      f(i) = 1.0;
-    else
-      f(i) = 1.0 / (1 + exp(beta_ * (x(i) - mu_)));
-    ac(i) = acos(x(i));
-  }
-  for (unsigned i = 0; i < N; i++) {
-    T sum = 0.0;
-    for (unsigned j = 0; j < N; j++)
-      sum += cos(i * ac(j)) * f(j);
-    coef(i) = sum * 2.0 / N;
-  }
-  coef(0) *= 0.5;
-  return coef;
-}
+#include "Coefficients.hpp"
 
 template <typename T, unsigned D>
 void Simulation<T, D>::calc_st_lcm()
@@ -110,7 +83,7 @@ void Simulation<T, D>::st_lcm(
   const value_type norm = 4 * M_PI / r.rLat.determinant();
   const value_type target = energy_ / energy_scale;
   const value_type beta = beta_ * energy_scale;
-  const Eigen::Array<value_type, -1, 1> coefs = build_fermi(beta, target);
+  const Eigen::Array<value_type, -1, 1> coefs = Coefficients::build_fermi<value_type>(beta, target);
 
   KPM_Vector<T, D> phi(2, *this);
   KPM_Vector<T, D> ket(1, *this);
@@ -205,14 +178,6 @@ void Simulation<T, D>::store_lcm(const Eigen::Array<T, -1, 1> &results_)
 #pragma omp barrier
   debug_message("Left store_lcm\n");
 }
-
-#define INSTANTIATE_FERMI(type)                                                \
-  template Eigen::Array<type, -1, 1> build_fermi(const type, const type);
-
-INSTANTIATE_FERMI(float)
-INSTANTIATE_FERMI(double)
-INSTANTIATE_FERMI(long double)
-#undef INSTANTIATE_FERMI
 
 #define instantiate(type, dim) template class Simulation<type, dim>;
 #include "instantiate.hpp"

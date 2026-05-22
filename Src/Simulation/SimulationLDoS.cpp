@@ -92,10 +92,9 @@ void Simulation<T, D>::ldos(
     const value_type factor =
       (coef_id_) ? 1.0 : std::sqrt(8 * M_PI) * sigma / energy_scale;
     const value_type fwhm = (coef_id_) ? sigma : std::sqrt(2) * sigma;
-    Coefficients<value_type> cfs;
     const Eigen::Array<value_type, -1, 1> coefs =
-      (coef_id_) ? cfs.build_window(target, fwhm)
-                 : cfs.build_gaussian(target, fwhm);
+      (coef_id_) ? Coefficients::build_window<value_type>(target, fwhm)
+                 : Coefficients::build_gaussian<value_type>(target, fwhm);
 
     KPM_Vector<T, D> phi(2, *this);
     Eigen::Array<T, -1, 1> ket(r.Sized);
