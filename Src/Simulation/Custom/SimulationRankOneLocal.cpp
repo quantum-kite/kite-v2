@@ -84,6 +84,7 @@ void Simulation<T, D>::calc_custom_one_local()
       pos_dspace.getSimpleExtentDims(pos_dims, nullptr);
       positions.resize(pos_dims[0]);
       get_hdf5(positions.data(), file, tmp);
+      number_local_sites = orbitals.size();
 
       const std::string base = base_grp + "Vertex0";
       std::string path = base + "/NumCoefficients";
@@ -130,11 +131,11 @@ void Simulation<T, D>::custom_one_local(
   const std::vector<std::string> &stream_
 )
 {
-  Eigen::Matrix<T, -1, -1> gamma =
-    Eigen::Matrix<T, -1, -1>::Zero(number_moments_, number_local_sites_);
-  Eigen::Matrix<T, -1, 1> gamma_site =
-    Eigen::Matrix<T, -1, 1>::Zero(number_moments_);
-  Eigen::Matrix<T, 2, 1> tmp = Eigen::Matrix<T, 2, 1>::Zero();
+  Eigen::Matrix<T, -1, -1> gamma(number_moments_, number_local_sites_);
+  gamma.setZero();
+  Eigen::Matrix<T, 1, 2> tmp;
+  tmp.setZero();
+  Eigen::Matrix<T, -1, 1> gamma_site(number_moments_);
   KPM_Vector<T, D> kpm_trc_0(1, *this);
   KPM_Vector<T, D> kpm_trc_1(2, *this);
   std::array<KPM_Vector<T, D> *, 2> vectors{&kpm_trc_0, &kpm_trc_1};
@@ -147,8 +148,8 @@ void Simulation<T, D>::custom_one_local(
         positions_[site] * r.Ld[0] + orbitals_[site];
       kpm_trc_0.build_site(global_index);
       kpm_trc_0.Exchange_Boundaries();
-      for (unsigned i = 0, I = vectors.size(); i < I; ++i)
-        vectors.at(i)->initiate_phases();
+      for (auto &vec : vectors)
+        vec->initiate_phases();
       kpm_trc_1.set_index(0);
       act_with_stream(stream_, operators_, coeffs_, vectors, 0);
       kpm_trc_0.empty_ghosts(0);
@@ -156,15 +157,16 @@ void Simulation<T, D>::custom_one_local(
         kpm_trc_1.cheb_iteration(m);
         kpm_trc_1.cheb_iteration(m + 1);
         tmp.setZero();
-        for (std::size_t ii = 0; ii < r.Sized; ii += r.Ld[0])
+        for (std::size_t ii = 0; ii < r.Sized; ii += r.Ld[0]) {
           tmp += kpm_trc_0.v.block(ii, 0, r.Ld[0], 1).adjoint() *
                  kpm_trc_1.v.block(ii, 0, r.Ld[0], 2);
+        }
         gamma_site.segment(m, 2) = tmp;
       }
       gamma.col(site) += (gamma_site - gamma.col(site)) / (disorder + 1);
     }
   }
-  store_custom_one_local(gamma, 0.0);
+  store_custom_one_local(gamma, 0);
 }
 
 template <typename T, unsigned D>
