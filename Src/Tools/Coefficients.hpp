@@ -1,9 +1,6 @@
 #ifndef COEFFICIENTS_H_
 #define COEFFICIENTS_H_
 #include <Eigen/Dense>
-#include <array>
-#include <cmath>
-#include <complex>
 
 namespace Coefficients {
 template <typename T>
@@ -16,11 +13,8 @@ T jackson(const int n_, const int polynomials_)
 }
 
 template <typename T>
-T gauss_first(
-  const int n_,
-  const T mu_,
-  const T sigma_
-) {
+T gauss_first(const int n_, const T mu_, const T sigma_)
+{
   const T numerator = n_ * mu_ * sigma_ * sigma_ *
                       (n_ * n_ * sigma_ * sigma_ / (1 - mu_ * mu_) - 3);
   const T denominator = std::pow(1 - mu_ * mu_, -1.5);
@@ -28,11 +22,8 @@ T gauss_first(
 }
 
 template <typename T>
-T gauss_second(
-  const int n_,
-  const T mu_,
-  const T sigma_
-) {
+T gauss_second(const int n_, const T mu_, const T sigma_)
+{
   const T term_1 = 7 * mu_ * mu_ - 4;
   const T tmp = 1 - mu_ * mu_;
   const T term_2 = 3 - 6 * n_ * n_ * sigma_ * sigma_ / tmp +
@@ -63,7 +54,8 @@ Eigen::Array<T, -1, 1> build_gaussian(const T energy_, const T width_)
 }
 
 template <typename T>
-Eigen::Array<T, -1, 1> build_window(const T center_, const T width_, const T mult_=64)
+Eigen::Array<T, -1, 1>
+build_window(const T center_, const T width_, const T mult_ = 64)
 {
   const T min = center_ - 0.5 * width_;
   const T max = center_ + 0.5 * width_;
@@ -122,7 +114,6 @@ Eigen::Array<T, -1, 1> build_fermi(const T beta_, const T mu_)
   coef(0) *= 0.5;
   return coef;
 }
-
 }
 
 #endif
