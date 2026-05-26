@@ -76,7 +76,8 @@ do {                                                                           \
     const Eigen::Array<value_type, -1, 1> coefs =                              \
       Coefficients::build_window<value_type>(                                  \
         (Emin + Emax) * 0.5,                                                   \
-        std::abs(Emax - Emin)                                                  \
+        std::abs(Emax - Emin),                                                 \
+        256                                                                    \
     );                                                                         \
                                                                                \
     Eigen::Array<T, -1, 1> filtered(r.Sized);                                  \
@@ -296,6 +297,34 @@ void prepare_leads(
   );
 }
 
+template <typename T, unsigned D, typename V>
+Eigen::Array<V, 3, 1> transmission_weight(
+    LatticeStructure<D>& r,
+    const std::size_t sample_start,
+    const std::size_t L,
+    const Eigen::Array<T, -1, 1>& psi
+) {
+  Eigen::Array<V, 3, 1> weights = Eigen::Array<V, 3, 1>::Zero();
+
+  for_each_orbital<D, true>(r, [&](
+    const Coordinates<std::size_t, D + 1>& local,
+    const Coordinates<std::size_t, D + 1>& global,
+    unsigned,
+    const std::array<unsigned, D>&) {
+      const auto x{global.coord[0]};
+      const V prob = std::norm(psi(local.index));
+      if (x < sample_start)
+        weights(0) += prob;
+      else if (sample_start <= x && x < sample_start + L)
+        weights(1) += prob;
+      else
+        weights(2) += prob;
+    }
+  );
+
+  return weights;
+}
+
 template <typename T, unsigned D>
 void Simulation<T, D>::calc_localized_wavepacket()
 {
@@ -441,6 +470,7 @@ void Simulation<T, D>::localized_wavepacket(
     Eigen::Array<value_type, -1, -1> moments1(D, measurements + 1);
     Eigen::Array<value_type, -1, -1> moments2(D * D, measurements + 1);
     Eigen::Array<T, -1, 1> return_amplitudes(measurements + 1);
+    Eigen::Array<value_type, -1, -1> transmission_weights(3, measurements + 1);
     const std::vector<LocalProbe> local_probes = build_local_probe_indices<D>(r, probe_lattice_coords);
     Eigen::Array<T, -1, -1> local_propagators(local_probes.size(), measurements + 1);
 
@@ -454,18 +484,15 @@ void Simulation<T, D>::localized_wavepacket(
     h.generate_disorder();
     prepare_leads(r, h, sample_start, sample_L);
 
-    auto update_local_propagators = [&](unsigned m) {
-      for (std::size_t i = 0; i < local_probes.size(); ++i) {
-        local_propagators(i, m) = phi.v(local_probes[i].second, 0);
-      }
-    };
-
     auto update_observables = [&](unsigned m) {
       const auto [m1, m2] = pos_moments<T, D, value_type>(r, phi.v.col(0));
       moments1.col(m) = m1;
       moments2.col(m) = m2;
       return_amplitudes(m) = no_ghost_dot<T, D>(r, initial_state, phi.v.col(0));
-      update_local_propagators(m);
+      transmission_weights.col(m) = transmission_weight<T, D, value_type>(r, sample_start, sample_L, phi.v.col(0));
+
+      for (std::size_t i = 0; i < local_probes.size(); ++i)
+        local_propagators(i, m) = phi.v(local_probes[i].second, 0);
     };
 
     update_observables(0);
@@ -488,7 +515,7 @@ void Simulation<T, D>::localized_wavepacket(
     if (num_spectral_moments > 0)
       spectral_moments.col(1) = spectral_function<T, D, value_type>(r, *this, num_spectral_moments, phi.v.col(0));
 
-    store_localized_wavepacket(spectral_moments, moments1, moments2, return_amplitudes, 
+    store_localized_wavepacket(spectral_moments, moments1, moments2, return_amplitudes, transmission_weights,
                                local_propagators, local_probes, num_global_probes);
   }
 }
@@ -499,6 +526,7 @@ void Simulation<T, D>::store_localized_wavepacket(
   const Eigen::Array<value_type, -1, -1>& moments1,
   const Eigen::Array<value_type, -1, -1>& moments2,
   const Eigen::Array<T, -1, 1>& return_amplitudes,
+  const Eigen::Array<value_type, -1, -1>& transmission_weights,
   const Eigen::Array<T, -1, -1>& propagator_amplitudes,
   const std::vector<LocalProbe>& propagator_coords,
   const std::size_t num_global_probes
@@ -508,16 +536,18 @@ void Simulation<T, D>::store_localized_wavepacket(
 #pragma omp barrier
 #pragma omp master
   {
-    Global.results_5.resize(spectral_moments.rows(), spectral_moments.cols()); 
     Global.results_1.resize(D, moments1.cols());
     Global.results_2.resize(D * D, moments2.cols());
     Global.results_3.resize(return_amplitudes.rows(), 1);
     Global.results_4.resize(num_global_probes, propagator_amplitudes.cols());
+    Global.results_5.resize(spectral_moments.rows(), spectral_moments.cols()); 
+    Global.results_6.resize(transmission_weights.rows(), transmission_weights.cols());
     Global.results_1.setZero();
     Global.results_2.setZero();
     Global.results_3.setZero();
     Global.results_4.setZero();
     Global.results_5.setZero();
+    Global.results_6.setZero();
   }
 #pragma omp barrier
 #pragma omp critical
@@ -526,6 +556,7 @@ void Simulation<T, D>::store_localized_wavepacket(
     Global.results_2 += moments2.template cast<T>();
     Global.results_3 += return_amplitudes;
     Global.results_5 += spectral_moments.template cast<T>();
+    Global.results_6 += transmission_weights.template cast<T>();
 
     for (std::size_t p = 0; p < num_local_probes; ++p) {
       Global.results_4.row(propagator_coords[p].first) = propagator_amplitudes.row(p);
@@ -549,12 +580,14 @@ void Simulation<T, D>::store_localized_wavepacket(
     Eigen::Array<value_type, -1, -1> results_2_real = Global.results_2.real();
     Eigen::Array<value_type, -1, -1> results_3_real = Global.results_3.real();
     Eigen::Array<value_type, -1, -1> results_5_real = Global.results_5.real();
+    Eigen::Array<value_type, -1, -1> results_6_real = Global.results_6.real();
     H5::H5File* file = new H5::H5File(name, H5F_ACC_RDWR);
     const std::string name2("Calculation/localized_wave_packet/StatesMean");
     const std::string name3("Calculation/localized_wave_packet/StatesCovariance");
     const std::string name4("Calculation/localized_wave_packet/ReturnProbability");
     const std::string name5("Calculation/localized_wave_packet/PropagatorAmplitude");
     const std::string name6("Calculation/localized_wave_packet/SpectralMoments");
+    const std::string name7("Calculation/localized_wave_packet/TransmissionWeights");
     write_hdf5(results_1_real, file, name2);
     write_hdf5(results_2_real, file, name3);
     write_hdf5(results_3_real, file, name4);
@@ -562,6 +595,7 @@ void Simulation<T, D>::store_localized_wavepacket(
       write_hdf5(Global.results_4, file, name5);
     if (spectral_moments.rows() > 0)
       write_hdf5(results_5_real, file, name6);
+    write_hdf5(results_6_real, file, name7);
     file->close();
     delete file;
   }

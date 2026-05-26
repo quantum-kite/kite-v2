@@ -63,11 +63,11 @@ Eigen::Array<T, -1, 1> build_gaussian(const T energy_, const T width_)
 }
 
 template <typename T>
-Eigen::Array<T, -1, 1> build_window(const T center_, const T width_)
+Eigen::Array<T, -1, 1> build_window(const T center_, const T width_, const T mult_=64)
 {
   const T min = center_ - 0.5 * width_;
   const T max = center_ + 0.5 * width_;
-  const unsigned number_polynomials = std::ceil(64 / width_);
+  const unsigned number_polynomials = std::ceil(mult_ / width_);
   Eigen::Array<T, -1, 1> coefs(number_polynomials);
   const T diff = std::asin(max) - std::asin(min);
   coefs(0) = jackson<T>(0, number_polynomials) * diff;

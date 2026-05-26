@@ -166,6 +166,7 @@ public:
     const Eigen::Array<value_type, -1, -1>& moments1,
     const Eigen::Array<value_type, -1, -1>& moments2,
     const Eigen::Array<T, -1, 1>& return_amplitudes,
+    const Eigen::Array<value_type, -1, -1>& transmission_weights,
     const Eigen::Array<T, -1, -1>& propagator_amplitudes,
     const std::vector<std::pair<std::size_t, std::size_t>>& propagator_coords,
     const std::size_t num_global_probes
