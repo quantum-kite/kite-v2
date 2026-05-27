@@ -15,7 +15,6 @@ class KPM_Vector;
 #include "KPM_VectorBasis.hpp"
 #include "KPM_Vector.hpp"
 #include "Loop.hpp"
-// #include <stdexcept>
 #include "Coefficients.hpp"
 
 template <typename T, unsigned D>
