@@ -139,7 +139,7 @@ public:
   // LDoS
   void calc_ldos();
   void ldos(const int, const value_type, const value_type, const int);
-  void store_ldos(const Eigen::Array<T, -1, -1> &);
+  void store_ldos(const Eigen::Array<value_type, -1, -1> &);
 
   // LCM
   void calc_st_lcm();

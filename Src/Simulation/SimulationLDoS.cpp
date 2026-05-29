@@ -98,9 +98,9 @@ void Simulation<T, D>::ldos(
     KPM_Vector<T, D> phi(2, *this);
     Eigen::Array<T, -1, 1> ket(r.Sized);
     Eigen::Array<T, -1, 1> bra(r.Sized);
-    Eigen::Array<T, -1, -1> results(r.Sized, 2);
+    Eigen::Array<value_type, -1, -1> results(r.Sized, 2);
     results.setZero();
-    Eigen::Array<T, -1, 1> prv(r.Sized);
+    Eigen::Array<value_type, -1, 1> prv(r.Sized);
 
     h.generate_disorder();
     for (int vec = 0; vec < vectors_; ++vec) {
@@ -118,7 +118,7 @@ void Simulation<T, D>::ldos(
         ket += coefs(n) * phi.v.col(phi.get_index()).array();
       }
       const value_type weight = 1.0 / (vec + 1);
-      const Eigen::Array<T, -1, 1> map =
+      const Eigen::Array<value_type, -1, 1> map =
         factor * (bra.conjugate() * ket).abs2();
 
       prv = results.col(0);
@@ -132,7 +132,9 @@ void Simulation<T, D>::ldos(
 }
 
 template <typename T, unsigned D>
-void Simulation<T, D>::store_ldos(const Eigen::Array<T, -1, -1> &results_)
+void Simulation<T, D>::store_ldos(
+  const Eigen::Array<value_type, -1, -1> &results_
+)
 {
   debug_message("Entered store_ldos\n");
   Coordinates<std::size_t, D + 1> global(r.Lt);
@@ -161,11 +163,12 @@ void Simulation<T, D>::store_ldos(const Eigen::Array<T, -1, -1> &results_)
 #pragma omp barrier
 #pragma omp master
   {
+    const Eigen::Array<value_type, -1, -1> ldos_r = Global.ldos_map.real();
     H5::H5File *file = new H5::H5File(name, H5F_ACC_RDWR);
     char buffer[200];
     std::sprintf(buffer, "/Calculation/ldos_map/Map");
     const std::string name(buffer);
-    write_hdf5(Global.ldos_map, file, name);
+    write_hdf5(ldos_r, file, name);
     delete file;
   }
 #pragma omp barrier

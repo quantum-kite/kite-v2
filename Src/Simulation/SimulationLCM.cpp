@@ -44,7 +44,7 @@ void Simulation<T, D>::calc_st_lcm()
 #pragma omp barrier
   if (local_calculate_st_lcm) {
 #pragma omp master
-    std::cout << "Calculating Local Chern.\n";
+    std::cout << "Calculating Local Chern Map.\n";
 #pragma omp barrier
     int number_samples;
     value_type energy;
@@ -83,23 +83,21 @@ void Simulation<T, D>::st_lcm(
   const value_type norm = 4 * M_PI / r.rLat.determinant();
   const value_type target = energy_ / energy_scale;
   const value_type beta = beta_ * energy_scale;
-  const Eigen::Array<value_type, -1, 1> coefs = Coefficients::build_fermi<value_type>(beta, target);
+  const Eigen::Array<value_type, -1, 1> coefs =
+    Coefficients::build_fermi<value_type>(beta, target);
 
   KPM_Vector<T, D> phi(2, *this);
   KPM_Vector<T, D> ket(1, *this);
   KPM_Vector<T, D> bra(1, *this);
-  std::vector<KPM_Vector<T, D> *> vectors;
-  vectors.push_back(&phi);
-  vectors.push_back(&ket);
-  vectors.push_back(&bra);
+  std::array<KPM_Vector<T, D> *, 3> vectors{&phi, &ket, &bra};
   Eigen::Array<T, -1, -1> results(r.Sized, 2);
   results.setZero();
   Eigen::Array<T, -1, 1> prv(r.Sized);
 
   h.generate_disorder();
   for (unsigned vec = 0; vec < vectors_; ++vec) {
-    for (auto &vec : vectors)
-      vec->initiate_phases();
+    for (auto &vv : vectors)
+      vv->initiate_phases();
     phi.set_index(0);
     phi.initiate_vector();
     bra.v.col(0) = phi.v.col(0);
@@ -141,11 +139,11 @@ void Simulation<T, D>::st_lcm(
 template <typename T, unsigned D>
 void Simulation<T, D>::store_lcm(const Eigen::Array<T, -1, 1> &results_)
 {
-  debug_message("Entered store_ldos\n");
+  debug_message("Entered store_lcm\n");
   Coordinates<std::size_t, D + 1> global(r.Lt);
   Coordinates<std::size_t, D + 1> local(r.Ld);
 #pragma omp master
-  Global.lcm_map.resize(r.Sizet, 2);
+  Global.ldos_map.resize(r.Sizet, 2);
 #pragma omp barrier
   std::array<unsigned, D> idx;
   std::array<unsigned, D> start;
@@ -161,7 +159,7 @@ void Simulation<T, D>::store_lcm(const Eigen::Array<T, -1, 1> &results_)
       else if constexpr (D == 3)
         local.set({i[2], i[1], i[0], io});
       r.convertCoordinates(global, local);
-      Global.lcm_map.row(global.index) = results_.row(local.index);
+      Global.ldos_map.row(global.index) = results_.row(local.index);
     };
     UnitCellLoop<D>::run(idx, start, final, body);
   }
