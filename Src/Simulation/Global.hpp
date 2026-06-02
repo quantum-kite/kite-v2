@@ -36,8 +36,9 @@ struct GLOBAL_VARIABLES {
   Eigen::Array<T, -1, -1> results_4;
   Eigen::Array<T, -1, -1> results_5;
   Eigen::Array<T, -1, -1> results_6;
-  double kpm_iteration_time;
-  
+  // Statistics
+  std::vector<T> buffer;
+
   bool calculate_arpes;
   bool calculate_ldos;
   bool calculate_wavepacket;
@@ -51,6 +52,7 @@ struct GLOBAL_VARIABLES {
   bool calculate_custom_density;
   bool calculate_custom_conddc;
   bool calculate_custom_ss_two;
+  bool calculate_lcm;
   bool calculate_st_lcm;
 
   GLOBAL_VARIABLES();

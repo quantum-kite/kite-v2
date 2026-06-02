@@ -83,6 +83,7 @@ void Simulation<T, D>::st_lcm(
   const value_type norm = 4 * M_PI / r.rLat.determinant();
   const value_type target = energy_ / energy_scale;
   const value_type beta = beta_ * energy_scale;
+  const value_type size = r.Sizet - r.SizetVacancies;
   const Eigen::Array<value_type, -1, 1> coefs =
     Coefficients::build_fermi<value_type>(beta, target);
 
@@ -100,6 +101,7 @@ void Simulation<T, D>::st_lcm(
       vv->initiate_phases();
     phi.set_index(0);
     phi.initiate_vector();
+    phi.v.col(0) *= std::sqrt(size);
     bra.v.col(0) = phi.v.col(0);
     phi.Exchange_Boundaries();
     ket.v.col(0).setZero();
@@ -123,10 +125,9 @@ void Simulation<T, D>::st_lcm(
       phi.cheb_iteration(n);
       ket.v.col(0) += phi.v.col(phi.get_index()) * coefs(n);
     }
-    bra.empty_ghosts(0);
     const value_type weight = 1.0 / (vec + 1);
     const Eigen::Array<value_type, -1, 1> map =
-      (bra.v.col(0) * ket.v.col(0)).imag();
+      norm * (bra.v.col(0).array().conjugate() * ket.v.col(0).array()).imag();
     prv = results.col(0);
     results.col(0) += weight * (map - results.col(0));
     results.col(1) +=
@@ -137,7 +138,7 @@ void Simulation<T, D>::st_lcm(
 }
 
 template <typename T, unsigned D>
-void Simulation<T, D>::store_lcm(const Eigen::Array<T, -1, 1> &results_)
+void Simulation<T, D>::store_st_lcm(const Eigen::Array<T, -1, -1> &results_)
 {
   debug_message("Entered store_lcm\n");
   Coordinates<std::size_t, D + 1> global(r.Lt);

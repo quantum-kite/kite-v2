@@ -142,9 +142,19 @@ public:
   void store_ldos(const Eigen::Array<value_type, -1, -1> &);
 
   // LCM
+  void calc_lcm();
+  void lcm(
+    const unsigned,
+    const value_type,
+    const value_type,
+    const std::array<int, 2> &
+  );
+  void store_lcm(const Eigen::Array<T, -1, 1> &);
+
+  // STLCM
   void calc_st_lcm();
   void st_lcm(const unsigned, const value_type, const value_type);
-  void store_lcm(const Eigen::Array<T, -1, 1> &);
+  void store_st_lcm(const Eigen::Array<T, -1, -1> &);
 
   // Wave-Packet Time Evol
   void calc_localized_wavepacket();
