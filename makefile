@@ -6,7 +6,7 @@ OBJDIR  := $(PREFIX)/.obj
 EIGEN_INC := -I/usr/local/include/eigen3
 
 # HDF5-Flags
-HDF5_LIBS   := $(shell h5c++ -show | tr ' ' '\n' | grep '^-l')
+HDF5_LIBS   := -lhdf5_cpp -lhdf5
 
 CPPFLAGS := $(EIGEN_INC) \
 	-Itools/Src \
