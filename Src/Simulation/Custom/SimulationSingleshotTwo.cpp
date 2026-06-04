@@ -14,78 +14,7 @@ class KPM_Vector;
 #include "Hamiltonian.hpp"
 #include "KPM_VectorBasis.hpp"
 #include "KPM_Vector.hpp"
-
-template <typename T>
-T gauss_first(const T n_, const T mu_, const T sigma_)
-{
-  const T numerator = n_ * mu_ * sigma_ * sigma_ *
-                      (n_ * n_ * sigma_ * sigma_ / (1 - mu_ * mu_) - 3);
-  const T denominator = std::pow(1 - mu_ * mu_, -1.5);
-  return numerator * denominator;
-}
-
-template <typename T>
-T gauss_second(const T n_, const T mu_, const T sigma_)
-{
-  const T term_1 = 7 * mu_ * mu_ - 4;
-  const T tmp = 1 - mu_ * mu_;
-  const T term_2 = 3 - 6 * n_ * n_ * sigma_ * sigma_ / tmp +
-                   std::pow(n_ * sigma_, 4) / (tmp * tmp);
-  const T denominator = 1 / (24 * tmp);
-  return sigma_ * sigma_ * term_1 * term_2 * denominator;
-}
-
-template <typename T>
-Eigen::Array<T, -1, 1> build_gaussian(
-  const T energy_,
-  const T sigma_,
-  const T escale_,
-  const unsigned Ncheb_
-)
-{
-  const T sigma = sigma_ / escale_;
-  const T energy = energy_ / escale_;
-  Eigen::Array<T, -1, 1> coefs(Ncheb_);
-  coefs(0) = 1 - gauss_second(static_cast<T>(0), energy, sigma);
-  for (unsigned n = 1; n < Ncheb_; ++n) {
-    const T gaussian =
-      std::exp(-0.5 * n * n * sigma * sigma / (1 - energy * energy));
-    const T cossine = std::cos(n * std::acos(energy));
-    const T sine = std::sin(n * std::acos(energy));
-    coefs(n) = 2 * gaussian *
-               (cossine * (1 - gauss_second(static_cast<T>(n), energy, sigma)) -
-                0.5 * sine * gauss_first(static_cast<T>(n), energy, sigma));
-  }
-  const T prefactor = 1 / (M_PI * std::sqrt(1 - energy * energy));
-  coefs *= prefactor;
-  return coefs / escale_;
-}
-
-template <typename T>
-Eigen::Array<std::complex<T>, -1, 1>
-build_dgreen(const std::complex<T> z_, const T escale_, const unsigned Ncheb_)
-{
-  using cplx = std::complex<T>;
-  constexpr cplx I{0.0, 1.0};
-  Eigen::Array<cplx, -1, 1> coef(Ncheb_);
-
-  const cplx z = z_ / escale_;
-  const cplx sq = static_cast<T>(1.0) - z * z;
-  const cplx sqr = std::sqrt(sq);
-
-  const cplx diff = z - I * sqr;
-
-  cplx current_power = 1.0;
-  coef(0) = -I * z * current_power / (sq * sqr);
-  current_power *= diff;
-  for (unsigned n = 1; n < Ncheb_; ++n) {
-    coef(n) = static_cast<T>(2.0) * (static_cast<T>(n) - I * z / sqr) *
-              current_power / sq;
-    current_power *= diff;
-  }
-  coef /= (escale_ * escale_);
-  return coef;
-}
+#include "Coefficients.hpp"
 
 template <typename T, unsigned D>
 void Simulation<T, D>::calc_custom_ss_two()
@@ -119,11 +48,11 @@ void Simulation<T, D>::calc_custom_ss_two()
 #pragma omp master
     std::cout << "Calculating Custom Singleshot Two\n";
 #pragma omp barrier
-    int number_samples;
-    int number_vectors;
-    value_type energy_scale;
-    std::array<Eigen::Array<value_type, -1, 1>, 3> targets;
-    std::vector<int> number_moments(2);
+    unsigned number_samples;
+    unsigned number_vectors;
+    value_type sigma;
+    value_type gamma;
+    Eigen::Array<value_type, -1, 1> energies;
     std::vector<Eigen::Array<T, -1, 1>> coefs(2);
     std::vector<std::vector<std::string>> stream(2);
     std::vector<Eigen::Matrix<std::complex<double>, -1, -1>> orb_operators;
@@ -136,20 +65,21 @@ void Simulation<T, D>::calc_custom_ss_two()
         "Two.\n"
       );
       tmp = base_grp + "NumDisorder";
-      get_hdf5<int>(&number_samples, file, tmp);
+      get_hdf5<unsigned>(&number_samples, file, tmp);
       tmp = base_grp + "NumVectors";
-      get_hdf5<int>(&number_vectors, file, tmp);
+      get_hdf5<unsigned>(&number_vectors, file, tmp);
+      tmp = base_grp + "Gamma";
+      get_hdf5<value_type>(&gamma, file, tmp);
+      tmp = base_grp + "Sigma";
+      get_hdf5<value_type>(&sigma, file, tmp);
+      tmp = base_grp + "Energies";
+      H5::DataSet dataset = file->openDataSet(tmp);
+      H5::DataSpace dataspace = dataset.getSpace();
+      hsize_t dims[1] = {0};
+      dataspace.getSimpleExtentDims(dims, nullptr);
+      energies.resize(dims[0]);
+      get_hdf5<value_type>(energies.data(), file, tmp);
 
-      std::array<std::string, 3> fields{"Gamma", "Sigma", "Energies"};
-      for (unsigned i = 0; i < fields.size(); ++i) {
-        tmp = base_grp + fields[i];
-        H5::DataSet dataset = file->openDataSet(tmp);
-        H5::DataSpace dataspace = dataset.getSpace();
-        hsize_t dims[1] = {0};
-        dataspace.getSimpleExtentDims(dims, nullptr);
-        targets[i].resize(dims[0]);
-        get_hdf5<value_type>(targets[i].data(), file, tmp);
-      }
       std::string path;
       for (unsigned i = 0; i < 2; ++i) {
         const std::string base = base_grp + "Vertex" + std::to_string(i);
@@ -161,10 +91,7 @@ void Simulation<T, D>::calc_custom_ss_two()
         get_hdf5<T>(coefs.at(i).data(), file, path);
         path = base + "/Operators";
         my_get_hdf5(stream.at(i), my_file, path);
-        path = base + "/NumMoments";
-        get_hdf5<int>(&number_moments[i], file, path);
       }
-
       tmp = base_grp + "CustomOperators/";
       H5::Group grp;
       grp = file->openGroup(tmp);
@@ -182,7 +109,7 @@ void Simulation<T, D>::calc_custom_ss_two()
     }
 #pragma omp barrier
     custom_ss_two(
-      number_samples, number_vectors, targets, number_moments, stream, coefs,
+      number_samples, number_vectors, gamma, sigma, energies, stream, coefs,
       orb_operators
     );
   }
@@ -192,8 +119,9 @@ template <typename T, unsigned D>
 void Simulation<T, D>::custom_ss_two(
   const int samples_,
   const int vectors_,
-  const std::array<Eigen::Array<value_type, -1, 1>, 3> &targets_,
-  const std::vector<int> &num_pol_,
+  const value_type gamma_,
+  const value_type sigma_,
+  const Eigen::Array<value_type, -1, 1> &energies_,
   const std::vector<std::vector<std::string>> &stream_,
   const std::vector<Eigen::Array<T, -1, 1>> &coeffs_,
   const std::vector<Eigen::Matrix<std::complex<double>, -1, -1>> &operators_
@@ -210,34 +138,34 @@ void Simulation<T, D>::custom_ss_two(
       delete file;
     }
 #pragma omp barrier
-    const std::array<Eigen::Index, 3>
-      dims{targets_[0].size(), targets_[1].size(), targets_[2].size()};
-    std::array<Eigen::Array<T, -1, -1>, 2> coefs;
-    for (unsigned i = 0; i < 2; ++i)
-      coefs[i].resize(num_pol_[i], dims[i] * dims[2]);
+    const unsigned num_en = energies_.size();
+    const value_type norm_0 = 1 / energy_scale;
+    const value_type sigma = sigma_ * norm_0;
+    const value_type gamma = gamma_ * norm_0;
+    const value_type norm_1 = norm_0 * norm_0;
 
-    for (unsigned i = 0; i < dims[2]; ++i) {
-      unsigned count = 0;
-      const value_type en = targets_[2](i);
-      for (const auto &gamma : targets_[0]) {
-        const unsigned idx = count + i * dims[0];
-        const T z = en + I * gamma;
-        coefs[0].col(idx) = build_dgreen(z, energy_scale, num_pol_[0]);
-        ++count;
+    std::array<Eigen::Array<T, -1, -1>, 2> coefs;
+    unsigned count = 0;
+    for (const auto &vv : energies_) {
+      const value_type en = vv / energy_scale;
+      const T z = en + I * gamma;
+      const Eigen::Array<T, -1, 1> dgreen_tmp =
+        Coefficients::build_dgreen<value_type>(z) * norm_1;
+      const Eigen::Array<value_type, -1, 1> gauss_tmp =
+        Coefficients::build_gaussian<value_type>(en, sigma) * norm_0;
+      if (count == 0) {
+        coefs[0].resize(dgreen_tmp.size(), num_en);
+        coefs[1].resize(gauss_tmp.size(), num_en);
       }
-      count = 0;
-      for (const auto &sigma : targets_[1]) {
-        const unsigned idx = count + i * dims[1];
-        coefs[1].col(idx) =
-          build_gaussian(en, sigma, energy_scale, num_pol_[1]);
-        ++count;
-      }
+      coefs[0].col(count) = dgreen_tmp;
+      coefs[1].col(count) = gauss_tmp;
+      ++count;
     }
     std::array<Eigen::Array<T, -1, 1>, 2> ket =
       {Eigen::Array<T, -1, 1>(r.Sized), Eigen::Array<T, -1, 1>(r.Sized)};
     Eigen::Array<T, -1, 1> bra(r.Sized);
     Eigen::Array<T, -1, 1> psi(r.Sized);
-    Eigen::Array<T, -1, -1> result(dims[2], dims[0] * dims[1]);
+    Eigen::Array<T, -1, 1> result(num_en);
     result.setZero();
     std::array<KPM_Vector<T, D>, 2> vecs =
       {KPM_Vector<T, D>(1, *this), KPM_Vector<T, D>(2, *this)};
@@ -258,38 +186,33 @@ void Simulation<T, D>::custom_ss_two(
         act_with_stream(stream_[0], operators_, coeffs_[0], ptrs, 0);
         psi = vecs[1].v.col(0);
         const value_type weight = 1.0 / (average + 1);
-        for (unsigned j = 0, J = dims[0] * dims[1]; j < J; ++j) {
-          const unsigned idx_gamma = j % dims[0];
-          const unsigned idx_sigma = j / dims[0];
-          for (unsigned i = 0; i < dims[2]; ++i) {
-            const std::array<Eigen::Index, 2>
-              broad_id{idx_gamma + i * dims[0], idx_sigma + i * dims[1]};
-            for (unsigned p = 0; p < 2; ++p) {
-              vecs[1].set_index(0);
-              vecs[1].v.col(0) = psi;
-              ket[p].setZero();
-              const unsigned id_0 = p % 2;
-              const unsigned id_1 = (p + 1) % 2;
-              for (unsigned n = 0, N = num_pol_[id_0]; n < N; ++n) {
-                vecs[1].cheb_iteration(n);
-                const unsigned idx_read = vecs[1].get_index();
-                const T coef = coefs[id_0](n, broad_id[id_0]);
-                ket[p] += coef * vecs[1].v.col(idx_read).array();
-              }
-              vecs[0].v.col(0) = ket[p];
-              act_with_stream(stream_[1], operators_, coeffs_[1], ptrs, 0);
-              ket[p].setZero();
-              for (unsigned n = 0, N = num_pol_[id_1]; n < N; ++n) {
-                vecs[1].cheb_iteration(n);
-                const unsigned idx_read = vecs[1].get_index();
-                const T coef = std::conj(coefs[id_1](n, broad_id[id_1]));
-                ket[p] += coef * vecs[1].v.col(idx_read).array();
-              }
+
+        for (unsigned i = 0; i < num_en; ++i) {
+          for (unsigned p = 0; p < 2; ++p) {
+            vecs[1].set_index(0);
+            vecs[1].v.col(0) = psi;
+            ket[p].setZero();
+            const unsigned id_0 = p % 2;
+            const unsigned id_1 = (p + 1) % 2;
+            for (unsigned n = 0, N = coefs[id_0].rows(); n < N; ++n) {
+              vecs[1].cheb_iteration(n);
+              const unsigned idx_read = vecs[1].get_index();
+              const T coef = coefs[id_0](n, i);
+              ket[p] += coef * vecs[1].v.col(idx_read).array();
             }
-            T res = (bra * ket[0] + (bra * ket[1]).conjugate()).sum();
-            res *= 0.5;
-            result(i, j) += (res - result(i, j)) * weight;
+            vecs[0].v.col(0) = ket[p];
+            act_with_stream(stream_[1], operators_, coeffs_[1], ptrs, 0);
+            ket[p].setZero();
+            for (unsigned n = 0, N = coefs[id_1].rows(); n < N; ++n) {
+              vecs[1].cheb_iteration(n);
+              const unsigned idx_read = vecs[1].get_index();
+              const T coef = std::conj(coefs[id_1](n, i));
+              ket[p] += coef * vecs[1].v.col(idx_read).array();
+            }
           }
+          T res = (bra * ket[0] + (bra * ket[1]).conjugate()).sum();
+          res *= 0.5;
+          result(i) += (res - result(i)) * weight;
         }
         ++average;
       }
@@ -340,16 +263,3 @@ void Simulation<T, D>::store_custom_ss_two(
 
 #define instantiate(type, dim) template class Simulation<type, dim>;
 #include "instantiate.hpp"
-
-#define INSTANTIATE_GAUSS(type)                                                \
-  template type gauss_first<type>(const type, const type, const type);         \
-  template type gauss_second<type>(const type, const type, const type);        \
-  template Eigen::Array<type, -1, 1>                                           \
-  build_gaussian(const type, const type, const type, const unsigned);          \
-  template Eigen::Array<std::complex<type>, -1, 1>                             \
-  build_dgreen(const std::complex<type>, const type, const unsigned);
-
-INSTANTIATE_GAUSS(float)
-INSTANTIATE_GAUSS(double)
-INSTANTIATE_GAUSS(long double)
-#undef INSTANTIATE_GAUSS

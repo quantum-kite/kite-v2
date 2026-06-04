@@ -129,8 +129,9 @@ public:
   void custom_ss_two(
     const int,
     const int,
-    const std::array<Eigen::Array<value_type, -1, 1>, 3> &,
-    const std::vector<int> &,
+    const value_type,
+    const value_type,
+    const Eigen::Array<value_type, -1, 1> &energies_,
     const std::vector<std::vector<std::string>> &,
     const std::vector<Eigen::Array<T, -1, 1>> &,
     const std::vector<Eigen::Matrix<std::complex<double>, -1, -1>> &

@@ -984,25 +984,9 @@ class Calculation:
 
     def custom_singleshot_two(self, stream_, num_random_, num_disorder_, gamma_, sigma_, energies_):
         """Calculate the rank two (Tr[Tn Ja Tm Jb]) custom operator trace
-        Parameters
-        ----------
-        stream_: [list]
-            List of operators
-        num_moments_ : int
-            Number of Moments used for each spectral expansion.
-        num_random_ : int
-            Number of random vectors to use for the stochastic evaluation of trace.
-        num_disorder_ : int
-            Number of different disorder realisations.
-        energy: list
-            List of energies where the singleshot traces should be evaluated
-        gamma : list
-            List of spectral resolutions where the singleshot traces should be evaluated
         """
-        # Check for Equal number of moments
         if (len(stream_) != 2):
             raise ValueError("Stream has to have two streams, [A, B]")
-
         coefs       = []
         operators   = []
         for i, vertex in enumerate(stream_):
@@ -1018,7 +1002,7 @@ class Calculation:
                 coefs[i].append(operator_sequence[0]) # numerical factor
                 operators[i].append(operator_sequence[1]) # operator streams
 
-        self._custom_ss_two.append({'rank' : len(stream_), 'num_moments': [stream_[0].moment, stream_[1].moment], 'num_random' : num_random_, 'num_disorder' : num_disorder_, 'operators' : operators, 'coefs' : coefs, 'energies': energies_, 'gamma' : gamma_, 'sigma' : sigma_})
+        self._custom_ss_two.append({'rank' : len(stream_), 'num_random' : num_random_, 'num_disorder' : num_disorder_, 'operators' : operators, 'coefs' : coefs, 'energies': energies_, 'gamma' : gamma_, 'sigma' : sigma_})
 
     def local_chern(self, num_disorder_, beta_, miu_, pos_):
         self._local_chern.append({'num_disorder' : num_disorder_, 'beta' : beta_, 'miu' : miu_, 'pos' : pos_})
@@ -2222,15 +2206,14 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
         grpc_p.create_dataset('NumVectors', data = np.asarray(calculation._custom_ss_two[0]['num_random']), dtype = np.int32)
         grpc_p.create_dataset('NumDisorder', data = np.asarray(calculation._custom_ss_two[0]['num_disorder']), dtype = np.int32)
         grpc_p.create_dataset('Energies', data = np.asarray(calculation._custom_ss_two[0]['energies']).flatten(), dtype = np.float64)
-        grpc_p.create_dataset('Gamma', data = np.asarray(calculation._custom_ss_two[0]['gamma']).flatten(), dtype = np.float64)
-        grpc_p.create_dataset('Sigma', data = np.asarray(calculation._custom_ss_two[0]['sigma']).flatten(), dtype = np.float64)
+        grpc_p.create_dataset('Gamma', data = np.asarray(calculation._custom_ss_two[0]['gamma']), dtype = np.float64)
+        grpc_p.create_dataset('Sigma', data = np.asarray(calculation._custom_ss_two[0]['sigma']), dtype = np.float64)
 
         for i in range(calculation._custom_ss_two[0]['rank']):
             grpc_vtx = grpc_p.create_group(f'Vertex{i:01d}')
             grpc_vtx.create_dataset('Coefficients', data = np.asarray(calculation._custom_ss_two[0]['coefs'][i]).astype(np.complex64))
             grpc_vtx.create_dataset('NumCoefficients', data = len(calculation._custom_ss_two[0]['coefs'][i]), dtype = np.int32)
             grpc_vtx.create_dataset('Operators', data = calculation._custom_ss_two[0]['operators'][i], dtype = hp.string_dtype(encoding='utf-8'))
-            grpc_vtx.create_dataset('NumMoments', data = np.asarray(calculation._custom_ss_two[0]['num_moments'][i]), dtype = np.int32)
 
         for label, operator in calculation._custom_operator_collection.items():
             grpc_op.create_dataset(label, data = np.asarray(operator).astype(config.type))

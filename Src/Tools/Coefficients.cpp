@@ -113,6 +113,30 @@ Eigen::Array<T, -1, 1> build_fermi(const T beta_, const T mu_)
   return coef;
 }
 
+template <typename T>
+Eigen::Array<std::complex<T>, -1, 1> build_dgreen(const std::complex<T> z_)
+{
+  using cplx = std::complex<T>;
+  constexpr cplx I{0.0, 1.0};
+  // const unsigned number_polynomials = std::ceil(18.0 / z_.imag());
+  const unsigned number_polynomials = 50;
+  Eigen::Array<cplx, -1, 1> coef(number_polynomials);
+
+  const cplx sq = static_cast<T>(1.0) - z_ * z_;
+  const cplx sqr = std::sqrt(sq);
+  const cplx diff = z_ - I * sqr;
+
+  cplx current_power = 1.0;
+  coef(0) = -I * z_ * current_power / (sq * sqr);
+  current_power *= diff;
+  for (unsigned n = 1; n < number_polynomials; ++n) {
+    coef(n) = static_cast<T>(2.0) * (static_cast<T>(n) - I * z_ / sqr) *
+              current_power / sq;
+    current_power *= diff;
+  }
+  return coef;
+}
+
 #define INSTANTIATE_COEFFICIENTS(type)                                         \
   template type jackson<type>(const int, const int);                           \
   template type gauss_first<type>(const int, const type, const type);          \
@@ -124,7 +148,11 @@ Eigen::Array<T, -1, 1> build_fermi(const T beta_, const T mu_)
   template Eigen::Array<std::complex<type>, -1, 1> build_cplx_exp<type>(       \
     const type                                                                 \
   );                                                                           \
-  template Eigen::Array<type, -1, 1> build_fermi<type>(const type, const type);
+  template Eigen::Array<type, -1, 1>                                           \
+  build_fermi<type>(const type, const type);                                   \
+  template Eigen::Array<std::complex<type>, -1, 1> build_dgreen<type>(         \
+    const std::complex<type>                                                   \
+  );
 
 INSTANTIATE_COEFFICIENTS(float)
 INSTANTIATE_COEFFICIENTS(double)
