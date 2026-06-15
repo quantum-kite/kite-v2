@@ -5,19 +5,20 @@
 /*                                                         */
 /***********************************************************/
 
-
-
-
 #include "Generic.hpp"
 #include "Coordinates.hpp"
 #include "LatticeStructure.hpp"
 #include "ComplexTraits.hpp"
 #include "Random.hpp"
 #include "HamiltonianVacancies.hpp"
-template <typename T,unsigned D>
-Vacancy_Operator<T,D>::Vacancy_Operator(char * filename, LatticeStructure <D> & rr, KPMRandom <T> & rndB) : r(rr), rnd(rndB), name(filename), position(r.NStr)
+template <typename T, unsigned D>
+Vacancy_Operator<T, D>::Vacancy_Operator(
+  char *filename,
+  LatticeStructure<D> &rr,
+  KPMRandom<T> &rndB
+) :
+  r(rr), rnd(rndB), name(filename), position(r.NStr)
 {
-
 }
 
 template <typename T,unsigned D>
@@ -130,6 +131,5 @@ void Vacancy_Operator<T,D>::test_field( T * phi0 )
         }
 }
 
-
-#define instantiate(type, dim)  template struct Vacancy_Operator<type,dim>;
+#define instantiate(type, dim) template struct Vacancy_Operator<type, dim>;
 #include "instantiate.hpp"

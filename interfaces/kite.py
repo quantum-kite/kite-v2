@@ -1012,7 +1012,7 @@ class Calculation:
 
 class Configuration:
     def __init__(self, divisions=(1, 1, 1), length=(1, 1, 1), boundaries=('open', 'open', 'open'),
-                 is_complex=False, precision=1, spectrum_range=None, angles=(0, 0, 0), custom_local=False,
+                 is_complex=False, precision=1, spectrum_range=None, seed=0, angles=(0, 0, 0), custom_local=False,
                  custom_local_print=False, custom_potential=0):
         """Define basic parameters used in the calculation
 
@@ -1061,6 +1061,7 @@ class Configuration:
         self._boundaries = boundaries
         self._Twists = np.array(angles, dtype=np.float64)
         self._custom_local = custom_local
+        self._seed = seed
         self._print_custom_local = custom_local_print
         self._check_custom_potential = custom_potential
 
@@ -1154,6 +1155,11 @@ class Configuration:
     def custom_pot(self):  # -> potential
         """Return custom potential flag"""
         return self._custom_local
+
+    @property
+    def seed(self):
+        """Return seed used for calculations"""
+        return self._seed
 
     @property
     def print_custom_pot(self):  # -> potential
@@ -1439,6 +1445,8 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
     f.create_dataset('EnergyScale', data=config.energy_scale, dtype=np.float64)
     # shift factor for the hopping parameters
     f.create_dataset('EnergyShift', data=config.energy_shift, dtype=np.float64)
+    # seed for calculations
+    f.create_dataset('Seed', data=config.seed, dtype='u4')
     # Hamiltonian group
     grp = f.create_group('Hamiltonian')
     # Hamiltonian group

@@ -118,8 +118,7 @@ Eigen::Array<std::complex<T>, -1, 1> build_dgreen(const std::complex<T> z_)
 {
   using cplx = std::complex<T>;
   constexpr cplx I{0.0, 1.0};
-  // const unsigned number_polynomials = std::ceil(18.0 / z_.imag());
-  const unsigned number_polynomials = 50;
+  const unsigned number_polynomials = std::ceil(18.0 / z_.imag());
   Eigen::Array<cplx, -1, 1> coef(number_polynomials);
 
   const cplx sq = static_cast<T>(1.0) - z_ * z_;

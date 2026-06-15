@@ -15,12 +15,12 @@ template <typename T, unsigned D>
 class Hamiltonian;
 template <typename T, unsigned D>
 class KPM_Vector;
-//#include "queue.hpp"
 #include "Simulation.hpp"
 #include "SimulationGlobal.hpp"
 #include "Hamiltonian.hpp"
-template <typename T,unsigned D>
-GlobalSimulation<T,D>::GlobalSimulation( char *name ) : rglobal(name){
+template <typename T, unsigned D>
+GlobalSimulation<T, D>::GlobalSimulation(char *name) : rglobal(name)
+{
   debug_message("Entered global_simulation\n");
 
   // rglobal is an instance of Lattice Structure which contains all the information
@@ -31,20 +31,24 @@ GlobalSimulation<T,D>::GlobalSimulation( char *name ) : rglobal(name){
   // Global is an instance of GLOBAL_VARIABLES which contains global objects to be
   // shared among all threads
 
-  Global.ghosts.resize( rglobal.get_BorderSize() );
+  Global.ghosts.resize(rglobal.get_BorderSize());
   std::fill(Global.ghosts.begin(), Global.ghosts.end(), 0);
-    
-  H5::H5File * file12         = new H5::H5File(name, H5F_ACC_RDONLY);
-  get_hdf5<double>(&EnergyScale,  file12, (char *)   "/EnergyScale");
-  file12->close();
-  delete file12;
-  
+
+  std::string path;
+  H5::H5File file(name, H5F_ACC_RDONLY);
+  path = "/EnergyScale";
+  get_hdf5<double>(&EnergyScale, &file, path);
+  unsigned ss{0};
+  path = "/Seed";
+  get_hdf5<unsigned>(&ss, &file, path);
+  file.close();
+
   omp_set_num_threads(rglobal.n_threads);
   debug_message("Starting parallelization\n");
 #pragma omp parallel default(shared)
   {
-    Simulation<T,D> simul(name, Global);
-
+    const unsigned seed = (ss != 0) * 77 * (omp_get_thread_num() + 1);
+    Simulation<T, D> simul(name, Global, seed);
     simul.calc_conddc();
     simul.calc_condopt();
     simul.calc_condopt2();
@@ -52,7 +56,7 @@ GlobalSimulation<T,D>::GlobalSimulation( char *name ) : rglobal(name){
     simul.calc_DOS();
     simul.calc_wavepacket();
     simul.calc_localized_wavepacket();
-    simul.calc_LDOS(); 
+    simul.calc_LDOS();
     simul.calc_ARPES(); // fetches parameters from .h5 file and calculates ARPES
     simul.calc_ldos();
     simul.calc_custom_one();
@@ -64,7 +68,6 @@ GlobalSimulation<T,D>::GlobalSimulation( char *name ) : rglobal(name){
   }
   debug_message("Left global_simulation\n");
 }
-
 
 #define instantiate(type, dim) template class GlobalSimulation<type, dim>;
 #include "instantiate.hpp"

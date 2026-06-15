@@ -16,16 +16,26 @@
 #include "Global.hpp"
 #include "Hamiltonian.hpp"
 
-
-
 extern "C" herr_t getMembers(hid_t loc_id, const char *name, void *opdata);
 template <typename T, unsigned D>
-Hamiltonian<T,D>::Hamiltonian(char *filename,  LatticeStructure<D> & rr, GLOBAL_VARIABLES <T> & gg) : name(filename), r(rr) , Global(gg),  hr(name, r), cross_mozaic(r.NStr), hV(name, rr, rnd)
+Hamiltonian<T, D>::Hamiltonian(
+  char *filename,
+  LatticeStructure<D> &rr,
+  GLOBAL_VARIABLES<T> &gg,
+  const unsigned seed_
+) :
+  rnd(seed_),
+  name(filename),
+  r(rr),
+  Global(gg),
+  hr(name, r),
+  cross_mozaic(r.NStr),
+  hV(name, rr, rnd)
 {
 #pragma omp critical
   {
     H5::H5File *file = new H5::H5File(filename, H5F_ACC_RDONLY);
-    get_hdf5<double>(&EnergyScale, file, (char *) "/EnergyScale");
+    get_hdf5<double>(&EnergyScale, file, (char *)"/EnergyScale");
     delete file;
   }
   /* Anderson disorder */
@@ -297,6 +307,6 @@ herr_t getMembers(hid_t loc_id, const char *name, void *opdata)
   return 0;
 }
 
-#define instantiate(type, dim)               template class Hamiltonian<type,dim>;
+#define instantiate(type, dim) template class Hamiltonian<type, dim>;
 #include "instantiate.hpp"
 

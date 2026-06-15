@@ -25,15 +25,15 @@ public:
   GLOBAL_VARIABLES <T>  & Global;
   double                  EnergyScale;
   Periodic_Operator<T,D>  hr;
-  
+
   /* Anderson disorder */
   std::vector <int> orb_num;
   std::vector <int> model;
   std::vector <double> mu;
   std::vector <double> sigma;
-  
+
   std::vector<value_type> U_Orbital;
-  std::vector<value_type> U_Anderson;      // Local disorder  
+  std::vector<value_type> U_Anderson;      // Local disorder
   std::vector<int> Anderson_orb_address;
 
   // Some checks
@@ -51,7 +51,7 @@ public:
   value_type custom_pot;
   void assign_local_potential(const unsigned, const unsigned);
 
-  Hamiltonian(char *name,  LatticeStructure<D> & rr, GLOBAL_VARIABLES <T> &  );
+Hamiltonian(char *name,  LatticeStructure<D> & rr, GLOBAL_VARIABLES <T> &, const unsigned);
   void generate_disorder();
   void generate_twists();
   void build_structural_disorder();
@@ -60,8 +60,3 @@ public:
   void build_velocity(std::vector<unsigned> & components, unsigned n);
   void distribute_AndersonDisorder();
 };
-
-
-
-
-
