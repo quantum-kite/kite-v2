@@ -132,10 +132,10 @@ void Simulation<T, D>::custom_ss_two(
     value_type energy_scale;
 #pragma omp critical
     {
-      H5::H5File *file = new H5::H5File(name, H5F_ACC_RDONLY);
-      get_hdf5<value_type>(&energy_scale, file, (char *)"/EnergyScale");
-      file->close();
-      delete file;
+      H5::H5File file(name, H5F_ACC_RDONLY);
+      std::string path = "/EnergyScale";
+      get_hdf5<value_type>(&energy_scale, &file, path);
+      file.close();
     }
 #pragma omp barrier
     const unsigned num_en = energies_.size();
@@ -176,11 +176,11 @@ void Simulation<T, D>::custom_ss_two(
       h.generate_disorder();
       for (int vec = 0; vec < vectors_; ++vec) {
         h.generate_twists();
+        for (auto &vec : vecs)
+          vec.initiate_phases();
         vecs[0].initiate_vector();
         vecs[0].empty_ghosts(0);
         bra = vecs[0].v.col(0).conjugate();
-        for (auto &vec : vecs)
-          vec.initiate_phases();
         vecs[1].set_index(0);
 
         act_with_stream(stream_[0], operators_, coeffs_[0], ptrs, 0);

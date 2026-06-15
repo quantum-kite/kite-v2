@@ -47,7 +47,8 @@ GlobalSimulation<T, D>::GlobalSimulation(char *name) : rglobal(name)
   debug_message("Starting parallelization\n");
 #pragma omp parallel default(shared)
   {
-    const unsigned seed = (ss != 0) * 77 * (omp_get_thread_num() + 1);
+    const unsigned thread_id = omp_get_thread_num();
+    const unsigned seed = (ss != 0) * 2654435761 * (thread_id + 1777 * ss);
     Simulation<T, D> simul(name, Global, seed);
     simul.calc_conddc();
     simul.calc_condopt();
