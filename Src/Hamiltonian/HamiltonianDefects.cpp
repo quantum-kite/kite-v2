@@ -370,7 +370,34 @@ void Defect_Operator<T,D>::generate_disorder()  {
     
   for(std::size_t istr = 0; istr < r.NStr; istr++)
     std::sort(position[istr].begin(), position[istr].end() );
-    
+
+  // Test
+  safe_k1.resize(r.NStr);
+  safe_k2.resize(r.NStr);
+  safe_hopping_idx.resize(r.NStr);
+  safe_iv.resize(r.NStr);
+
+  Coordinates<std::size_t, D + 1> Latt_dest(r.Ld);
+  Coordinates<std::ptrdiff_t, D + 1> local1(r.Ld);
+
+  for (std::size_t istr = 0; istr < r.NStr; ++istr) {
+    for (std::size_t i = 0; i < position[istr].size(); ++i) {
+      const std::size_t ip = position[istr][i];
+      const std::size_t iv = local1.set_coord(ip).coord[D - 1];
+      for (unsigned k = 0, K = hopping.size(); k < K; ++k) {
+	const std::size_t k1 = ip + node_position[element1[k]];
+        const std::size_t k2 = ip + node_position[element2[k]];
+        Latt_dest.set_coord(k1);
+        if (r.test_ghosts(Latt_dest) == 1) {
+          safe_k1[istr].push_back(k1);
+          safe_k2[istr].push_back(k2);
+          safe_hopping_idx[istr].push_back(k);
+          safe_iv[istr].push_back(iv);
+        }
+      }
+    }
+  }
+  // End Test
   debug_message("Left generate_disorder\n");
 }
 

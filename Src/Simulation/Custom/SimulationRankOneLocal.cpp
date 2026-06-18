@@ -25,11 +25,11 @@ void Simulation<T, D>::calc_custom_one_local()
 #pragma omp master
   {
     H5::H5File *file = new H5::H5File(name, H5F_ACC_RDONLY);
-    Global.calculate_custom_density = false;
+    Global.calculate_custom_one = false;
     try {
       int dummy_variable;
       get_hdf5<int>(&dummy_variable, file, tmp);
-      Global.calculate_custom_density = true;
+      Global.calculate_custom_one = true;
     } catch (H5::Exception &e) {
       debug_message(
         "Custom One - Local: no need to calculate Custom One - Local.\n"
@@ -39,11 +39,11 @@ void Simulation<T, D>::calc_custom_one_local()
     delete file;
   }
 #pragma omp barrier
-  bool local_calculate_custom_density = false;
+  bool local_calculate_custom_one = false;
 #pragma omp critical
-  local_calculate_custom_density = Global.calculate_custom_density;
+  local_calculate_custom_one = Global.calculate_custom_one;
 #pragma omp barrier
-  if (local_calculate_custom_density) {
+  if (local_calculate_custom_one) {
 #pragma omp master
     std::cout << "Calculating Custom One - Local\n";
 #pragma omp barrier

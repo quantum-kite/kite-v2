@@ -63,6 +63,7 @@ GlobalSimulation<T, D>::GlobalSimulation(char *name) : rglobal(name)
     simul.calc_custom_one();
     simul.calc_custom_one_local();
     simul.calc_custom_two();
+    simul.calc_custom_two_local();
     simul.calc_custom_ss_two();
     simul.calc_lcm();
     simul.calc_st_lcm();

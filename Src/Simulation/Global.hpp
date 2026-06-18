@@ -49,8 +49,9 @@ struct GLOBAL_VARIABLES {
   bool calculate_condopt2;
   bool calculate_singleshot;
   bool calculate_ldos_map;
-  bool calculate_custom_density;
-  bool calculate_custom_conddc;
+  bool calculate_custom_one;
+  bool calculate_custom_two;
+  bool calculate_custom_two_local;
   bool calculate_custom_ss_two;
   bool calculate_lcm;
   bool calculate_st_lcm;

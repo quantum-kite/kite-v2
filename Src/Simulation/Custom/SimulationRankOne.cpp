@@ -160,11 +160,11 @@ void Simulation<T, D>::calc_custom_one()
 #pragma omp master
   {
     H5::H5File *file = new H5::H5File(name, H5F_ACC_RDONLY);
-    Global.calculate_custom_density = false;
+    Global.calculate_custom_one = false;
     try {
       int dummy_variable;
       get_hdf5<int>(&dummy_variable, file, tmp);
-      Global.calculate_custom_density = true;
+      Global.calculate_custom_one = true;
     } catch (H5::Exception &e) {
       debug_message("Custom Density: no need to calculate Custom One.\n");
     }
@@ -172,11 +172,11 @@ void Simulation<T, D>::calc_custom_one()
     delete file;
   }
 #pragma omp barrier
-  bool local_calculate_custom_density = false;
+  bool local_calculate_custom_one = false;
 #pragma omp critical
-  local_calculate_custom_density = Global.calculate_custom_density;
+  local_calculate_custom_one = Global.calculate_custom_one;
 #pragma omp barrier
-  if (local_calculate_custom_density) {
+  if (local_calculate_custom_one) {
 #pragma omp master
     std::cout << "Calculating Custom One\n";
 #pragma omp barrier
@@ -279,7 +279,7 @@ void Simulation<T, D>::custom_one(
 }
 
 // template <typename T, unsigned D>
-// void Simulation<T,D>::custom_density(
+// void Simulation<T,D>::custom_one(
 //   const int number_moments_,
 //   const int number_samples_,
 //   const int number_random_vectors_,
@@ -316,7 +316,7 @@ void Simulation<T, D>::custom_one(
 //       gamma.segment(m, 2) += tmp;
 //     }
 //   }
-//   store_custom_density(gamma, "/Calculation/CustomDensity/Gamma");
+//   store_custom_one(gamma, "/Calculation/CustomDensity/Gamma");
 // }
 
 template <typename T, unsigned D>

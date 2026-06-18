@@ -539,6 +539,11 @@ class Calculation:
         return self._custom_two
 
     @property
+    def get_custom_two_local(self):
+        """Returns the local contributions to the trace with custom operators."""
+        return self._custom_two_local
+
+    @property
     def get_local_chern(self):
         """Returns the requested Local Chern number"""
         return self._local_chern
@@ -575,6 +580,7 @@ class Calculation:
         self._custom_one                     = []
         self._custom_one_local               = []
         self._custom_two                     = []
+        self._custom_two_local               = []
         self._custom_ss_two                  = []
         self._local_chern_map                = []
         self._local_chern                    = []
@@ -980,6 +986,35 @@ class Calculation:
                 operators[i].append(operator_sequence[1]) # operator streams
 
         self._custom_two.append({'rank' : len(stream_), 'num_moments': [stream_[0].moment, stream_[1].moment], 'num_random' : num_random_, 'num_disorder' : num_disorder_, 'operators' : operators, 'coefs' : coefs, 'temperature': temperature_, 'num_points' : num_points_})
+
+
+    def custom_two_local(self, stream_, positions_):
+        """Calculate the rank two (Tr[Tn Ja Tm Jb]) custom operator trace
+        Parameters
+        ----------
+        stream_: [list]
+            List of operators
+        positions_: array(number of positions, D + 1)
+            List of positions
+        """
+        if (len(stream_) != 2):
+            raise ValueError("Stream has to have two streams, [A, B]")
+        coefs       = []
+        operators   = []
+        for i, vertex in enumerate(stream_):
+            if not vertex.stream:
+                raise ValueError("The vertex cannot be empty.")
+            coefs.append([])
+            operators.append([])
+            for operator_sequence in vertex.stream:
+                if not isinstance(operator_sequence, list):
+                    raise TypeError("The operator sequence must be a list")
+                if not isinstance(operator_sequence[0], numbers.Number):
+                    raise ValueError("The first element must be a numeric type")
+                coefs[i].append(operator_sequence[0]) # numerical factor
+                operators[i].append(operator_sequence[1]) # operator streams
+
+        self._custom_two_local.append({'rank' : len(stream_), 'num_moments': [stream_[0].moment, stream_[1].moment], 'positions' : positions_, 'operators' : operators, 'coefs' : coefs})
 
 
     def custom_singleshot_two(self, stream_, num_random_, num_disorder_, gamma_, sigma_, energies_):
@@ -2204,6 +2239,21 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
             grpc_vtx.create_dataset('NumCoefficients', data = len(calculation._custom_two[0]['coefs'][i]), dtype = np.int32)
             grpc_vtx.create_dataset('Operators', data = calculation._custom_two[0]['operators'][i], dtype = hp.string_dtype(encoding='utf-8'))
             grpc_vtx.create_dataset('NumMoments', data = np.asarray(calculation._custom_two[0]['num_moments'][i]), dtype = np.int32)
+
+        for label, operator in calculation._custom_operator_collection.items():
+            grpc_op.create_dataset(label, data = np.asarray(operator).astype(config.type))
+
+
+    if calculation.get_custom_two_local:
+        grpc_p = grpc.create_group('CustomTwoLocal')
+        grpc_p.create_dataset('Positions', data = calculation._custom_two_local[0]['positions'], dtype = np.int32)
+        grpc_op = grpc.create_group('CustomTwoLocal/CustomOperators')
+        for i in range(calculation._custom_two_local[0]['rank']):
+            grpc_vtx = grpc_p.create_group(f'Vertex{i:01d}')
+            grpc_vtx.create_dataset('Coefficients', data = np.asarray(calculation._custom_two_local[0]['coefs'][i]).astype(np.complex64))
+            grpc_vtx.create_dataset('NumCoefficients', data = len(calculation._custom_two_local[0]['coefs'][i]), dtype = np.int32)
+            grpc_vtx.create_dataset('Operators', data = calculation._custom_two_local[0]['operators'][i], dtype = hp.string_dtype(encoding='utf-8'))
+            grpc_vtx.create_dataset('NumMoments', data = np.asarray(calculation._custom_two_local[0]['num_moments'][i]), dtype = np.int32)
 
         for label, operator in calculation._custom_operator_collection.items():
             grpc_op.create_dataset(label, data = np.asarray(operator).astype(config.type))

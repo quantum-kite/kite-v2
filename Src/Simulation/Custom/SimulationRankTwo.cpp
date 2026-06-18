@@ -25,11 +25,11 @@ void Simulation<T, D>::calc_custom_two()
 #pragma omp master
   {
     H5::H5File *file = new H5::H5File(name, H5F_ACC_RDONLY);
-    Global.calculate_custom_conddc = false;
+    Global.calculate_custom_two = false;
     try {
       int dummy_variable;
       get_hdf5<int>(&dummy_variable, file, tmp);
-      Global.calculate_custom_conddc = true;
+      Global.calculate_custom_two = true;
     } catch (H5::Exception &e) {
       debug_message("CustomTwo: no need to calculate Custom Two.\n");
     }
@@ -37,11 +37,11 @@ void Simulation<T, D>::calc_custom_two()
     delete file;
   }
 #pragma omp barrier
-  bool local_calculate_custom_conddc = false;
+  bool local_calculate_custom_two = false;
 #pragma omp critical
-  local_calculate_custom_conddc = Global.calculate_custom_conddc;
+  local_calculate_custom_two = Global.calculate_custom_two;
 #pragma omp barrier
-  if (local_calculate_custom_conddc) {
+  if (local_calculate_custom_two) {
 #pragma omp master
     std::cout << "Calculating Custom Two\n";
 #pragma omp barrier
@@ -129,13 +129,13 @@ void Simulation<T, D>::custom_two(
   unsigned average = 0;
 
   for (int rand_v = 0; rand_v < random_vectors_; ++rand_v) {
-    h.generate_twists();
     kpm_trc_0.initiate_vector();
     kpm_trc_0.Exchange_Boundaries();
     for (int disorder = 0; disorder < samples_; ++disorder) {
       h.generate_disorder();
-      for (unsigned i = 0, I = vectors.size(); i < I; ++i)
-        vectors[i]->initiate_phases();
+      h.generate_twists();
+      for (auto &vec : vectors)
+        vec->initiate_phases();
       kpm_trc_2.initiate_phases();
       kpm_trc_3.initiate_phases();
       kpm_trc_1.set_index(0);

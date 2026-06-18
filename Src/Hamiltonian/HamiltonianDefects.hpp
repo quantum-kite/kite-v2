@@ -33,7 +33,14 @@ struct Defect_Operator: public ComplexTraits<T> {
   Eigen::Array<T, -1, -1>        new_hopping;
   KPMRandom <T>                        & rnd;
   std::vector <int>          positions_fixed;
-  
+
+  // Test
+  std::vector<std::vector<std::size_t>> safe_k1;
+  std::vector<std::vector<std::size_t>> safe_k2;
+  std::vector<std::vector<unsigned>>    safe_hopping_idx;
+  std::vector<std::vector<std::size_t>> safe_iv;
+  // End test
+
   Defect_Operator(Hamiltonian<T,D> &,  std::string & defect, H5::H5File *file);
   void generate_disorder();
   void build_velocity(std::vector<unsigned> & components, unsigned n);

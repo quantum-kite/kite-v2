@@ -55,7 +55,7 @@ bool KPM_VectorBasis<T,D>::aux_test(T & x, T & y ) {
 }
 
 template <typename T, unsigned D>
-template <unsigned MULT> 
+template <unsigned MULT>
 void KPM_VectorBasis<T,D>::Multiply() {
   vverbose_message("Entered Multiply");
   typedef KPM_Vector<T,D> myvector;
@@ -75,7 +75,7 @@ template<typename T, unsigned D>
 void KPM_VectorBasis<T,D>::Velocity(KPM_Vector<T,D> * kpm_final,  std::vector<std::vector<unsigned>> & indices, int pos)
 {
   // kpm_final shoud be different from this instance
-  // 
+  //
   KPM_Vector<T,D>* child = static_cast<KPM_Vector<T,D>*>(this);
   switch(indices.at(pos).size())
     {
@@ -83,7 +83,7 @@ void KPM_VectorBasis<T,D>::Velocity(KPM_Vector<T,D> * kpm_final,  std::vector<st
       break;
     default:
       {
-        child->inc_index(); 
+        child->inc_index();
         child->template KPM_MOTOR<0u, true>(kpm_final, static_cast<unsigned>(pos));
         child->dec_index();
       }
@@ -115,45 +115,85 @@ void KPM_VectorBasis<T,D>::cheb_iteration(unsigned n)
     }
 }
 
-template <typename T,unsigned D> 
-template <unsigned MULT, bool VELOCITY>  
-void KPM_VectorBasis<T,D>::multiply_defect(std::size_t istr, T* & phi0, T* & phiM1, unsigned axis)
+// Test
+template <typename T, unsigned D>
+template <unsigned MULT, bool VELOCITY>
+void KPM_VectorBasis<T, D>::multiply_defect(
+  std::size_t istr,
+  T *&phi0,
+  T *&phiM1,
+  unsigned axis
+)
 {
-  Coordinates<std::ptrdiff_t, D + 1> local1(simul.r.Ld);
-  
-  for(auto id = h.hd.begin(); id != h.hd.end(); id++)
-    for(std::size_t i = 0; i <  id->position.at(istr).size(); i++)
-      {
-        
-        // Add deffect Hoppings between lattice sites 
-        std::size_t ip = id->position.at(istr)[i];
-        std::size_t iv = local1.set_coord(ip).coord[D - 1];
-        for(unsigned k = 0; k < id->hopping.size(); k++)
-          {
-            std::size_t k1 = ip + id->node_position[id->element1[k]];
-            std::size_t k2 = ip + id->node_position[id->element2[k]];
-            
-            if( VELOCITY )
-              phi0[k1] += value_type(MULT + 1) * id->v.at(axis).at(k) * id-> new_hopping(k, iv) * phiM1[k2] ;
-            else
-              phi0[k1] += value_type(MULT + 1) * id->new_hopping(k, iv) * phiM1[k2] ;
-          }
-        // Add deffect lattice local energies  
-        if(!VELOCITY)
-          for(std::size_t k = 0; k < id->U.size(); k++)
-            {
-              std::size_t k1 = ip + id->node_position[id->element[k]];
-              phi0[k1] += value_type(MULT + 1) * id->U[k] * phiM1[k1];
-            }        
-      }
+  constexpr value_type order = MULT + 1;
+  for (const auto &id : h.hd) {
+    for (std::size_t idx = 0, Idx = id.safe_k1[istr].size(); idx < Idx; ++idx) {
+      const std::size_t k1 = id.safe_k1[istr][idx];
+      const std::size_t k2 = id.safe_k2[istr][idx];
+      const unsigned k = id.safe_hopping_idx[istr][idx];
+      const std::size_t iv = id.safe_iv[istr][idx];
 
+      const T tmp = order * id.new_hopping(k, iv) * phiM1[k2];
+      const value_type vel = VELOCITY ? id.v[axis][k] : 1.0;
+      phi0[k1] += vel * tmp;
+    }
+    if constexpr (!VELOCITY) {
+      for (const auto &ip : id.position[istr]) {
+        for (std::size_t i = 0, I = id.element.size(); i < I; ++i) {
+          const std::size_t k1 = ip + id.node_position[id.element[i]];
+          phi0[k1] += order * id.U[i] * phiM1[k1];
+        }
+      }
+    }
+  }
 }
+
+// template <typename T, unsigned D>
+// template <unsigned MULT, bool VELOCITY>
+// void KPM_VectorBasis<T, D>::multiply_defect(
+//   std::size_t istr,
+//   T *&phi0,
+//   T *&phiM1,
+//   unsigned axis
+// )
+// {
+//   Coordinates<std::ptrdiff_t, D + 1> local1(simul.r.Ld);
+//   for (auto id = h.hd.begin(); id != h.hd.end(); id++)
+//     for (std::size_t i = 0; i < id->position.at(istr).size(); i++) {
+//       // Add deffect Hoppings between lattice sites
+//       std::size_t ip = id->position.at(istr)[i];
+//       std::size_t iv = local1.set_coord(ip).coord[D - 1];
+//       for (unsigned k = 0; k < id->hopping.size(); k++) {
+//         std::size_t k1 = ip + id->node_position[id->element1[k]];
+//         std::size_t k2 = ip + id->node_position[id->element2[k]];
+
+//         if (VELOCITY) {
+//           phi0[k1] += value_type(MULT + 1) * id->v.at(axis).at(k) *
+//                       id->new_hopping(k, iv) * phiM1[k2];
+//         } else {
+//           // if (k1 == 46 && k2 == 109) {
+//           //   std::cout << ip << " " << id->node_position[id->element1[k]] << " " << id->node_position[id->element2[k]]
+//           //             << std::endl;
+//           // }
+//           phi0[k1] += value_type(MULT + 1) * id->new_hopping(k, iv) * phiM1[k2];
+//           // if (k1 == 46 && k2 == 109) {
+//           //   std::cout << "Aft: " << phiM1[k2] << " " << phi0[k1] << std::endl;
+//           // }
+//         }
+//       }
+//       // Add deffect lattice local energies
+//       if (!VELOCITY)
+//         for (std::size_t k = 0; k < id->U.size(); k++) {
+//           std::size_t k1 = ip + id->node_position[id->element[k]];
+//           phi0[k1] += value_type(MULT + 1) * id->U[k] * phiM1[k1];
+//         }
+//     }
+// }
 
 template <typename T,unsigned D>
 void KPM_VectorBasis<T,D>::build_defect_planewave(Eigen::Matrix<double,-1,1> & k , Eigen::Matrix<T,-1,1> & weight )
 {
 }
-
 
 // Instantiate KPM_VectorBasis
 #define instantiate(type, dim)               template class KPM_VectorBasis <type,dim>; \
