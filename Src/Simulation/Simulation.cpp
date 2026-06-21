@@ -25,13 +25,14 @@ template <typename T, unsigned D>
 Simulation<T, D>::Simulation(
   char *filename,
   GLOBAL_VARIABLES<T> &Global1,
-  const unsigned seed_
+  const unsigned seed_v_,
+  const unsigned seed_h_
 ) :
-  rnd(seed_),
+  rnd(seed_v_),
   r(filename),
   Global(Global1),
   name(filename),
-  h(name, r, Global1, seed_)
+  h(name, r, Global1, seed_h_)
 {
   // Initializes the Hamiltonian h, an instance of Lattice Structure r,
   // and an instance of GLOBAL_VARIABLES Global1

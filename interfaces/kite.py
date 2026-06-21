@@ -1096,7 +1096,8 @@ class Configuration:
         self._boundaries = boundaries
         self._Twists = np.array(angles, dtype=np.float64)
         self._custom_local = custom_local
-        self._seed = seed
+        self._seed_h = seed_h
+        self._seed_v = seed_v
         self._print_custom_local = custom_local_print
         self._check_custom_potential = custom_potential
 
@@ -1192,9 +1193,14 @@ class Configuration:
         return self._custom_local
 
     @property
-    def seed(self):
+    def seed_h(self):
         """Return seed used for calculations"""
-        return self._seed
+        return self._seed_h
+
+    @property
+    def seed_v(self):
+        """Return seed used for calculations"""
+        return self._seed_v
 
     @property
     def print_custom_pot(self):  # -> potential
@@ -1480,8 +1486,10 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
     f.create_dataset('EnergyScale', data=config.energy_scale, dtype=np.float64)
     # shift factor for the hopping parameters
     f.create_dataset('EnergyShift', data=config.energy_shift, dtype=np.float64)
-    # seed for calculations
-    f.create_dataset('Seed', data=config.seed, dtype='u4')
+    # seed for hamiltonian
+    f.create_dataset('Seed0', data=config.seed_h, dtype='u4')
+    # seed for random vectors
+    f.create_dataset('Seed1', data=config.seed_v, dtype='u4')
     # Hamiltonian group
     grp = f.create_group('Hamiltonian')
     # Hamiltonian group

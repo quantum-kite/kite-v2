@@ -38,18 +38,21 @@ GlobalSimulation<T, D>::GlobalSimulation(char *name) : rglobal(name)
   H5::H5File file(name, H5F_ACC_RDONLY);
   path = "/EnergyScale";
   get_hdf5<double>(&EnergyScale, &file, path);
-  unsigned ss{0};
-  path = "/Seed";
-  get_hdf5<unsigned>(&ss, &file, path);
+  unsigned s0;
+  path = "/Seed0";
+  get_hdf5<unsigned>(&s0, &file, path);
+  unsigned s1;
+  path = "/Seed1";
+  get_hdf5<unsigned>(&s1, &file, path);
   file.close();
-
   omp_set_num_threads(rglobal.n_threads);
   debug_message("Starting parallelization\n");
 #pragma omp parallel default(shared)
   {
     const unsigned thread_id = omp_get_thread_num();
-    const unsigned seed = (ss != 0) * 2654435761 * (thread_id + 1777 * ss);
-    Simulation<T, D> simul(name, Global, seed);
+    const unsigned seed_h = (s0 != 0) * 2654435761 * (thread_id + 8191 * s0);
+    const unsigned seed_v = (s1 != 0) * 3242174893 * (thread_id + 7919 * s1);
+    Simulation<T, D> simul(name, Global, seed_v, seed_h);
     simul.calc_conddc();
     simul.calc_condopt();
     simul.calc_condopt2();

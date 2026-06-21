@@ -19,7 +19,7 @@ public:
   Hamiltonian<T, D> h;
   std::unordered_map<char, unsigned> components_map;
 
-  Simulation(char *, GLOBAL_VARIABLES<T> &, const unsigned);
+  Simulation(char *, GLOBAL_VARIABLES<T> &, const unsigned, const unsigned);
 
   //void Measure_Gamma(measurement_queue);
 
