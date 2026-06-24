@@ -18,7 +18,6 @@ class KPM_Vector;
 template <typename T, unsigned D>
 void Simulation<T, D>::calc_custom_two_local()
 {
-  std::cout << "Hi" << std::endl;
   debug_message("Entered Simulation::calc_custom_two\n");
   std::string base_grp = "/Calculation/CustomTwoLocal/";
   std::string tmp = base_grp + "Vertex0/NumMoments";
@@ -118,8 +117,6 @@ void Simulation<T, D>::custom_two_local(
   }
   Coordinates<std::size_t, D + 1> global(r.Lt);
   Eigen::Matrix<T, MEMORY, MEMORY> tmp;
-  Eigen::Array<T, -1, -1> gamma(positions_.rows(), size_gamma);
-
   KPM_Vector<T, D> kpm_trc_0(1, *this);
   KPM_Vector<T, D> kpm_trc_1(2, *this);
   std::array<KPM_Vector<T, D> *, 2> vectors{&kpm_trc_0, &kpm_trc_1};
@@ -134,7 +131,8 @@ void Simulation<T, D>::custom_two_local(
   kpm_trc_3.initiate_phases();
 
   for (unsigned p = 0, P = positions_.rows(); p < P; ++p) {
-    const Eigen::Array<unsigned, 1, 3> pos = positions_.row(p);
+    Eigen::Array<T, -1, -1> gamma(1, size_gamma);
+    const Eigen::Array<unsigned, 1, D + 1> pos = positions_.row(p);
     if constexpr (D == 2)
       global.set({pos(1), pos(0), pos(2)});
     else
@@ -164,23 +162,26 @@ void Simulation<T, D>::custom_two_local(
         for (unsigned j = 0; j < MEMORY; j++) {
           const unsigned idx = m + M * (n + j);
           for (unsigned i = 0; i < MEMORY; i++)
-            gamma(p, idx + i) = tmp(i, j);
+            gamma(idx + i) = tmp(i, j);
         }
       }
     }
     vectors[0] = &kpm_trc_0;
     vectors[1] = &kpm_trc_1;
+    store_custom_two_local(p, number_moments_, pos, gamma);
   }
-  store_custom_two_local(number_moments_, gamma);
 }
 
 template <typename T, unsigned D>
 void Simulation<T, D>::store_custom_two_local(
+  const unsigned p_,
   const std::array<unsigned, 2> &number_moments_,
+  const Eigen::Array<unsigned, 1, D + 1> &pos_,
   const Eigen::Array<T, -1, -1> &gamma_
 )
 {
-  const std::string base_grp = "/Calculation/CustomTwoLocal/Matrices/";
+  const std::string base_grp =
+    "/Calculation/CustomTwoLocal/p_" + std::to_string(p_) + "/";
 #pragma omp master
   {
     H5::H5File file(name, H5F_ACC_RDWR);
@@ -192,32 +193,32 @@ void Simulation<T, D>::store_custom_two_local(
     }
   }
 #pragma omp barrier
-  for (unsigned i = 0, I = gamma_.rows(); i < I; ++i) {
-    Eigen::Array<T, -1, -1> general_gamma = Eigen::Map<const Eigen::Array<
-      T, -1, -1>>(gamma_.row(i).data(), number_moments_[1], number_moments_[0]);
+  Eigen::Array<T, -1, -1> general_gamma = Eigen::Map<const Eigen::Array<
+    T, -1, -1>>(gamma_.data(), number_moments_[1], number_moments_[0]);
 #pragma omp master
-    {
-      Global.general_gamma.resize(general_gamma.rows(), general_gamma.cols());
-      Global.general_gamma.setZero();
-    }
+  {
+    Global.general_gamma.resize(general_gamma.rows(), general_gamma.cols());
+    Global.general_gamma.setZero();
+  }
 #pragma omp barrier
 #pragma omp critical
-    {
-      if (number_moments_[0] == number_moments_[1])
-        Global.general_gamma.matrix() +=
-          0.5 * (general_gamma.matrix() + general_gamma.matrix().adjoint());
-      else
-        Global.general_gamma.matrix() += general_gamma.matrix();
-    }
+  {
+    if (number_moments_[0] == number_moments_[1])
+      Global.general_gamma.matrix() +=
+        0.5 * (general_gamma.matrix() + general_gamma.matrix().adjoint());
+    else
+      Global.general_gamma.matrix() += general_gamma.matrix();
+  }
 #pragma omp barrier
 #pragma omp master
-    {
-      const std::string nn = base_grp + "Gamma" + std::to_string(i);
-      H5::H5File file(name, H5F_ACC_RDWR);
-      write_hdf5(Global.general_gamma, &file, nn);
-    }
-#pragma omp barrier
+  {
+    const std::string np = base_grp + "Pos";
+    H5::H5File file(name, H5F_ACC_RDWR);
+    write_hdf5(Eigen::Array<unsigned, -1, -1>(pos_), &file, np);
+    const std::string ng = base_grp + "Gamma";
+    write_hdf5(Global.general_gamma, &file, ng);
   }
+#pragma omp barrier
   debug_message("Left store_gamma\n");
 }
 

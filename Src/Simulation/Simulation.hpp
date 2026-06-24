@@ -189,14 +189,15 @@ public:
     const std::vector<Eigen::Matrix<std::complex<double>, -1, -1>> &
   );
   void store_custom_two_local(
+    const unsigned,
     const std::array<unsigned, 2> &,
+    const Eigen::Array<unsigned, 1, D + 1> &,
     const Eigen::Array<T, -1, -1> &
   );
   // LDoS
   void calc_ldos();
   void ldos(const int, const value_type, const value_type, const int);
   void store_ldos(const Eigen::Array<value_type, -1, -1> &);
-  void store_custom_two_local(const Eigen::Matrix<T, -1, -1> &);
 
   // LCM
   void calc_lcm();
