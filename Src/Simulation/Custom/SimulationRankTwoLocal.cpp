@@ -203,11 +203,7 @@ void Simulation<T, D>::store_custom_two_local(
 #pragma omp barrier
 #pragma omp critical
   {
-    if (number_moments_[0] == number_moments_[1])
-      Global.general_gamma.matrix() +=
-        0.5 * (general_gamma.matrix() + general_gamma.matrix().adjoint());
-    else
-      Global.general_gamma.matrix() += general_gamma.matrix();
+    Global.general_gamma.matrix() += general_gamma.matrix();
   }
 #pragma omp barrier
 #pragma omp master
