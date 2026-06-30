@@ -264,6 +264,11 @@ void KPM_Vector <T, 2>::build_site(unsigned long pos){
 #pragma omp barrier
  v.setZero();
  v(thread_coords_gh.index,0) = T(correct_thread);
+ for (unsigned i = 0; i < r.NStr; i++) {
+   auto &vv = h.hV.position.at(i);
+   for (unsigned j = 0; j < vv.size(); j++)
+     v(vv.at(j), index) = 0.;
+ }
 }
 
 template <typename T>
