@@ -5,6 +5,9 @@
 /*                                                         */
 /***********************************************************/
 
+#ifndef GENERIC_H_
+#define GENERIC_H_
+
 #define EIGEN_DONT_PARALLELIZE
 #define EIGEN_STACK_ALLOCATION_LIMIT 0
 
@@ -94,5 +97,7 @@
 #define debug_message(VAR) 
 #endif
 #else
-#define debug_message(VAR) 
+#define debug_message(VAR)
+#endif
+
 #endif

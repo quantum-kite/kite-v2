@@ -4,9 +4,10 @@
 /*  A. Ferreira, S. M. Joao, J. V. Lopes, T. G. Rappoport  */
 /*                                                         */
 /***********************************************************/
+#ifndef COORDINATES_H_
+#define COORDINATES_H_
 
 #include "Generic.hpp"
-
 
 template <typename T, unsigned D>
 struct Coordinates;
@@ -40,7 +41,4 @@ struct Coordinates {
   Coordinates<T,D> & subtract( Coordinates<T,D> & x);  
 };
 
-
-
-
-
+#endif

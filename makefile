@@ -8,6 +8,9 @@ EIGEN_INC := -I/usr/local/include/eigen3
 # HDF5-Flags
 HDF5_LIBS   := -lhdf5_cpp -lhdf5
 
+# FFTW3
+FFT_LIBS   := -lfftw3f -lfftw3 -lfftw3l
+
 CPPFLAGS := $(EIGEN_INC) \
 	-Itools/Src \
 	-ISrc \
@@ -20,7 +23,7 @@ CPPFLAGS := $(EIGEN_INC) \
 	$(HDF5_FLAGS)
 
 CXXFLAGS := -std=c++17 -O3 -fopenmp
-LDFLAGS  := -fopenmp $(HDF5_LIBS)
+LDFLAGS  := -fopenmp $(HDF5_LIBS) $(FFT_LIBS)
 
 SRC_KITEX := $(shell find Src -name '*.cpp')
 SRC_TOOLS := $(shell find tools/Src -name '*.cpp')

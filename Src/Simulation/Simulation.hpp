@@ -4,6 +4,9 @@
 /*  A. Ferreira, S. M. Joao, J. V. Lopes, T. G. Rappoport  */
 /*                                                         */
 /***********************************************************/
+#ifndef SIMULATION_H_
+#define SIMULATION_H_
+#include "FFT/GlobalFFT.hpp"
 
 template <typename T, unsigned D>
 class Simulation : public ComplexTraits<T> {
@@ -198,6 +201,16 @@ public:
   void calc_ldos();
   void ldos(const int, const value_type, const value_type, const int);
   void store_ldos(const Eigen::Array<value_type, -1, -1> &);
+  // Spectral Function map
+  void calc_spectral(GlobalFFT<value_type> &);
+  void spectral(
+    const unsigned,
+    const value_type,
+    const value_type,
+    const unsigned,
+    GlobalFFT<value_type> &
+  );
+  void store_spectral(const Eigen::Array<value_type, -1, -1> &);
 
   // LCM
   void calc_lcm();
@@ -240,3 +253,5 @@ public:
     const std::size_t num_global_probes
   );
 };
+
+#endif

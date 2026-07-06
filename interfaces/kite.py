@@ -486,6 +486,11 @@ class Calculation:
         return self._ldos_map
 
     @property
+    def get_spectral_map(self):
+        """Returns the requested LDOS functions."""
+        return self._spectral_map
+
+    @property
     def get_arpes(self):
         """Returns the requested ARPES functions."""
         return self._arpes
@@ -568,6 +573,7 @@ class Calculation:
         self._dos                            = []
         self._ldos                           = []
         self._ldos_map                       = []
+        self._spectral_map                   = []
         self._arpes                          = []
         self._conductivity_dc                = []
         self._conductivity_optical           = []
@@ -650,6 +656,25 @@ class Calculation:
 
         self._ldos_map.append({'energy': energy_, 'sigma': sigma_, 'vectors': vectors_, 'coef_id': coef_id})
 
+    def spectral_map(self, energy_, sigma_, vectors_, coef = "gaussian"):
+        """Calculate the local density of states as a function of energy
+
+        Parameters
+        ----------
+        energy : float
+            Target energy where the map is evaluated.
+        sigma : float
+            Width of the Gaussian that approximates the Dirac-Delta
+        num_vectors : int
+            Number of different random vectors.
+        kernel : string
+            Choose the coefficients to be used. These will be translated into numbers which will be read by c++.
+        """
+
+        coef_dict = {"gaussian": 0, "window": 1}
+        coef_id = coef_dict[coef.lower()]
+
+        self._spectral_map.append({'energy': energy_, 'sigma': sigma_, 'vectors': vectors_, 'coef_id': coef_id})
 
     def arpes(self, k_vector, weight, num_moments, num_disorder=1):
         """Calculate the spectral contribution for given k-points and weights.
@@ -1835,6 +1860,13 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
         grpc_p.create_dataset('Sigma', data = np.asarray(calculation._ldos_map[0]['sigma']), dtype = np.float64)
         grpc_p.create_dataset('NumVectors', data = np.asarray(calculation._ldos_map[0]['vectors']), dtype = np.int32)
         grpc_p.create_dataset('Coef_ID', data = np.asarray(calculation._ldos_map[0]['coef_id']), dtype = np.int32)
+
+    if calculation.get_spectral_map:
+        grpc_p = grpc.create_group('spectral_map')
+        grpc_p.create_dataset('Energy', data = np.asarray(calculation._spectral_map[0]['energy']), dtype = np.float64)
+        grpc_p.create_dataset('Sigma', data = np.asarray(calculation._spectral_map[0]['sigma']), dtype = np.float64)
+        grpc_p.create_dataset('NumVectors', data = np.asarray(calculation._spectral_map[0]['vectors']), dtype = np.int32)
+        grpc_p.create_dataset('Coef_ID', data = np.asarray(calculation._spectral_map[0]['coef_id']), dtype = np.int32)
 
     if calculation.get_arpes:
         grpc_p = grpc.create_group('arpes')

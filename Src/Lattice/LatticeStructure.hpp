@@ -5,6 +5,8 @@
 /*                                                         */
 /***********************************************************/
 
+#ifndef LATTICE_STRUCTURE_H_
+#define LATTICE_STRUCTURE_H_
 
 template <unsigned D>
 struct LatticeStructure {
@@ -50,3 +52,4 @@ public:
   
 };
 
+#endif

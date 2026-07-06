@@ -46,6 +46,11 @@ GlobalSimulation<T, D>::GlobalSimulation(char *name) : rglobal(name)
   get_hdf5<unsigned>(&s1, &file, path);
   file.close();
   omp_set_num_threads(rglobal.n_threads);
+
+  using value_type = typename extract_value_type<T>::value_type;
+  GlobalFFT<value_type> global_fft;
+  global_fft.allocate(rglobal.Sizet);
+
   debug_message("Starting parallelization\n");
 #pragma omp parallel default(shared)
   {
@@ -63,6 +68,7 @@ GlobalSimulation<T, D>::GlobalSimulation(char *name) : rglobal(name)
     simul.calc_LDOS();
     simul.calc_ARPES(); // fetches parameters from .h5 file and calculates ARPES
     simul.calc_ldos();
+    simul.calc_spectral(global_fft);
     simul.calc_custom_one();
     simul.calc_custom_one_local();
     simul.calc_custom_two();

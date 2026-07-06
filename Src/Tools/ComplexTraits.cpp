@@ -93,4 +93,3 @@ template struct ComplexTraits<long double>;
 template struct ComplexTraits<std::complex<double>>;
 template struct ComplexTraits<std::complex<float>>;
 template struct ComplexTraits<std::complex<long double>>;
-
