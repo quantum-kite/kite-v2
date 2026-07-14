@@ -14,11 +14,8 @@
 
 __all__ = ["main"]
 
-import sys
-sys.path.append("..")
-
-from interfaces import kite
-from interfaces import lattice as latt
+import kite
+from kite import lattice as latt
 import numpy as np
 
 filename = "Lat_Weyl.h5"

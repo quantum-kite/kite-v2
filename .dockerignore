@@ -1,1 +1,8 @@
 .git
+build/
+build-verify/
+docs/site/
+*.h5
+__pycache__/
+*.pyc
+maintenance/

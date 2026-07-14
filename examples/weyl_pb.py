@@ -14,10 +14,7 @@
 
 __all__ = ["main"]
 
-import sys
-sys.path.append("..")
-
-from interfaces import kite
+import kite
 import pybinding as pb
 import numpy as np
 

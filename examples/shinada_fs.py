@@ -1,9 +1,6 @@
-import sys
-sys.path.append("..")
-
-from interfaces import kite
-from interfaces import custom
-from interfaces import lattice as latt
+import kite
+from kite import custom
+from kite import lattice as latt
 import numpy as np
 
 def cuprate(t, r, t_prime):

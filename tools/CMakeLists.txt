@@ -1,7 +1,10 @@
 cmake_minimum_required(VERSION 3.9)
-set(CMAKE_C_COMPILER "gcc")
-set(CMAKE_CXX_COMPILER "g++") 
 set(CMAKE_CXX_STANDARD 17)
+
+# See root CMakeLists.txt for why the compiler isn't hardcoded here.
+if(DEFINED ENV{CONDA_PREFIX})
+  list(APPEND CMAKE_PREFIX_PATH $ENV{CONDA_PREFIX})
+endif()
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
@@ -25,7 +28,6 @@ set(HDF5_USE_STATIC_LIBRARIES ON)
 MESSAGE(STATUS "Hdf5 Library:  ${HDF5_CXX_HL_LIBRARIES}")
 MESSAGE(STATUS "Hdf5Hl Library:  ${HDF5_CXX_LIBRARIES}")
 MESSAGE(STATUS "Compiler:  ${CMAKE_CXX_COMPILER}")
-include_directories(~/include/)
 
 
 option(USE_SYSTEM_EIGEN "Use the system-installed Eigen3 instead of the bundled copy in third_party/eigen3" OFF)

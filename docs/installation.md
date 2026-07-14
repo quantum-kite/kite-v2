@@ -1,6 +1,8 @@
-KITE is written in C++ with code optimized for large systems and optimal multithreading performance. 
-[Pybinding][pybinding] is KITE's default interface, 
-which is primarily used to build the configuration (HDF5) file for [KITEx].
+KITE is written in C++ with code optimized for large systems and optimal multithreading performance.
+Lattices are specified from Python and turned into the configuration (HDF5) file that [KITEx] reads.
+The default, dependency-free way to do this is KITE's own `#!python kite.lattice.Lattice` class
+(see [`#!python kite.py`][kitepython]); [Pybinding][pybinding] is also supported as an optional interface
+for users who already have lattices defined that way — install it with `#!bash pip install "quantum-kite[pybinding]"`.
 
 The KITE team endeavours to assist researchers run KITE on UNIX-based systems, such as GNU/Linux and Mac OS X.
 Thus, feel free to contact any of our team members if you have any queries (contacts can be found at the bottom of the landing page). 
@@ -22,13 +24,15 @@ git clone https://github.com/quantum-kite/kite.git
 
 ## 2. Get dependencies
 
-* [Pybinding][pybinding]
-* [HDF5][hdf5] (version 1.8.13 or newer)
+* [HDF5][hdf5] (version 1.8.13 or newer, built with the C++ and high-level APIs)
+* [FFTW3][fftw3] (all three precisions: float, double, and long double)
 * [CMake][cmake] (version 3.9 or newer)
 * [gcc][gcc] (version 4.8.1 or newer)
 * [h5py][h5py]
+* [Pybinding][pybinding] (optional, only if you want to use pybinding-based lattices instead of KITE's native `#!python kite.lattice.Lattice`)
 
-(See detailed instructions below.)
+(See detailed instructions below. If you'd rather skip dependency-hunting entirely, jump to
+[Section 2.4 (conda)][conda_section] or [Using Docker][docker_section].)
 
 !!! info "Eigen3 is bundled — no separate install needed"
 
@@ -58,30 +62,30 @@ sudo apt-get install h5utils
 sudo apt-get install libhdf5-dev
 ```
 
-Calculations on KITE are configured using a python script which interfaces with Pybinding.
-Pybinding requires CMake:
+KITE also requires FFTW3 (all three precisions):
+
+``` bash
+sudo apt-get install libfftw3-dev
+```
+
+Calculations on KITE are configured using a Python script, and CMake is required to build the C++ core:
 
 ``` bash
 sudo apt-get install cmake
 ```
 
-Next, install Pybinding dependencies: 
-
+Then install KITE's Python interface and its dependencies (`#!bash numpy`, `#!bash scipy`, `#!bash h5py`) from
+the repository root:
 
 ``` bash
-pip install numpy scipy matplotlib pytest
+pip install -e .
 ```
 
-Install pybinding using pip:
+If you also want to use pybinding-based lattices (optional — KITE's own `#!python kite.lattice.Lattice`
+needs nothing extra):
 
 ``` bash
-pip install -i https://test.pypi.org/simple/ pybinding
-```
-
-To construct the HDF5-files, KITE requires *h5py*: 
-
-``` bash
-pip install h5py
+pip install -e ".[pybinding]"
 ```
 
 ### 2.2 For Mac OS X users
@@ -130,46 +134,40 @@ HOMEBREW_CC=gcc-n HOMEBREW_CXX=g++-n HOMEBREW_CXXFLAGS="-std=c++17" brew install
     sudo port -v install hdf5 +gcc-n +cxx +hl configure.ldflags="-stdlib=libstdc++" configure.cxx_stdlib="libstdc++" configure.cxxflags="-std=c++17" 
     ```
 
-Install CMake and Python:
+Install CMake, Python, and FFTW3:
 
 ``` bash
-brew install python Cmake git
+brew install python Cmake git fftw
 ```
 
-Calculations on KITE are configured using a python script which interfaces with Pybinding.
-Pybinding also requires the SciPy packages but pip will resolve all the SciPy dependencies automatically:
+Calculations on KITE are configured using a Python script. KITE's own `#!python kite.lattice.Lattice`
+needs nothing beyond the packages below; Pybinding is optional (see the note at the top of
+[Section 2][get_dependencies]):
 
 !!! warning
 
-    To install the pyhton requirements, you **must** run the Homebrew-python version.
+    To install the python requirements, you **must** run the Homebrew-python version.
     You can find the Homebrew-python binary at `#!bash /opt/homebrew/bin/python3`.
 
 ``` bash
-/usr/local/bin/python3 -m pip install numpy h5py pybinding
+/usr/local/bin/python3 -m pip install -e .
 ```
 
-Install pybinding using pip:
+To also install pybinding (optional):
 
 ``` bash
-pip install -i https://test.pypi.org/simple/ pybinding
+/usr/local/bin/python3 -m pip install -e ".[pybinding]"
 ```
 
-Next, download the source code by the command given in section 1.
-Edit *CMakeLists.txt* in the `#!bash kite/`-directory:
+Next, download the source code by the command given in section 1. When configuring with CMake in
+[Section 3][kitex_kitetools], pass the Homebrew-installed compiler explicitly instead of editing
+*CMakeLists.txt*:
 
-* locate the following statements
-  ```
-  set(CMAKE C COMPILER "gcc")
-  set(CMAKE CXX COMPILER "g++")
-  ```
+``` bash
+cmake -DCMAKE_C_COMPILER=gcc-n -DCMAKE_CXX_COMPILER=g++-n ..
+```
 
-* replace by
-  ```
-  set(CMAKE C COMPILER "gcc-n")
-  set(CMAKE CXX COMPILER "g++-n")
-  ```
-
-where **n** is the version number as used previously.
+where **n** is the gcc version installed by Homebrew (as given by `#!bash brew info gcc`).
 
 ### 2.3 Verified MacPorts recipe
 
@@ -197,25 +195,60 @@ than a clear "wrong compiler" message:
 sudo port install hdf5 +cxx +hl +gcc14
 ```
 
+Install FFTW3 — MacPorts splits this into three separate ports, one per precision, all of which KITE needs:
+
+``` bash
+sudo port install fftw-3 fftw-3-single fftw-3-long
+```
+
 Since Eigen3 is bundled with KITE (see [Section 2][get_dependencies]), no separate Eigen install is needed.
 
-Edit *CMakeLists.txt* in the `#!bash kite/`-directory the same way as in the Homebrew instructions above,
-replacing **n** with the installed gcc14 version:
+Install KITE's Python interface (native `#!python kite.lattice.Lattice` needs nothing else; pybinding is
+optional, see [Section 2][get_dependencies]):
 
-* locate:
-  ```
-  set(CMAKE_C_COMPILER "gcc")
-  set(CMAKE_CXX_COMPILER "g++")
-  ```
-* replace with:
-  ```
-  set(CMAKE_C_COMPILER "gcc-mp-14")
-  set(CMAKE_CXX_COMPILER "g++-mp-14")
-  ```
+``` bash
+pip install -e .
+```
 
-Then build as usual (see [Section 3][kitex_kitetools] below) — `#!bash cmake ..` should report
-`#!bash Found HDF5` with the C++/HL components and `#!bash Found OpenMP`, and `#!bash make` should complete
-with only benign deprecation warnings (safe to ignore, as noted in Section 3).
+When configuring with CMake (see [Section 3][kitex_kitetools] below), pass the MacPorts gcc14 compiler
+explicitly instead of editing *CMakeLists.txt*:
+
+``` bash
+cmake -DCMAKE_C_COMPILER=/opt/local/bin/gcc-mp-14 -DCMAKE_CXX_COMPILER=/opt/local/bin/g++-mp-14 ..
+```
+
+`#!bash cmake ..` should report `#!bash Found HDF5` with the C++/HL components, `#!bash Found FFTW3` for
+all three precisions, and `#!bash Found OpenMP`, and `#!bash make` should complete with only benign
+deprecation warnings (safe to ignore, as noted in Section 3).
+
+### 2.4 Using conda (recommended for reproducibility) { #conda_section }
+
+!!! success "Tested end-to-end"
+
+    This sidesteps every dependency-hunting issue in sections 2.1–2.3 above (compiler/HDF5 ABI mismatches,
+    hunting down FFTW3's three separate precision packages, Eigen version drift): conda-forge builds HDF5,
+    FFTW3, and the compiler toolchain against each other consistently, so they're guaranteed compatible.
+
+From the `#!bash kite/` directory:
+
+``` bash
+conda env create -f environment.yml
+conda activate kite
+```
+
+This installs a matched C/C++ compiler toolchain, HDF5, FFTW3, and KITE's Python interface (editable, from
+this checkout) all at once. Then configure and build (see [Section 3][kitex_kitetools]) with:
+
+``` bash
+mkdir build && cd build
+cmake -DCMAKE_PREFIX_PATH=$CONDA_PREFIX -DCMAKE_BUILD_TYPE=Release ..
+make
+```
+
+No compiler flags or *CMakeLists.txt* edits needed — CMake automatically finds everything inside the active
+conda environment. Pybinding is intentionally not part of `#!bash environment.yml` (see the note at the top
+of [Section 2][get_dependencies]); add it yourself with `#!bash pip install pybinding` inside the activated
+environment if you need it.
 
 ## 3. KITEx & KITE-tools
 From within the `#!bash kite/` directory (containing *CMakeLists.txt* and [*kite.py*][kitepython]), run the following commands:
@@ -242,6 +275,12 @@ To generate an input file using [KITE's python-interface][kitepython], try one o
 python dos_graphene.py
 ```
 
+!!! info "This example needs the optional pybinding extra"
+
+    `#!bash dos_graphene.py` builds its lattice with Pybinding, so it needs `#!bash pip install -e ".[pybinding]"`
+    (see [Section 2][get_dependencies]). If you'd rather not install Pybinding, try `#!bash shinada_single.py`
+    or `#!bash weyl_lt.py` instead — both use KITE's native, dependency-free `#!python kite.lattice.Lattice`.
+
 It creates a file named *graphene_lattice-output.h5* that is used as an input for [KITEx][kitex]:
 
 ``` bash
@@ -267,11 +306,51 @@ you need a different Eigen3 version for some reason, pass `#!bash -DUSE_SYSTEM_E
 (`#!bash cmake -DUSE_SYSTEM_EIGEN=ON ..`); this falls back to CMake's `#!bash find_package(Eigen3)`, in which
 case CMake must be able to locate your own [Eigen3][eigen3] install.
 
+### 5.2 FFTW3 "not found", or only some precisions found
+
+KITE links all three FFTW3 precisions (float, double, long double). Some package managers split these into
+separate packages instead of a single install — notably MacPorts (`#!bash fftw-3`, `#!bash fftw-3-single`,
+`#!bash fftw-3-long`, see [Section 2.3][macports_recipe]) and Debian/Ubuntu, where a plain
+`#!bash apt-get install libfftw3-dev` is normally enough, but double-check if `#!bash cmake ..` reports
+missing precisions. conda-forge's `#!bash fftw` package (used by [Section 2.4][conda_section]) builds all
+three in one package, which avoids this entirely.
+
+### 5.3 `pybinding` fails to build from source
+
+`pybinding` (both on PyPI and conda-forge) is frozen at version 0.9.5 and only ships as a source
+distribution for some platform/Python combinations — building its C++ extension can fail depending on your
+compiler setup. Since `pybinding` is an optional extra (see the note at the top of
+[Section 2][get_dependencies]), you don't need it at all to use KITE — the native
+`#!python kite.lattice.Lattice` interface (used by `#!bash shinada_single.py`, `#!bash weyl_lt.py`, and
+others in `#!bash examples/`) needs no compiled dependency and always installs cleanly.
+
+## 6. Using Docker
+
+If you'd rather not install any dependencies at all, a `#!bash Dockerfile` is provided that builds a
+complete, ready-to-use KITE environment (compiler toolchain, HDF5, FFTW3, and the `#!python kite` Python
+package, all via the same [conda-forge environment][conda_section] used in Section 2.4):
+
+``` bash
+docker build -t kite .
+```
+
+Then run it, mounting your working directory so files you create persist outside the container:
+
+``` bash
+docker run -it -v $(pwd):/home/kite/work kite
+```
+
+This drops you into a shell inside the container with `#!bash KITEx`, `#!bash KITE-tools`, and
+`#!python import kite` all ready to use — no further setup needed. Pybinding is not included in the image by
+default (see [Section 2][get_dependencies]); install it yourself inside a running container with
+`#!bash pip install pybinding` if you need it.
+
 [repository]: https://github.com/quantum-kite/kite
 [eigen3]: https://eigen.tuxfamily.org/
 [cmake]: https://cmake.org/
 [gcc]: https://gcc.gnu.org/
 [h5py]: https://www.h5py.org/
+[fftw3]: https://www.fftw.org/
 [calculation-gaussian_wave_packet]: api/kite.md#calculation-gaussian_wave_packet
 [hdf5]: https://github.com/HDFGroup/
 [openmp]: https://gcc.gnu.org/onlinedocs/libgomp/
@@ -284,5 +363,8 @@ case CMake must be able to locate your own [Eigen3][eigen3] install.
 [kitetools]: api/kite-tools.md
 [kitex_kitetools]: #3-kitex-kite-tools
 [get_dependencies]: #2-get-dependencies
+[conda_section]: #conda_section
+[docker_section]: #6-using-docker
+[macports_recipe]: #23-verified-macports-recipe
 
 

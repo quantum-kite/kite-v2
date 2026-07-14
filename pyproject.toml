@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "quantum-kite"
+version = "1.1.0"
+description = "Python interface for KITE: a real-space quantum transport simulator based on the Chebyshev/Kernel Polynomial Method"
+readme = "README.md"
+license = { file = "LICENSE.md" }
+requires-python = ">=3.9"
+dependencies = [
+    "numpy",
+    "scipy",
+    "h5py",
+]
+
+[project.optional-dependencies]
+pybinding = ["pybinding"]
+
+[project.urls]
+Homepage = "https://quantum-kite.com"
+Documentation = "https://quantum-kite.github.io/kite-v2"
+Repository = "https://github.com/quantum-kite/kite-v2"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/kite"]

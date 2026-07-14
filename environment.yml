@@ -1,0 +1,21 @@
+name: kite
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python >=3.9,<3.13
+  - cxx-compiler
+  - c-compiler
+  - llvm-openmp
+  - cmake >=3.9
+  - make
+  - hdf5=*=nompi*
+  - fftw
+  - numpy
+  - scipy
+  - h5py
+  - matplotlib
+  - pytest
+  - pip
+  - pip:
+      - -e .

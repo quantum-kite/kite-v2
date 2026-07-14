@@ -1,7 +1,15 @@
 cmake_minimum_required(VERSION 3.9)
-set(CMAKE_C_COMPILER "gcc")
-set(CMAKE_CXX_COMPILER "g++")
 set(CMAKE_CXX_STANDARD 17)
+
+# Respect $CC/$CXX (set by conda's compiler-activation packages, or by the
+# user directly) instead of hardcoding a compiler. Without an override, CMake
+# falls back to its own platform default (e.g. Apple Clang on macOS), which
+# may not support the OpenMP flags KITE needs -- pass
+# -DCMAKE_C_COMPILER=... -DCMAKE_CXX_COMPILER=... (or set $CC/$CXX) explicitly
+# if that's the case for your toolchain.
+if(DEFINED ENV{CONDA_PREFIX})
+  list(APPEND CMAKE_PREFIX_PATH $ENV{CONDA_PREFIX})
+endif()
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
@@ -24,7 +32,6 @@ else()
   MESSAGE(STATUS "Couldn't find HDF5")
 endif()
 MESSAGE(STATUS "Compiler:  ${CMAKE_CXX_COMPILER}")
-include_directories(~/include/)
 
 option(USE_SYSTEM_EIGEN "Use the system-installed Eigen3 instead of the bundled copy in third_party/eigen3" OFF)
 if(USE_SYSTEM_EIGEN)

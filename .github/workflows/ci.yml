@@ -1,12 +1,13 @@
-# Build the documentation on GitHub and publish on GitHub pages
-
+# CI: build the docs site, and build+smoke-test KITE itself across OSes.
 name: ci
 on:
   push:
     branches:
       - master
+  pull_request:
 jobs:
-  deploy:
+  deploy-docs:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -15,3 +16,51 @@ jobs:
           python-version: 3.x
       - run: pip install mkdocs-material
       - run: mkdocs gh-deploy --force
+
+  build-and-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up conda environment
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          environment-file: environment.yml
+          activate-environment: kite
+          miniforge-version: latest
+
+      - name: Configure (CMake)
+        shell: bash -el {0}
+        run: |
+          mkdir -p build
+          cd build
+          cmake -DCMAKE_PREFIX_PATH=$CONDA_PREFIX -DCMAKE_BUILD_TYPE=Release ..
+
+      - name: Build KITEx + KITE-tools
+        shell: bash -el {0}
+        run: cmake --build build --config Release -j 4
+
+      - name: Smoke test — generate a config and run KITEx
+        shell: bash -el {0}
+        run: |
+          cd examples
+          python shinada_single.py
+          ../build/KITEx single.h5
+
+      # NOTE: tests/start_tests.sh is not run here yet. Most of its cases need
+      # the optional `pybinding` extra to regenerate configs, and at least one
+      # case (tests/test001_KITEx_sq) fails independently of this workflow --
+      # its checked-in configORIG.h5 fixture predates a C++ change that now
+      # requires /Seed0 and /Seed1 fields. See maintenance/installability-plan.md
+      # for details; fixing the test suite itself is separate, follow-up work.
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build Docker image (includes its own baked-in smoke test)
+        run: docker build -t quantum-kite/kite-v2:ci .
