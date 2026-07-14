@@ -8,13 +8,6 @@
     Last updated: 30/07/2022
 """
 
-# TODO: revisit this script once kite.lattice/kite.custom grow native
-# replacements for the pybinding functionality we actually rely on here
-# (pre-built lattice templates like pybinding.repository.graphene, and the
-# k-path helper used by the ARPES examples). Once that lands, most of the
-# examples this script drives can move back out of examples/pybinding/ and
-# this script should be updated to import them from their new location.
-
 import sys
 sys.path.append("..")
 
