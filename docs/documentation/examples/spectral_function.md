@@ -20,11 +20,11 @@ recursion is a normalized Bloch-like plane wave rather than a random vector (as 
 single real-space site (as for the LDOS):
 
 $$
-    |\mathbf{k}\rangle = \frac{1}{\sqrt{N}}\sum_{\mathbf{r},\alpha} w_\alpha\, e^{\,i\,\mathbf{k}\cdot(\mathbf{r}+\boldsymbol{\tau}_\alpha)}\,|\mathbf{r},\alpha\rangle,
+    |\mathbf{k}\rangle = \frac{1}{\sqrt{N}}\sum_{\mathbf{r},\alpha} w_\alpha\, e^{\,i\,\mathbf{k}\cdot(\mathbf{r}+\mathbf{d}_\alpha)}\,|\mathbf{r},\alpha\rangle,
 $$
 
 where $\mathbf{r}$ runs over unit cells, $\alpha$ runs over orbitals within the unit cell (at position
-$\boldsymbol{\tau}_\alpha$), and $w_\alpha$ is a user-supplied per-orbital weight. This is why ARPES is
+$\mathbf{d}_\alpha$), and $w_\alpha$ is a user-supplied per-orbital weight. This is why ARPES is
 classified, alongside the LDOS, as a "diagonal matrix element" calculation in [Section 0][ground_rules]
 rather than a full-trace one: `#!python num_random` plays no role, and the target function is evaluated at
 one specific $\mathbf{k}$-point at a time.

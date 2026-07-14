@@ -4,8 +4,8 @@ site_description: "KITE: Real-space quantum transport simulator"
 site_author: "KITE"
 
 # Repository
-repo_url: https://github.com/quantum-kite/kite
-edit_uri: https://github.com/quantum-kite/kite/tree/master/docs
+repo_url: https://github.com/quantum-kite/kite-v2
+edit_uri: https://github.com/quantum-kite/kite-v2/tree/master/docs
 
 # Copyright
 copyright:  "KITE is a free software: you can redistribute it and/or modify it under the terms of the GNU
