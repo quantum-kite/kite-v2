@@ -1889,7 +1889,7 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
         grpc_p.create_dataset('NumMoments', data=moments, dtype=np.int32)
         grpc_p.create_dataset('k_vector', data=np.asmatrix(np.asarray(k_vector_rel)), dtype=np.float32)
         grpc_p.create_dataset('NumDisorder', data=dis, dtype=np.int32)
-        grpc_p.create_dataset('OrbitalWeights', data=np.asmatrix(np.asarray(spinor)))
+        grpc_p.create_dataset('OrbitalWeights', data=np.asmatrix(np.asarray(spinor)).astype(config.type))
 
     if calculation.get_gaussian_wave_packet:
         grpc_p = grpc.create_group('gaussian_wave_packet')

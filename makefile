@@ -2,8 +2,11 @@ PREFIX  := build
 CXX     := g++
 OBJDIR  := $(PREFIX)/.obj
 
-# Eigen-Dir
-EIGEN_INC := -I/usr/local/include/eigen3
+# Eigen-Dir: uses the bundled copy in third_party/eigen3 by default (see
+# third_party/eigen3/VENDORED.md). To use your own system Eigen3 instead,
+# override on the command line, e.g.:
+#   make EIGEN_INC=-I/usr/local/include/eigen3
+EIGEN_INC := -Ithird_party/eigen3
 
 # HDF5-Flags
 HDF5_LIBS   := -lhdf5_cpp -lhdf5

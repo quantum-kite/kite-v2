@@ -28,12 +28,15 @@ nav:
     - 6. Disorder: 'documentation/disorder.md'
     - 7. Magnetic Fields: 'documentation/magnetic.md'
     - 8. Editing an HDF5 file: 'documentation/editing_hdf_files.md'
+    - 9. Performance & Memory Tuning: 'documentation/performance.md'
+    - 10. Code Structure & Compilation Options: 'documentation/code_structure.md'
     - In Depth Examples:
       - About the examples: 'documentation/examples/index.md'
       - Graphene: 'documentation/examples/graphene.md'
       - Haldane: 'documentation/examples/haldane.md'
       - Phosphorene: 'documentation/examples/phosphorene.md'
       - Optical Conductivity: 'documentation/examples/optical_conductivity.md'
+      - Spectral Function (ARPES): 'documentation/examples/spectral_function.md'
     - KITE scripts v.1.1:
       - About Examples-dir: 'documentation/more_examples/additional_examples.md'
     - Advanced Examples:

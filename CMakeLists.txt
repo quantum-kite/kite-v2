@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.9)
 set(CMAKE_C_COMPILER "gcc")
-set(CMAKE_CXX_COMPILER "g++") 
+set(CMAKE_CXX_COMPILER "g++")
 set(CMAKE_CXX_STANDARD 17)
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -26,12 +26,28 @@ endif()
 MESSAGE(STATUS "Compiler:  ${CMAKE_CXX_COMPILER}")
 include_directories(~/include/)
 
-find_package(Eigen3)
-if(${EIGEN3_FOUND})
-  include_directories(${EIGEN3_INCLUDE_DIR})
+option(USE_SYSTEM_EIGEN "Use the system-installed Eigen3 instead of the bundled copy in third_party/eigen3" OFF)
+if(USE_SYSTEM_EIGEN)
+  find_package(Eigen3)
+  if(${EIGEN3_FOUND})
+    include_directories(${EIGEN3_INCLUDE_DIR})
+  else()
+    include_directories(~/include/eigen3)
+    MESSAGE(STATUS "Couldn't find Eigen3. Looking in ~/include")
+  endif()
 else()
-  include_directories(~/include/eigen3)
-  MESSAGE(STATUS "Couldn't find Eigen3. Looking in ~/include")
+  MESSAGE(STATUS "Using bundled Eigen3 from third_party/eigen3 (pass -DUSE_SYSTEM_EIGEN=ON to use the system install instead)")
+  include_directories(${PROJECT_SOURCE_DIR}/third_party/eigen3)
+endif()
+
+find_library(FFTW3_LIB fftw3)
+find_library(FFTW3F_LIB fftw3f)
+find_library(FFTW3L_LIB fftw3l)
+if(FFTW3_LIB AND FFTW3F_LIB AND FFTW3L_LIB)
+  MESSAGE(STATUS "Found FFTW3 (float/double/long double): ${FFTW3_LIB} ${FFTW3F_LIB} ${FFTW3L_LIB}")
+else()
+  MESSAGE(FATAL_ERROR "Couldn't find FFTW3 in all three precisions (float/double/long double), needed by Src/FFT/. "
+    "On MacPorts: sudo port install fftw-3 fftw-3-single fftw-3-long. On Debian/Ubuntu: sudo apt-get install libfftw3-dev.")
 endif()
 
 set (CORRECT_CODING_FLAGS "")
@@ -65,7 +81,7 @@ endif()
 add_definitions(-DCOMPILE_WAVEPACKET=${compile_wp})
 
 
-target_link_libraries(KITEx ${HDF5_CXX_LIBRARIES})
+target_link_libraries(KITEx ${HDF5_CXX_LIBRARIES} ${FFTW3_LIB} ${FFTW3F_LIB} ${FFTW3L_LIB})
 target_include_directories(KITEx PRIVATE "Src/"
 "Src/Tools/"
 "Src/Lattice/"
