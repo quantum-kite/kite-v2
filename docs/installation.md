@@ -234,10 +234,14 @@ From the `#!bash kite/` directory:
 ``` bash
 conda env create -f environment.yml
 conda activate kite
+pip install -e .
 ```
 
-This installs a matched C/C++ compiler toolchain, HDF5, FFTW3, and KITE's Python interface (editable, from
-this checkout) all at once. Then configure and build (see [Section 3][kitex_kitetools]) with:
+This installs a matched C/C++ compiler toolchain, HDF5, FFTW3, and Python dependencies via conda, then KITE's
+own Python interface via `#!bash pip install -e .` (kept as a separate step rather than bundled into
+`#!bash environment.yml` itself, since the latter would resolve `#!bash .` relative to wherever
+`#!bash environment.yml` happens to be — fine here, but not inside a staged Docker build). Then configure and
+build (see [Section 3][kitex_kitetools]) with:
 
 ``` bash
 mkdir build && cd build

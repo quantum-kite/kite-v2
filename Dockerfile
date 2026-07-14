@@ -16,6 +16,8 @@ SHELL ["conda", "run", "--no-capture-output", "-n", "kite", "/bin/bash", "-c"]
 
 COPY . .
 
+RUN pip install --no-deps .
+
 RUN mkdir -p build_cxx && cd build_cxx && \
     cmake -DCMAKE_PREFIX_PATH=$CONDA_PREFIX -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_BUILD_TYPE=Release .. && \
     make -j"$(nproc)" && \

@@ -16,6 +16,9 @@ dependencies:
   - h5py
   - matplotlib
   - pytest
-  - pip
-  - pip:
-      - -e .
+# After activating this environment, install the kite package itself with:
+#   pip install -e .
+# (not done inline here as a `pip:` section, since that resolves "." relative
+# to wherever environment.yml happens to be at solve time -- inside a staged
+# Docker build, that's before the rest of the repo has been copied in, which
+# breaks the whole point of copying environment.yml separately for caching.)

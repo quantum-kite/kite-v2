@@ -39,6 +39,10 @@ jobs:
           echo "CONDA_PREFIX=$CONDA_PREFIX"
           ls "$CONDA_PREFIX/lib" | grep -i "fftw\|hdf5" || echo "(no matching libs found)"
 
+      - name: Install kite (editable)
+        shell: bash -el {0}
+        run: pip install -e .
+
       - name: Configure (CMake)
         shell: bash -el {0}
         run: |
