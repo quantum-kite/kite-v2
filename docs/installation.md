@@ -223,11 +223,16 @@ deprecation warnings (safe to ignore, as noted in Section 3).
 
 ### 2.4 Using conda (recommended for reproducibility) { #conda_section }
 
-!!! success "Tested end-to-end"
+!!! warning "Recommended path, but not yet verified end-to-end"
 
-    This sidesteps every dependency-hunting issue in sections 2.1–2.3 above (compiler/HDF5 ABI mismatches,
-    hunting down FFTW3's three separate precision packages, Eigen version drift): conda-forge builds HDF5,
-    FFTW3, and the compiler toolchain against each other consistently, so they're guaranteed compatible.
+    This is intended to sidestep the dependency-hunting issues in sections 2.1–2.3 above (compiler/HDF5
+    ABI mismatches, hunting down FFTW3's three separate precision packages, Eigen version drift), and is
+    the recommended starting point if you want to avoid those. However, unlike [section 2.3's verified
+    MacPorts recipe][macports_recipe], this exact sequence has **not** been confirmed to work end-to-end
+    yet: a CI run of this sequence failed on macOS with FFTW3 not found in any of the three precisions
+    (an open issue — see [Section 5.2][fftw3_common_issue]), and separately failed on Windows at checkout
+    (an unrelated, since-fixed issue, but not yet re-verified by a green CI run). If you hit either
+    problem, please report it so it can be tracked down.
 
 From the `#!bash kite/` directory:
 
@@ -255,7 +260,9 @@ of [Section 2][get_dependencies]); add it yourself with `#!bash pip install pybi
 environment if you need it.
 
 ## 3. KITEx & KITE-tools
-From within the `#!bash kite/` directory (containing *CMakeLists.txt* and [*kite.py*][kitepython]), run the following commands:
+From within the `#!bash kite/` directory (containing *CMakeLists.txt* — the [KITE Python package][kitepython]
+should already be installed via `#!bash pip install -e .`, as described in [Section 2][get_dependencies]),
+run the following commands:
 
 ``` bash
 mkdir build
@@ -370,5 +377,6 @@ default (see [Section 2][get_dependencies]); install it yourself inside a runnin
 [conda_section]: #conda_section
 [docker_section]: #6-using-docker
 [macports_recipe]: #23-verified-macports-recipe
+[fftw3_common_issue]: #52-fftw3-not-found-or-only-some-precisions-found
 
 

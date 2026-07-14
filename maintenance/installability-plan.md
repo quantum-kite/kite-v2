@@ -265,3 +265,18 @@ Pushed to `quantum-kite/kite-v2` and let CI run for the first time with the new 
 4. **`docker-build` root cause, confirmed and fixed**: `RUN conda env create -f environment.yml` failed with `ERROR: file:///build ... does not appear to be a Python project: neither 'setup.py' nor 'pyproject.toml' found`. Cause: `environment.yml`'s inline `pip: [-e .]` section resolves `.` relative to the working directory *at conda-solve time* — inside the Dockerfile's staged build, only `environment.yml` had been `COPY`'d in at that point (`COPY . .` with the full repo, including `pyproject.toml`, comes later, intentionally, for Docker layer-caching so source changes don't force a full conda re-solve). Fixed by removing the inline `pip: [-e .]` from `environment.yml` entirely (now pure conda dependencies, with a comment explaining why) and adding an explicit `pip install --no-deps .` step in the Dockerfile *after* `COPY . .`. Since `environment.yml` no longer installs `kite` itself, added the equivalent explicit `pip install -e .` step to `.github/workflows/ci.yml`'s `build-and-test` job (previously relied on the same inline section — worked there only because `actions/checkout@v2` already puts the full repo in place before conda processes `environment.yml`, unlike Docker's staged `COPY`s) and to `docs/installation.md`'s conda section. Verified: `mkdocs build --strict` still passes; Dockerfile/ci.yml/environment.yml all still syntactically valid.
 
 None of these three fixes have been verified against a real CI run yet (Windows/macOS/docker-build fixes are all reasoned from confirmed root causes, but not re-tested) — that's the next step once pushed.
+
+---
+
+## Addendum — structure audit before pushing (`d060fa8..555a9cb`)
+
+Before pushing this round's fixes, ran the real `structure-auditor` agent (previously emulated via a general-purpose agent, since the custom agent type wasn't loaded in this session yet — a session refresh made it and `careful-executor` available as proper agent types) over the full diff range. It independently confirmed three findings from the earlier emulated pass and surfaced one new, higher-priority one:
+
+1. **New finding**: `docs/installation.md` section 2.4's `"Tested end-to-end"` badge overclaimed conda-forge as "guaranteed compatible," directly contradicted by this session's own CI run (macOS FFTW3 failure, Windows checkout failure). Never caveated by any of the fix commits.
+2. `docs/documentation/code_structure.md` had stale references to the deleted `Dockerfile.full` and described the Python interface as "`kite.py`, built on Pybinding."
+3. `tests/large000_KITEx_sq_dos/kite.py` — a stale, non-symlink, pre-session standalone copy of the old code, silently shadowing the new installed `kite` package for that one test's `config.py` (`import kite` resolves same-directory first).
+4. `docs/installation.md` §3 still said "containing *CMakeLists.txt* and *kite.py*" — pre-existing staleness in a heavily-edited-around section.
+
+All four fixed by the `careful-executor` agent, verified independently afterward (diffed each file, confirmed the `large000_KITEx_sq_dos` deletion doesn't affect the automated `quick`-mode test loop — that test dir isn't even in it, and the `script`/`redo` modes that do use `config.py` are actually made *more* correct by the deletion, since the old stale `kite.py` predates the `Seed0`/`Seed1` fields current `KITEx` expects). `mkdocs build --strict` still passes.
+
+Everything else in the diff — Dockerfile/environment.yml/CI/CMake consistency, the `aux.cpp` renames, `examples/pybinding/README.md` accuracy — was independently reconfirmed clean, no scope drift.

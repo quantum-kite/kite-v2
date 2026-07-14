@@ -78,18 +78,22 @@ addressing one does not require any concession on the other.
 KITE is built from three independently-compiled components that communicate only through a shared
 [HDF5 file][hdf5_structure]:
 
-1. **Python interface** (`kite.py`, built on [Pybinding][pybinding]) constructs the lattice/Hamiltonian
-   description and calculation settings, and writes them to a new `.h5` file.
+1. **Python interface** (the `kite` package, `src/kite/`, installed via `#!bash pip install -e .`; see
+   [Installation][installation]) constructs the lattice/Hamiltonian description and calculation settings,
+   and writes them to a new `.h5` file. It uses KITE's own native `#!python kite.lattice.Lattice` class by
+   default; [Pybinding][pybinding] is an optional extra (`#!bash pip install -e ".[pybinding]"`) for users
+   who already have lattices defined that way.
 2. **KITEx** (`Src/`) reads that file, executes the Chebyshev (KPM) recursion in parallel, and writes the
    computed moments back into the same file.
 3. **KITE-tools** (`tools/Src/`) reads the moments back out and reconstructs physical quantities (DOS,
    conductivities, ...), writing `.dat` files.
 
 Both C++ programs are built from the same root [`CMakeLists.txt`][cmakelists_gh] in a single
-`cmake && make` invocation. `tools/CMakeLists.txt` is a second, independent copy of the same build logic,
-retained so that KITE-tools can also be rebuilt as a standalone project (`cd tools && cmake . && make`),
-which is the approach taken by `Dockerfile.full`. Because nothing enforces equivalence between the two
-files, they can drift out of sync; both should be checked when modifying build flags.
+`cmake && make` invocation — this is also the approach used by the project's [`Dockerfile`][docker].
+`tools/CMakeLists.txt` is a second, independent copy of the same build logic, retained so that KITE-tools
+can also be rebuilt as a standalone project (`cd tools && cmake . && make`). Because nothing enforces
+equivalence between the two files, they can drift out of sync; both should be checked when modifying build
+flags.
 
 ## `Src/` — KITEx
 
@@ -211,12 +215,14 @@ the mechanisms described above are the applicable ones.
 
 Both `CMakeLists.txt` files register `install(TARGETS ... DESTINATION bin)` for their respective
 executables, so `make install` (following `cmake ..`) copies `KITEx`/`KITE-tools` into
-`${CMAKE_INSTALL_PREFIX}/bin` (`/usr/local/bin` by default). This is the mechanism used by
-`Dockerfile.full`.
+`${CMAKE_INSTALL_PREFIX}/bin` (`/usr/local/bin` by default). This is the mechanism used by the project's
+[`Dockerfile`][docker], which sets `CMAKE_INSTALL_PREFIX` to the active conda environment's prefix instead
+of the default.
 
 [performance]: performance.md
 [hdf5_structure]: editing_hdf_files.md
 [installation]: ../installation.md
+[docker]: ../installation.md#6-using-docker
 [macports_recipe]: ../installation.md#23-verified-macports-recipe
 [pybinding]: https://docs.pybinding.site/en/stable
 [cmakelists_gh]: https://github.com/quantum-kite/kite/blob/master/CMakeLists.txt
