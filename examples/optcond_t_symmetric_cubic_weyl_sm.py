@@ -16,7 +16,7 @@ __all__ = ["main"]
 
 import kite
 import numpy as np
-import pybinding as pb
+from kite import lattice as latt
 
 
 def weyl_semimetal(t=1):
@@ -28,7 +28,7 @@ def weyl_semimetal(t=1):
     a3 = np.array([0, 0, 1])
 
     # create a lattice with 3 primitive vectors
-    lat = pb.Lattice(a1=a1, a2=a2, a3=a3)
+    lat = latt.Lattice(a1=a1, a2=a2, a3=a3)
 
     # add sublattices
     lat.add_sublattices(

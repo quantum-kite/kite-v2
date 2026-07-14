@@ -18,7 +18,7 @@ __all__ = ["main"]
 
 import kite
 import numpy as np
-import pybinding as pb
+from kite import lattice as latt
 
 
 def honeycomb_lattice(onsite=(0, 0), t=1):
@@ -34,7 +34,7 @@ def honeycomb_lattice(onsite=(0, 0), t=1):
     a2 = a * np.array([1 / 2, 1 / 2 * np.sqrt(3)])
 
     # create a lattice with 2 primitive vectors
-    lat = pb.Lattice(a1=a1, a2=a2)
+    lat = latt.Lattice(a1=a1, a2=a2)
 
     # add sublattices
     lat.add_sublattices(

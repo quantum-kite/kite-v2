@@ -1,4 +1,4 @@
-""" Density of states of graphene with On-site disorder
+""" Density of states of graphene with On-site and vacancy disorder
 
     ##########################################################################
     #                         Copyright 2020/22, KITE                        #
@@ -8,9 +8,11 @@
     Units: Energy in eV
     Lattice: Honeycomb
     Configuration: Periodic boundary conditions, double precision,
-                    manual scaling, size of the system 256x256, with domain decomposition (nx=ny=2),
-    Disorder: Disorder class Deterministic and Uniform at different sublattices
+                    manual scaling, size of the system 256x256, without domain decomposition (nx=ny=1),
+    Disorder: Disorder class Deterministic and Uniform at different sublattices,
+               StructuralDisorder class vacancy and bond disorder
     Calculation type: Average DOS
+    Note: automatic scaling is not supported when bond disorder is present
     Last updated: 08/05/2025
 """
 
@@ -28,12 +30,16 @@ def main(onsite=(0, 0)):
 
     # add Disorder
     disorder = kite.Disorder(lattice)
-    disorder.add_disorder('B', 'Deterministic', -1.0)
-    disorder.add_disorder('A', 'Uniform', 1.5, 1.0)
+    disorder.add_disorder('B', 'Deterministic', -0.7)
+    disorder.add_disorder('A', 'Uniform', 0.0, 0.5)
+
+    # add vacancy StructuralDisorder
+    disorder_structural = kite.StructuralDisorder(lattice, concentration=0.05)
+    disorder_structural.add_vacancy('A')
 
     # number of decomposition parts [nx,ny] in each direction of matrix.
     # This divides the lattice into various sections, each of which is calculated in parallel
-    nx = ny = 2
+    nx = ny = 1
     # number of unit cells in each direction.
     lx = ly = 512
 
@@ -63,19 +69,20 @@ def main(onsite=(0, 0)):
     # specify calculation type
     calculation = kite.Calculation(configuration)
     calculation.dos(
-            num_points=4000,
-            num_moments=512,
-            num_random=2,
-            num_disorder=1
+        num_points=10000,
+        num_moments=1024,
+        num_random=1,
+        num_disorder=1
     )
 
     # configure the *.h5 file
-    output_file = "on_site_disorder-output.h5"
-    kite.config_system(lattice, configuration, calculation, filename=output_file, disorder=disorder)
+    output_file = "mixed_disorder-output.h5"
+    kite.config_system(lattice, configuration, calculation, filename=output_file,
+                       disorder=disorder, disorder_structural=disorder_structural)
 
     # for generating the desired output from the generated HDF5-file, run
-    # ../build/KITEx on_site_disorder-output.h5
-    # ../build/KITE-tools on_site_disorder-output.h5
+    # ../../build/KITEx mixed_disorder-output.h5
+    # ../../build/KITE-tools mixed_disorder-output.h5
 
     # returning the name of the created HDF5-file
     return output_file

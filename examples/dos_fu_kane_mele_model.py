@@ -18,7 +18,7 @@ __all__ = ["main"]
 
 import kite
 import numpy as np
-import pybinding as pb
+from kite import lattice as latt
 
 
 def fu_kane_mele(dt_plus, dt_minus, lambda_so=1, t=1):
@@ -35,7 +35,7 @@ def fu_kane_mele(dt_plus, dt_minus, lambda_so=1, t=1):
     a3 = np.array([0.5, 0.0, 0.5])
 
     # create a lattice with 3 primitive vectors
-    lat = pb.Lattice(a1=a1, a2=a2, a3=a3)
+    lat = latt.Lattice(a1=a1, a2=a2, a3=a3)
 
     # add sublattices (Includes Spin-1/2 Degree of Freedom)
     lat.add_sublattices(

@@ -17,7 +17,7 @@ __all__ = ["main"]
 
 import kite
 import numpy as np
-import pybinding as pb
+from kite import lattice as latt
 
 
 def phosphorene_lattice(num_hoppings=4):
@@ -37,7 +37,7 @@ def phosphorene_lattice(num_hoppings=4):
     a2 = np.array([0, ay])
 
     # create a lattice with 2 primitive vectors
-    lat = pb.Lattice(a1=a1, a2=a2)
+    lat = latt.Lattice(a1=a1, a2=a2)
     
     # add sublattices
     lat.add_sublattices(

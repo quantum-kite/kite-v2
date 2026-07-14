@@ -13,7 +13,7 @@
     Calculation type: Optical Conductivity
     Last updated: 08/05/2025
 """
-import pybinding as pb
+from kite import lattice as latt
 import numpy as np
 import kite
 
@@ -24,7 +24,7 @@ def hbn():
     a = a_cc*np.sqrt(3)                   # [nm] unit cell length
     gap = 0.2                             # [t] gap
 
-    lat = pb.Lattice(
+    lat = latt.Lattice(
         a1=[a/2,  a/2 * np.sqrt(3)],
         a2=[a/2, -a/2 * np.sqrt(3)])
 

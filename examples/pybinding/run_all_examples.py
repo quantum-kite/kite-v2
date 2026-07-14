@@ -8,6 +8,16 @@
     Last updated: 30/07/2022
 """
 
+# TODO: revisit this script once kite.lattice/kite.custom grow native
+# replacements for the pybinding functionality we actually rely on here
+# (pre-built lattice templates like pybinding.repository.graphene, and the
+# k-path helper used by the ARPES examples). Once that lands, most of the
+# examples this script drives can move back out of examples/pybinding/ and
+# this script should be updated to import them from their new location.
+
+import sys
+sys.path.append("..")
+
 import numpy as np
 import matplotlib.pyplot as plt
 import process_arpes as pa
@@ -17,14 +27,14 @@ from matplotlib import rc
 rc('font',size=14)
 rc('axes',labelsize=14,linewidth=2)
 
-_kitex_dir = "../build"
-_kite_tools_dir = "../build"
+_kitex_dir = "../../build"
+_kite_tools_dir = "../../build"
 
 KITEx_exists = exists(_kitex_dir)
 tools_exists = exists(_kite_tools_dir)
 
 if not KITEx_exists:
-    print("Please make sure the KITEx executable is in the correct place relative to this script: ../build/KITEx")
+    print("Please make sure the KITEx executable is in the correct place relative to this script: ../../build/KITEx")
     exit(1)
 if not tools_exists:
     print("Please make sure the KITE-tools executable is in the correct place relative to this script: ../tools/build/KITE-tools")
