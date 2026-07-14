@@ -8,7 +8,7 @@ This example shows how to use the custom local potential functionality in KITE.
 Begin by defining the local energy function that you want to use.
 This is a function that takes as arguments the position ($x$, $y$) (in 2D) or ($x$, $y$, $z$) (in 3D) and
 orbital `#!python "orb"` and returns the value of the local energy at that position and orbital.
-This function is defined by the user in a simple cpp file `#!bash aux.cpp`, which is then compiled into a
+This function is defined by the user in a simple cpp file `#!bash custom_potential.cpp`, which is then compiled into a
 shared library to be used by KITE `#!bash libaux.so.1`.
 To force KITE to use the function defined by the user, the file `#!bash /lib/libaux.so.1` should be replaced by
 our custom shared library, and the flag `#!python custom_local=True` must be used in the Python configuration script.
@@ -18,11 +18,11 @@ By default, this flag is set to `#!python False`.
 Begin by compiling the c++ file into a shared library by executing the following lines:
 
 ``` bash
-g++ -Wall -fPIC -c aux.cpp
-g++ -shared -Wl,-soname,libaux.so.1 -o libaux.so aux.o
+g++ -Wall -fPIC -c custom_potential.cpp
+g++ -shared -Wl,-soname,libaux.so.1 -o libaux.so custom_potential.o
 ```
 
-The first line compiles the `#!bash aux.cpp` file and the second generates the shared library from the compiled object.
+The first line compiles the `#!bash custom_potential.cpp` file and the second generates the shared library from the compiled object.
 Next, replace the default shared library file in the `#!bash /lib` folder by the library that we just built:
 
 ``` bash
@@ -61,8 +61,8 @@ If the user wants to restore the original library, a backup should be used,
 or the following three lines can be executed inside the `#!bash /lib` folder:
 
 ``` bash
-g++ -Wall -fPIC -c aux.cpp 
-g++ -shared -Wl,-soname,libaux.so.1 -o libaux.so aux.o
+g++ -Wall -fPIC -c custom_potential.cpp
+g++ -shared -Wl,-soname,libaux.so.1 -o libaux.so custom_potential.o
 ln -sf libaux.so libaux.so.1
 ```
 

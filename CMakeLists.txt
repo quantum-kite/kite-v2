@@ -53,8 +53,14 @@ find_library(FFTW3L_LIB fftw3l)
 if(FFTW3_LIB AND FFTW3F_LIB AND FFTW3L_LIB)
   MESSAGE(STATUS "Found FFTW3 (float/double/long double): ${FFTW3_LIB} ${FFTW3F_LIB} ${FFTW3L_LIB}")
 else()
-  MESSAGE(FATAL_ERROR "Couldn't find FFTW3 in all three precisions (float/double/long double), needed by Src/FFT/. "
-    "On MacPorts: sudo port install fftw-3 fftw-3-single fftw-3-long. On Debian/Ubuntu: sudo apt-get install libfftw3-dev.")
+  MESSAGE(STATUS "FFTW3_LIB (double):      ${FFTW3_LIB}")
+  MESSAGE(STATUS "FFTW3F_LIB (float):      ${FFTW3F_LIB}")
+  MESSAGE(STATUS "FFTW3L_LIB (long double): ${FFTW3L_LIB}")
+  MESSAGE(STATUS "CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
+  MESSAGE(FATAL_ERROR "Couldn't find FFTW3 in all three precisions (float/double/long double), needed by Src/FFT/ "
+    "(see the FFTW3*_LIB/CMAKE_PREFIX_PATH values just printed above for which one(s) are missing and where it looked). "
+    "On MacPorts: sudo port install fftw-3 fftw-3-single fftw-3-long. On Debian/Ubuntu: sudo apt-get install libfftw3-dev. "
+    "On conda: conda install -c conda-forge fftw.")
 endif()
 
 set (CORRECT_CODING_FLAGS "")

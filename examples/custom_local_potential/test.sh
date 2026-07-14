@@ -7,9 +7,9 @@ SEED=ones
 
 
 # Replace the custom file
-cp aux.cpp ../../Src/Hamiltonian/aux.cpp
+cp custom_potential.cpp ../../Src/Hamiltonian/custom_potential.cpp
 cd ../../build
-cmake .. && make 
+cmake .. && make
 cd ../examples/custom_local_potential
 
 # Run the example with the modified local potential
@@ -19,7 +19,7 @@ SEED=$S ../../build/KITEx config.h5 > log_KITEx
 rm -r __pycache__
 
 # Put the file back
-cp aux_default.cpp ../../Src/Hamiltonian/aux.cpp
+cp custom_potential_default.cpp ../../Src/Hamiltonian/custom_potential.cpp
 cd ../../build
 cmake .. && make 
 cd ../examples/custom_local_potential

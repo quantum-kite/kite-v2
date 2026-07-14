@@ -33,6 +33,12 @@ jobs:
           activate-environment: kite
           miniforge-version: latest
 
+      - name: Debug — list conda env's fftw/hdf5 install
+        shell: bash -el {0}
+        run: |
+          echo "CONDA_PREFIX=$CONDA_PREFIX"
+          ls "$CONDA_PREFIX/lib" | grep -i "fftw\|hdf5" || echo "(no matching libs found)"
+
       - name: Configure (CMake)
         shell: bash -el {0}
         run: |
