@@ -25,7 +25,7 @@ git clone https://github.com/quantum-kite/kite.git
 ## 2. Get dependencies
 
 * [HDF5][hdf5] (version 1.8.13 or newer, built with the C++ and high-level APIs)
-* [FFTW3][fftw3] (all three precisions: float, double, and long double)
+* [FFTW3][fftw3] (float and double precision — long double is not required, see [Section 5.2][fftw3_common_issue])
 * [CMake][cmake] (version 3.9 or newer)
 * [gcc][gcc] (version 4.8.1 or newer)
 * [h5py][h5py]
@@ -62,7 +62,7 @@ sudo apt-get install h5utils
 sudo apt-get install libhdf5-dev
 ```
 
-KITE also requires FFTW3 (all three precisions):
+KITE also requires FFTW3 (float and double precision):
 
 ``` bash
 sudo apt-get install libfftw3-dev
@@ -195,10 +195,11 @@ than a clear "wrong compiler" message:
 sudo port install hdf5 +cxx +hl +gcc14
 ```
 
-Install FFTW3 — MacPorts splits this into three separate ports, one per precision, all of which KITE needs:
+Install FFTW3 — MacPorts splits this into separate ports per precision; KITE needs the double and float
+precision ports (not `fftw-3-long`, see [Section 5.2][fftw3_common_issue]):
 
 ``` bash
-sudo port install fftw-3 fftw-3-single fftw-3-long
+sudo port install fftw-3 fftw-3-single
 ```
 
 Since Eigen3 is bundled with KITE (see [Section 2][get_dependencies]), no separate Eigen install is needed.
@@ -217,8 +218,8 @@ explicitly instead of editing *CMakeLists.txt*:
 cmake -DCMAKE_C_COMPILER=/opt/local/bin/gcc-mp-14 -DCMAKE_CXX_COMPILER=/opt/local/bin/g++-mp-14 ..
 ```
 
-`#!bash cmake ..` should report `#!bash Found HDF5` with the C++/HL components, `#!bash Found FFTW3` for
-all three precisions, and `#!bash Found OpenMP`, and `#!bash make` should complete with only benign
+`#!bash cmake ..` should report `#!bash Found HDF5` with the C++/HL components, `#!bash Found FFTW3`
+(float/double), and `#!bash Found OpenMP`, and `#!bash make` should complete with only benign
 deprecation warnings (safe to ignore, as noted in Section 3).
 
 ### 2.4 Using conda (recommended for reproducibility) { #conda_section }
@@ -319,12 +320,19 @@ case CMake must be able to locate your own [Eigen3][eigen3] install.
 
 ### 5.2 FFTW3 "not found", or only some precisions found
 
-KITE links all three FFTW3 precisions (float, double, long double). Some package managers split these into
-separate packages instead of a single install — notably MacPorts (`#!bash fftw-3`, `#!bash fftw-3-single`,
-`#!bash fftw-3-long`, see [Section 2.3][macports_recipe]) and Debian/Ubuntu, where a plain
-`#!bash apt-get install libfftw3-dev` is normally enough, but double-check if `#!bash cmake ..` reports
-missing precisions. conda-forge's `#!bash fftw` package (used by [Section 2.4][conda_section]) builds all
-three in one package, which avoids this entirely.
+KITE links FFTW3's float and double precision libraries — **not** long double, which is intentionally not
+required (see below). Some package managers split even these two into separate packages instead of a
+single install — notably MacPorts (`#!bash fftw-3`, `#!bash fftw-3-single`, see
+[Section 2.3][macports_recipe]) and Debian/Ubuntu, where a plain `#!bash apt-get install libfftw3-dev` is
+normally enough, but double-check if `#!bash cmake ..` reports a missing precision.
+
+**Long double is not supported for FFT/spectral calculations, on purpose.** conda-forge's `#!bash fftw`
+package (used by [Section 2.4][conda_section]) only ships float and double by default — long double isn't
+a default build there, and it's a niche precision requirement in practice — so KITE doesn't require it.
+Long-double precision is still fully supported everywhere else in KITE (Hamiltonian, general KPM, etc.);
+this is specific to the FFT-based spectral feature. If you genuinely need long-double FFT precision, see
+["FFTW3 precision limits"][fftw3_precision_limits] in the code structure docs for what rebuilding that
+combination yourself would involve.
 
 ### 5.3 `pybinding` fails to build from source
 
@@ -378,5 +386,6 @@ default (see [Section 2][get_dependencies]); install it yourself inside a runnin
 [docker_section]: #6-using-docker
 [macports_recipe]: #23-verified-macports-recipe
 [fftw3_common_issue]: #52-fftw3-not-found-or-only-some-precisions-found
+[fftw3_precision_limits]: documentation/code_structure.md#fftw3-precision-limits
 
 

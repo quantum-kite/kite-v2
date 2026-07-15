@@ -280,3 +280,26 @@ Before pushing this round's fixes, ran the real `structure-auditor` agent (previ
 All four fixed by the `careful-executor` agent, verified independently afterward (diffed each file, confirmed the `large000_KITEx_sq_dos` deletion doesn't affect the automated `quick`-mode test loop — that test dir isn't even in it, and the `script`/`redo` modes that do use `config.py` are actually made *more* correct by the deletion, since the old stale `kite.py` predates the `Seed0`/`Seed1` fields current `KITEx` expects). `mkdocs build --strict` still passes.
 
 Everything else in the diff — Dockerfile/environment.yml/CI/CMake consistency, the `aux.cpp` renames, `examples/pybinding/README.md` accuracy — was independently reconfirmed clean, no scope drift.
+
+---
+
+## Addendum — macOS/Windows FFTW3 root cause found, long-double dropped as a requirement
+
+CI run `ci #5` (commit `7aa1fd8`) results: **`docker-build` now passes** (including its baked-in smoke test) and **`build-and-test (ubuntu-latest)` passes** — 2 of the 4 original CI problems fully fixed and confirmed green. `build-and-test (windows-latest)`'s checkout now succeeds too (confirms the `aux.cpp` rename fix), but it fails at the same "Configure (CMake)" step as macOS — both are hitting the FFTW3 issue.
+
+The user investigated directly via the GitHub UI (this session's browser tooling couldn't get full log access — confirmed via the GitHub API that full workflow logs require repo admin rights, even on a public repo) and found the root cause: **conda-forge's `fftw` package only ships float and double precision by default — not long double.** Long-double FFT support was judged unnecessary for now ("very specific applications, we don't need it").
+
+**Investigated before implementing, since this isn't a simple CMake-only change:**
+- Confirmed via `kite-docs-project` (the original, pre-`Src/FFT/` fork) that `long double` is already in the shared `Src/Tools/instantiate.hpp` there, and that fork has no `Src/FFT/` directory at all. So long-double precision is a long-standing, core KITE feature entirely independent of the new FFT/spectral module — dropping it globally (from `instantiate.hpp`) would have been a real regression to unrelated functionality, not a fix scoped to this feature.
+- Traced the actual link dependency: `Src/FFT/FFT.cpp`'s `FFT<T,D>` class calls `FFTWTraits<T>::plan_many_dft`/`execute`/`destroy_plan`, and `FFTWTraits<long double>` (in `Src/FFT/TraitsFFTW.hpp`) calls real `fftwl_*` functions. Because `Simulation<T,D>`/`GlobalSimulation<T,D>` are instantiated for every precision via the same shared `instantiate.hpp` (and unconditionally declare a `GlobalFFT<value_type>` member, calling `calc_spectral()` regardless of `T`), simply not linking `libfftw3l` would have caused the **entire `KITEx` binary to fail to link** (undefined `fftwl_*` symbols) — not a "user hits an error only if they request long-double FFT" situation.
+- `Src/FFT/GlobalFFT.cpp` turned out to already use plain `fftw_malloc`/`fftw_free` regardless of `T` (not `FFTWTraits<T>::malloc`) — so it never actually depended on `fftwl_malloc`/`fftwl_free` in the first place; only `FFT.cpp`'s plan/execute/destroy calls did.
+
+**Fix implemented** (scoped to the FFT/spectral feature only, long double untouched everywhere else):
+1. `Src/FFT/TraitsFFTW.hpp`: `FFTWTraits<long double>`'s methods no longer call any real `fftwl_*` function — each throws `std::runtime_error` with a clear message instead. This lets the build link cleanly without `libfftw3l`, while a config that actually requests `precision = long double` together with a spectral/FFT calculation fails immediately and legibly at that call site, rather than a cryptic linker error or silently wrong output.
+2. `CMakeLists.txt`: FFTW3 detection now only requires `FFTW3_LIB` (double) and `FFTW3F_LIB` (float); `FFTW3L_LIB`/`fftw3l` removed from the `find_library` calls, the fatal-error message, and `target_link_libraries(KITEx ...)`.
+3. `makefile` (the plain, non-CMake build path): `FFT_LIBS` no longer links `-lfftw3l`.
+4. Verified locally: fresh CMake configure + `make -j4` build succeeds with only float/double FFTW3 linked (no `fftw3l` needed), and the full pipeline (`shinada_single.py` → `KITEx`) still runs correctly end-to-end.
+5. Documentation: added a new "FFTW3 precision limits" subsection to `docs/documentation/code_structure.md` (under "Compilation Options", explicitly noted as a candidate to move to a future dedicated "advanced usage" page later, per the user's suggestion), explaining the restriction and what rebuilding your own long-double FFTW would require. Updated `docs/installation.md`'s dependency list, MacPorts recipe (`fftw-3 fftw-3-single`, dropped `fftw-3-long`), Ubuntu/section-3 confirmation text, and the "Common issues" 5.2 section to all reflect float/double-only, with cross-links between the two docs.
+6. While already in `code_structure.md`, fixed two more stale claims noticed in passing: it still said `CMakeLists.txt` hardcodes the compiler (fixed back in Phase 1 of this plan) and that "there is no plain Makefile in the project today" (kite-v2 does have one, added alongside the FFT feature).
+
+`mkdocs build --strict` still passes. **Not yet pushed or re-verified by CI** — that's the next step.

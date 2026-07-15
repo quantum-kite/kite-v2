@@ -11,8 +11,10 @@ EIGEN_INC := -Ithird_party/eigen3
 # HDF5-Flags
 HDF5_LIBS   := -lhdf5_cpp -lhdf5
 
-# FFTW3
-FFT_LIBS   := -lfftw3f -lfftw3 -lfftw3l
+# FFTW3 -- only float/double are linked; long-double FFT/spectral support
+# throws a clear runtime error instead (see Src/FFT/TraitsFFTW.hpp), since
+# the long-double variant isn't built by default by common package managers.
+FFT_LIBS   := -lfftw3f -lfftw3
 
 CPPFLAGS := $(EIGEN_INC) \
 	-Itools/Src \

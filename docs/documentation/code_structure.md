@@ -128,15 +128,10 @@ flags.
 |---|---|---|
 | `CMAKE_BUILD_TYPE` | `Release` | Setting `-DCMAKE_BUILD_TYPE=Debug` adds `-DDEBUG=1` (via `add_definitions`, [`CMakeLists.txt:10-12`][cmakelists_gh]) and changes optimization flags. Because `add_definitions` applies to every target declared afterward in the same file, this affects both KITEx and KITE-tools when building from the root `CMakeLists.txt`. |
 | `USE_SYSTEM_EIGEN` | `OFF` | Selects between the bundled `third_party/eigen3` (default) and a system installation located via `find_package(Eigen3)`. See [Installation][installation]. |
+| `CMAKE_C_COMPILER` / `CMAKE_CXX_COMPILER` | CMake's platform default | No longer hardcoded — `CMakeLists.txt` respects `$CC`/`$CXX` and an active conda environment's `$CONDA_PREFIX` (added to `CMAKE_PREFIX_PATH` automatically). On macOS, CMake's platform default resolves to Apple Clang, which lacks OpenMP support, so pass e.g. `-DCMAKE_C_COMPILER=gcc-14 -DCMAKE_CXX_COMPILER=g++-14` explicitly (see the [verified MacPorts recipe][macports_recipe]) unless using the [conda path][conda_section], which handles this automatically. |
 
-Two further compile-time choices exist but are not exposed as CMake options:
+One further compile-time choice exists but is not exposed as a CMake option:
 
-- **Compiler selection.** `CMakeLists.txt` hardcodes `set(CMAKE_C_COMPILER "gcc")` and
-  `set(CMAKE_CXX_COMPILER "g++")` ([`CMakeLists.txt:2-3`][cmakelists_gh]). On macOS, these names resolve
-  to Apple Clang, which lacks OpenMP support. Changing the compiler therefore requires editing these two
-  lines directly (see the [verified MacPorts recipe][macports_recipe]); passing
-  `-DCMAKE_CXX_COMPILER=...` on the command line has no effect, since the hardcoded `set()` in the file
-  takes precedence.
 - **`COMPILE_WAVEPACKET`.** This is set automatically by CMake — `1` if
   `CMAKE_CXX_COMPILER_VERSION >= 8.0.0`, otherwise `0` ([`CMakeLists.txt:66-71`][cmakelists_gh]) — and
   gates whether Gaussian wavepacket propagation is compiled in. There is no supported way to force this
@@ -205,11 +200,40 @@ via `Src/Tools/instantiate.hpp` (`float`/`double`/`long double`, real and comple
 instantiations in total), so changing `precision` or `is_complex` never requires a rebuild. Only `MEMORY`,
 `TILE`, and the four constants listed above are fixed at compile time.
 
+**One documented exception**: FFT-based spectral calculations (`Src/FFT/`, used by
+`Simulation::calc_spectral`) do not support `precision = long double`. See
+["FFTW3 precision limits"](#fftw3-precision-limits) below.
+
+### FFTW3 precision limits
+
+KITE only links FFTW3's float and double precision libraries (`find_library(FFTW3_LIB fftw3)` /
+`find_library(FFTW3F_LIB fftw3f)` in [`CMakeLists.txt`][cmakelists_gh]) — the long-double variant
+(`fftw3l`) is not required, since it isn't built by default by common package managers (e.g. conda-forge's
+`fftw` package only ships float/double) and long-double FFT precision is a niche need. Long-double
+precision is otherwise fully supported everywhere else in KITE (Hamiltonian, general KPM, etc., per the
+instantiation table above) — this restriction is specific to `Src/FFT/`.
+
+Concretely: `FFTWTraits<long double>` (in `Src/FFT/TraitsFFTW.hpp`) doesn't call any real `fftwl_*`
+functions. Its methods throw `std::runtime_error` instead, so the build links cleanly without `libfftw3l`,
+and a config that actually requests `precision = long double` together with a spectral/FFT calculation
+fails immediately with a clear message, rather than the whole build failing to link or (worse) silently
+computing wrong results. Anyone who genuinely needs this combination must build FFTW3 from source with
+`--enable-long-double`, link `libfftw3l` themselves, and replace the throwing calls with real `fftwl_*`
+calls (mirroring the `float`/`double` specializations in the same file).
+
+*(This section may move to a dedicated "advanced usage" page later, alongside other niche
+build-configuration notes — noted here for now since [Compilation Options](#compilation-options) is
+where it's most discoverable today.)*
+
 ### Documentation inconsistency
 
 The runtime banner in `Src/Tools/messages.hpp` instructs users to "set DEBUG to 1 in the Makefile." This
-text predates the current CMake-based build system; there is no plain Makefile in the project today, and
-the mechanisms described above are the applicable ones.
+text predates the CMake-based build system that this doc otherwise describes. A plain `makefile` does
+exist in the repo (added alongside the newer `Src/FFT/`/spectral functionality, and covered by [the
+installation instructions][installation] as an alternative to CMake), but it does not define a `DEBUG`
+knob either — `DEBUG`/`VERBOSE` are only ever set via `-D` flags or `CMAKE_BUILD_TYPE`, as described above.
+So the banner's instruction has never had a literal file-and-variable match to point to; the mechanisms
+described above are the applicable ones regardless of which build path (CMake or `makefile`) is used.
 
 ### Installation via `make install`
 
@@ -224,6 +248,7 @@ of the default.
 [installation]: ../installation.md
 [docker]: ../installation.md#6-using-docker
 [macports_recipe]: ../installation.md#23-verified-macports-recipe
+[conda_section]: ../installation.md#conda_section
 [pybinding]: https://docs.pybinding.site/en/stable
 [cmakelists_gh]: https://github.com/quantum-kite/kite/blob/master/CMakeLists.txt
 [genericheader_gh]: https://github.com/quantum-kite/kite/blob/master/Src/Generic.hpp
