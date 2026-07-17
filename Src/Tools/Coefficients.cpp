@@ -1,4 +1,5 @@
 #include "Coefficients.hpp"
+#include "BesselJ.hpp"
 
 namespace Coefficients {
 template <typename T>
@@ -79,9 +80,12 @@ Eigen::Array<std::complex<T>, -1, 1> build_cplx_exp(const T t)
     std::max<unsigned>(32, static_cast<unsigned>(std::ceil(2 * t)));
   Eigen::Array<std::complex<T>, -1, 1> moments(N_pols);
 
-  moments(0) = mi_pow[0] * static_cast<T>(std::cyl_bessel_j(0, t));
+  std::vector<double> besselj(N_pols);
+  cyl_bessel_j_series(N_pols - 1, static_cast<double>(t), besselj.data());
+
+  moments(0) = mi_pow[0] * static_cast<T>(besselj[0]);
   for (unsigned n = 1; n < N_pols; ++n)
-    moments(n) = mi_pow[n % 4] * static_cast<T>(2.0 * std::cyl_bessel_j(n, t));
+    moments(n) = mi_pow[n % 4] * static_cast<T>(2.0 * besselj[n]);
   return moments;
 }
 

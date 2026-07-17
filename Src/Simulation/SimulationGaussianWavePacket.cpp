@@ -7,6 +7,7 @@
 
 
 #include "Generic.hpp"
+#include "BesselJ.hpp"
 #include "ComplexTraits.hpp"
 #include "myHDF5.hpp"
 #include "Global.hpp"
@@ -150,8 +151,11 @@ void Simulation<T,D>::Gaussian_Wave_Packet(){
     
   NumMoments = (NumMoments/2)*2;
   Eigen::Matrix<T,-1,1> m(NumMoments);
+  std::vector<double> besselj(NumMoments > 0 ? NumMoments : 0);
+  if(NumMoments > 0)
+    cyl_bessel_j_series(unsigned(NumMoments - 1), double(timestep), besselj.data());
   for(unsigned n = 0; n < unsigned(NumMoments); n++)
-    m(n) = value_type((n == 0 ? 1 : 2 )*std::cyl_bessel_j(n, timestep )) * T(pow(-II,n));
+    m(n) = value_type((n == 0 ? 1 : 2 )*besselj[n]) * T(pow(-II,n));
     
   for(int id = 0; id < NumDisorder; id++)
     {

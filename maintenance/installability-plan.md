@@ -302,4 +302,50 @@ The user investigated directly via the GitHub UI (this session's browser tooling
 5. Documentation: added a new "FFTW3 precision limits" subsection to `docs/documentation/code_structure.md` (under "Compilation Options", explicitly noted as a candidate to move to a future dedicated "advanced usage" page later, per the user's suggestion), explaining the restriction and what rebuilding your own long-double FFTW would require. Updated `docs/installation.md`'s dependency list, MacPorts recipe (`fftw-3 fftw-3-single`, dropped `fftw-3-long`), Ubuntu/section-3 confirmation text, and the "Common issues" 5.2 section to all reflect float/double-only, with cross-links between the two docs.
 6. While already in `code_structure.md`, fixed two more stale claims noticed in passing: it still said `CMakeLists.txt` hardcodes the compiler (fixed back in Phase 1 of this plan) and that "there is no plain Makefile in the project today" (kite-v2 does have one, added alongside the FFT feature).
 
-`mkdocs build --strict` still passes. **Not yet pushed or re-verified by CI** — that's the next step.
+`mkdocs build --strict` still passes.
+
+## Addendum — macOS `std::cyl_bessel_j` compile failure (wave-packet code path)
+
+After the FFTW3 fix above, CI (`ci #7`, commit `7aa1fd8`) confirmed `build-and-test (macos-latest)` was
+still failing, this time at `make`, with `SimulationGaussianWavePacket.cpp.o` as the failing target
+(confirmed from the user's own pasted CI log excerpt, which included the compiler's deprecation-note
+output but was cut off before the actual top-level error).
+
+**Root cause**: `std::cyl_bessel_j` — the C++17 "mathematical special functions" library — is implemented
+by GCC's `libstdc++` (used on Linux, where this always worked) but **not** by Clang's `libc++` (used by
+both Apple Clang and conda-forge's macOS Clang toolchain). Confirmed directly with a minimal standalone
+test program compiled with Apple Clang: `error: no member named 'cyl_bessel_j' in namespace 'std'`. These
+special functions were left optional by the C++17 standard for exactly this reason — this is a genuine,
+long-standing libc++ gap, not a regression in KITE.
+
+Two call sites were affected:
+- `Src/Tools/Coefficients.cpp`'s `build_cplx_exp<T>` — **unconditionally instantiated** for
+  float/double/long double (used to build the Chebyshev time-evolution coefficients), so this was the more
+  fundamental blocker.
+- `Src/Simulation/SimulationGaussianWavePacket.cpp`'s `Gaussian_Wave_Packet()` — gated behind
+  `#if COMPILE_WAVEPACKET`, but that guard is enabled by default, so it still builds on macOS CI.
+
+**Fix (per the user's explicit choice, "vendor a small portable implementation" over any libc-shim
+approach)**: added `Src/Tools/BesselJ.hpp`, a small header implementing Miller's downward-recurrence
+algorithm (`cyl_bessel_j_series(n_max, x, out)`, filling `J_0(x)..J_{n_max}(x)` in one pass). Downward
+recurrence is the standard, numerically stable way to compute a whole range of integer-order $J_n(x)$ at
+once (the same three-term recurrence is unstable recurred upward). Both call sites now call this instead
+of `std::cyl_bessel_j`; the wave-packet file also gained an explicit `NumMoments > 0` guard before
+computing `NumMoments - 1` as an `unsigned`, since `NumMoments` is a signed `int` that could in principle be
+zero (the original plain `for` loop had no equivalent risk, since it simply wouldn't execute).
+
+**Verification**: compared against real `std::cyl_bessel_j` (compiled with GCC via MacPorts `g++-mp-14`,
+which does implement it) across 810 cases (10 x-values from 0.001–100 × orders 0–80): zero failures, max
+absolute error 5.18e-15, max relative error 1.06e-11. Also checked at KITE's realistic moment-count scale
+(n_max=4096): zero failures. Edge case `x=0` verified correct (`J_0=1`, all higher orders `0`). Note:
+`std::cyl_bessel_j` itself throws `std::domain_error` for negative `x` per the standard, so negative-`x`
+comparisons were dropped from the test set as invalid reference points — consistent with the original code
+never having safely supported negative `timestep`/argument either. Ran a full GCC regression build of the
+changed files (no new warnings/errors beyond pre-existing unrelated `sprintf` deprecation notices), and a
+Clang `-fsyntax-only` check of both changed files (using a minimal stub `omp.h`, since no real `omp_*()`
+runtime calls appear in the affected headers — only `#pragma omp` directives) to confirm the libc++ build
+path specifically now compiles clean.
+
+**Not yet pushed or re-verified by CI** — that's the next step. Windows' current failure mode is still
+unresolved (last seen failing at the CMake configure step with an `EnvironmentNameNotFound` annotation
+nearby, possibly unrelated to either fix above) — needs a fresh CI run to know current status.
