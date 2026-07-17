@@ -221,4 +221,74 @@ kept re-resolving to the wrong case. **Worth remembering for any future new file
 on this machine**: verify with `git status`/`git ls-files` that it landed at the lowercase `src/kite/...`
 path, not `Src/kite/...`, before committing.
 
-Not yet committed or pushed — pending review.
+---
+
+## Addendum — k-path (`make_path`) and predefined lattice templates (graphene, phosphorene, TMDs)
+
+Second slice, per the user's explicit "next stage" request: a k-path helper for the Brillouin zone (item 3
+above) and native, pybinding-free equivalents of `pybinding.repository`'s lattice templates, so example
+scripts can eventually stop needing pybinding just to get a lattice definition. Since pybinding is actually
+installed locally, this was implemented as a direct **port**, not a re-derivation — a `careful-executor`
+agent (correctness) built it against pybinding's real source, and a `sci-viz` agent (presentation) then
+rendered and visually inspected the result. No `cmt-physicist` involved this round, since there was nothing
+to derive — the goal was matching pybinding's existing structure/parameters exactly, not deriving new physics.
+
+**`make_path(*points, step=0.1, point_labels=None)`** added to `src/kite/visualize.py`, wired into
+`plot_brillouin_zone`'s existing `k_path` parameter (backward compatible — a plain `(N,2)` array still
+works as before). Implements exactly the two correctness requirements from section 3 above: point density
+per segment is set by that segment's actual Cartesian length (not fractional coordinates, not a fixed
+count), and zero-length segments raise `ValueError` rather than silently dividing by zero. Units convention
+(Cartesian reciprocal-space coordinates, matching `reciprocal_vectors()`'s output, not fractional) is
+documented explicitly in the docstring, with an explicit callout of the ARPES k-vector unit bug
+(`e62c839`) as the reason this isn't silently dual-accepted.
+
+**`src/kite/repository.py`** (new file): `graphene.monolayer(nearest_neighbors=1|2, ...)`,
+`phosphorene.monolayer_4band(num_hoppings=2..5)`, `group6_tmd.monolayer_3band(name, ...)` for all 6 group-6
+TMD species (MoS2, WS2, MoSe2, WSe2, MoTe2, WTe2). Deliberately mirrors `pybinding.repository`'s
+module/function/constant naming (`graphene.a`, `graphene.monolayer`, etc.), per the user's explicit
+direction — this is a port, no `pybinding` import anywhere in the file. TMD's 3-orbital metal site is built
+as one sublattice per orbital with scalar hoppings (matching the pattern already used natively in
+`examples/pybinding/arpes_tmd.py`'s `tmd_monolayer`), since `kite.lattice.Lattice.add_one_sublattice` only
+accepts a scalar onsite energy, unlike pybinding's dense per-site onsite matrix.
+
+**Verification** (independently re-checked, not just trusting each agent's own report):
+- Every literal constant (graphene `a`/`a_cc`/`t`/`t_nn`, phosphorene's `a`/`ax`/`ay`/`theta`/`phi`/`t1`–`t5`,
+  all 6 TMD species' 9-parameter table) diffed exactly (`0.0` difference) against the real, locally-installed
+  `pybinding.repository` source — re-ran this diff independently after the agents finished (not just taking
+  their word for it): `repository.graphene.a/a_cc/t/t_nn` all compare `True` against
+  `pybinding.repository.graphene.a/a_cc/constants.t/constants.t_nn`.
+- Independently smoke-tested every template (`graphene.monolayer()` both NN shells, `phosphorene.monolayer_4band()`,
+  all 6 `group6_tmd.monolayer_3band(...)` species) — correct sublattice/hopping-term counts (graphene:
+  2 subs/3 or 9 hop terms; phosphorene: 4 subs/20 hop terms; each TMD: 3 subs/27 hop terms), all
+  `plot_unit_cell`/`plot_brillouin_zone` calls render without error, error-handling paths
+  (`make_path` zero-length segment, `graphene.monolayer(nearest_neighbors=3)`) correctly raise `ValueError`.
+- `make_path` end-to-end through graphene's actual Γ→K→M→Γ (K/M computed from `reciprocal_vectors()`/
+  `brillouin_zone()`, not hardcoded textbook values): K lands exactly on a BZ hexagon corner, M at an edge
+  midpoint (both to machine precision), tick_indices index back to the exact input points.
+- `sci-viz` rendered and visually inspected the actual figures (not just reasoned about the code) and found
+  two real presentation bugs, both fixed in `visualize.py`: (1) `plot_unit_cell` crashed outright on any 2D
+  lattice whose sublattice positions carry a 3rd (out-of-plane) component — phosphorene's buckled sites hit
+  this immediately — fixed by zero-padding the in-plane cell-translation offset to match the position's own
+  dimensionality before adding (a correct top-down projection, not a misrepresentation, since only x/y are
+  ever plotted); (2) more seriously, TMD's 3 orbital-sublattices (`Mo_0`/`Mo_1`/`Mo_2`) all sit at the exact
+  same in-plane position, and the original same-size-opaque-marker scatter silently let the last-drawn
+  orbital hide the other two — the legend showed 3 entries but the figure only ever showed 1. Fixed by
+  drawing coincident-position sublattice groups as nested rings (decreasing size, largest first) so every
+  orbital stays visible.
+- `src/kite/__init__.py` and `src/kite/lattice.py` confirmed untouched (`git diff` shows zero changes) —
+  the standing constraint that other tests run against `kite.py` in parallel elsewhere still holds.
+
+**Deliberately deferred** (flagged by the implementing agent, not oversights): graphene's `monolayer_alt`
+(same physics, alternative lattice vectors), `monolayer_4atom`/`bilayer` (both need
+`Lattice.add_aliases`, which `kite.lattice.Lattice` doesn't implement — a real API gap, not faked around),
+and the 3rd-nearest-neighbor `t_nnn` term (explicitly rejected with `ValueError`, not silently ignored).
+`hamiltonian_k`/`compute_bands`/`plot_bands` (section 5 above) remain unbuilt — this round was scoped to
+`make_path` + lattice templates only. Converting `arpes_bilayer.py`/`arpes_cubic.py`/`arpes_tmd.py` off
+pybinding themselves is still separate follow-up work, now unblocked by this landing.
+
+**The same case-sensitivity gotcha recurred** (`src/kite/repository.py`, a new file under `src/kite/`, was
+staged by `git status` as `Src/kite/repository.py` again) — same fix as before (`git hash-object -w` +
+`git update-index --add --cacheinfo` with the explicit lowercase path), confirmed via `git status --short --
+src/` and `git ls-files --others` resolving correctly before committing.
+
+Committed, not yet pushed (in progress alongside a separate CI thread verifying the macOS Bessel-function fix).
