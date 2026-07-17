@@ -80,3 +80,45 @@ jobs:
       - uses: actions/checkout@v2
       - name: Build Docker image (includes its own baked-in smoke test)
         run: docker build -t quantum-kite/kite-v2:ci .
+
+  # Follows docs/installation.md section 2.2's Homebrew recipe verbatim (as
+  # verbatim as a non-interactive CI shell allows), on a real macOS runner
+  # that ships with Homebrew preinstalled -- an actual end-to-end check of
+  # that documented path, not just the conda one already covered above.
+  build-and-test-homebrew:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install an up-to-date C++ compiler via Homebrew
+        run: |
+          brew install gcc
+          GCC_VERSION=$(brew list --versions gcc | awk '{print $2}' | cut -d. -f1)
+          echo "GCC_VERSION=$GCC_VERSION" >> "$GITHUB_ENV"
+
+      - name: Install HDF5 from source, enforcing C++17 (matches docs section 2.2)
+        run: |
+          HOMEBREW_CC=gcc-$GCC_VERSION HOMEBREW_CXX=g++-$GCC_VERSION HOMEBREW_CXXFLAGS="-std=c++17" brew install hdf5 --build-from-source
+
+      - name: Install CMake, Python, and FFTW3
+        run: brew install python cmake git fftw
+
+      - name: Install kite (editable) with the Homebrew python
+        run: |
+          echo "PYTHON_BIN=$(brew --prefix)/bin/python3" >> "$GITHUB_ENV"
+          "$(brew --prefix)/bin/python3" -m pip install -e .
+
+      - name: Configure (CMake), passing the Homebrew compiler explicitly
+        run: |
+          mkdir -p build
+          cd build
+          cmake -DCMAKE_C_COMPILER=gcc-$GCC_VERSION -DCMAKE_CXX_COMPILER=g++-$GCC_VERSION -DCMAKE_BUILD_TYPE=Release ..
+
+      - name: Build KITEx + KITE-tools
+        run: cmake --build build --config Release -j 4
+
+      - name: Smoke test — generate a config and run KITEx
+        run: |
+          cd examples
+          "$PYTHON_BIN" shinada_single.py
+          ../build/KITEx single.h5
