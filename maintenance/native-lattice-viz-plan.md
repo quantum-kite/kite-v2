@@ -292,3 +292,54 @@ staged by `git status` as `Src/kite/repository.py` again) — same fix as before
 src/` and `git ls-files --others` resolving correctly before committing.
 
 Committed, not yet pushed (in progress alongside a separate CI thread verifying the macOS Bessel-function fix).
+
+---
+
+## Addendum — the 3 remaining ARPES examples converted off pybinding
+
+Per the user's request, once `make_path`/`repository.py` landed: `examples/pybinding/arpes_bilayer.py`,
+`arpes_cubic.py`, `arpes_tmd.py` (the only files still needing pybinding beyond basic `pb.Lattice`
+construction, per `examples/pybinding/README.md`) converted and moved to the top level of `examples/`.
+`pb.Lattice` → `kite.lattice.Lattice`; `pb.results.make_path(...)` → `kite.visualize.make_path(...)[0]`;
+`arpes_tmd.py`'s locally-defined `tmd_monolayer()` replaced with a thin wrapper around
+`kite.repository.group6_tmd.monolayer_3band()`.
+
+**Verified, not just reviewed**: diffed HDF5 config output (lattice vectors, orbital positions, hoppings,
+disorder arrays, weights) between the original pybinding-based version and the converted native version for
+all 3 files — bit-identical (max abs diff 0.0) on everything except the `k_vector` path itself, then
+independently re-ran all 3 scripts (fresh interpreter, `pybinding in sys.modules` checked explicitly)
+to confirm they generate valid output with zero pybinding import at runtime.
+
+**Two things the implementing agent flagged rather than deciding on its own, both resolved**:
+
+1. **A genuine, real bug in the original `arpes_tmd.py`, caught in the process of matching an already-verified
+   shared implementation**: its local parameter table used the lattice constant `a` in **angstrom**
+   (matching that file's own docstring header), but `kite.repository.group6_tmd`'s parameter table (already
+   verified exact-match against `pybinding.repository.group6_tmd`) uses **nm**, like the rest of `kite`.
+   Left as a bare substitution, `dk = 0.1` (meant as ≈0.1 Å⁻¹) would have silently become ≈0.1 nm⁻¹ — a real
+   ~10x finer/more-expensive k-path sampling than the script ever intended, not caught by the bit-identical
+   lattice diff since it only affects the k-path. Fixed by rescaling `dk` to `1.0`; verified independently
+   (not just re-trusting the agent) that `distance/step` for each path segment is identical before and after
+   to machine precision (13.131003776759846 in both), so the point count is unaffected by the unit change.
+   Also fixed the file's stale "Length in angstrom" docstring header to "Length in nm".
+2. **A deliberate, accepted design difference between `kite.visualize.make_path` and `pb.results.make_path`**:
+   ours uses `ceil(distance/step)` per segment (guarantees at least the requested density, never silently
+   drops a segment to 0 points), pybinding's uses `floor` (can undersample short segments). This explains
+   every k-path shape mismatch found during verification (e.g. TMD: 27 points old vs. 29 new) — the
+   high-symmetry tick points themselves land at numerically identical coordinates either way; only interior
+   sampling differs. Decision: keep `ceil` as-is, since it's arguably the more correct/robust behavior (never
+   sparser than requested) and was already a deliberate choice when `make_path` was first built — not a
+   regression to fix.
+
+Also fixed a real regression the file moves caused: each of the 3 files' `"complete"` CLI mode does
+`import run_all_examples as ra` (a driver script that stayed in `examples/pybinding/`) — fixed via
+`sys.path.append("pybinding")` in each moved file, and anchoring `run_all_examples.py`'s `_kitex_dir`/
+`_kite_tools_dir` to its own file location (`os.path.dirname(os.path.abspath(__file__))`) instead of the
+caller's cwd, verified both the direct-invocation and cross-directory-import cases still resolve correctly.
+
+`examples/pybinding/README.md` updated to drop these 3 from its "still need pybinding" list and note that
+`kite.repository.graphene.monolayer(...)` also now exists (verified against pybinding) but hasn't yet been
+wired into the 3 remaining `dos_*disorder.py` examples — left as the next, not-yet-requested step, along
+with `dos_twisted_bilayer.py`'s fundamentally different workflow.
+
+`src/kite/__init__.py`, `lattice.py`, and `repository.py` confirmed untouched throughout.

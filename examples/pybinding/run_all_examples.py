@@ -8,6 +8,7 @@
     Last updated: 30/07/2022
 """
 
+import os
 import sys
 sys.path.append("..")
 
@@ -20,8 +21,15 @@ from matplotlib import rc
 rc('font',size=14)
 rc('axes',labelsize=14,linewidth=2)
 
-_kitex_dir = "../../build"
-_kite_tools_dir = "../../build"
+# Anchored to this file's own location (not the caller's current working directory),
+# so these still resolve correctly both when this module is run directly (expected
+# cwd == examples/pybinding/) and when it's imported as a helper from a caller
+# elsewhere -- e.g. arpes_bilayer.py/arpes_cubic.py/arpes_tmd.py's "complete" mode,
+# which now live at the top level of examples/ and import this module by appending
+# "pybinding" to sys.path (expected cwd == examples/ in that case).
+_this_dir = os.path.dirname(os.path.abspath(__file__))
+_kitex_dir = os.path.join(_this_dir, "..", "..", "build")
+_kite_tools_dir = os.path.join(_this_dir, "..", "..", "build")
 
 KITEx_exists = exists(_kitex_dir)
 tools_exists = exists(_kite_tools_dir)

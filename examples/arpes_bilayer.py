@@ -14,9 +14,10 @@
     Last updated: 28/07/2022
 """
 
-import pybinding as pb
 from math import sqrt
 import kite
+from kite import lattice as latt
+from kite import visualize
 import sys
 from os import system as terminal
 
@@ -34,8 +35,8 @@ def bilayer_graphene_rashba():
   a = 0.24595                               # [nm] unit cell length
   a_cc = 0.142                              # [nm] carbon-carbon distance
   c0 = 0.335                                # [nm] interlayer spacing
-  lat = pb.Lattice(
-      a1=[a/2,  a/2 * sqrt(3)], 
+  lat = latt.Lattice(
+      a1=[a/2,  a/2 * sqrt(3)],
       a2=[-a/2, a/2 * sqrt(3)])
 
   lat.add_sublattices(
@@ -127,7 +128,7 @@ def main():
     M = b1[0:2]/2
     dk=0.5
     points = [Gamma, M, K, Gamma]
-    k_path = pb.results.make_path(*points, step=dk)
+    k_path = visualize.make_path(*points, step=dk)[0]
 
 
     weights = [1 for i in range(8)]
@@ -156,6 +157,7 @@ if __name__ == "__main__":
     hdf5_file = main() # generate the Configuration file
 
     if len(sys.argv) > 1 and sys.argv[1] == "complete":
+        sys.path.append("pybinding")  # examples/pybinding/run_all_examples.py, assumes cwd == examples/
         import run_all_examples as ra
         import process_arpes as pa
         ra.run_calculation(hdf5_file)

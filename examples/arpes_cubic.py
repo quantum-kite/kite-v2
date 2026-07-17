@@ -14,8 +14,9 @@
     Last updated: 28/07/2022
 """
 
-import pybinding as pb
 import kite
+from kite import lattice as latt
+from kite import visualize
 import sys
 import numpy as np
 from os import system as terminal
@@ -32,7 +33,7 @@ def cube(onsite=(0, 0)):
     a3 = np.array([0, 0, 1])
 
     # create a lattice with 2 primitive vectors
-    lat = pb.Lattice(a1=a1, a2=a2, a3=a3)
+    lat = latt.Lattice(a1=a1, a2=a2, a3=a3)
 
     # add sublattices
     lat.add_sublattices(
@@ -76,7 +77,7 @@ def main():
     R     = [np.pi, np.pi, np.pi]
     dk = 0.3
     points = [Gamma, X, Y, M, R, Gamma]
-    k_path = pb.results.make_path(*points, step=dk)
+    k_path = visualize.make_path(*points, step=dk)[0]
 
 
     weights = [1]
@@ -105,6 +106,7 @@ if __name__ == "__main__":
     hdf5_file = main() # generate the Configuration file
 
     if len(sys.argv) > 1 and sys.argv[1] == "complete":
+        sys.path.append("pybinding")  # examples/pybinding/run_all_examples.py, assumes cwd == examples/
         import run_all_examples as ra
         import process_arpes as pa
         ra.run_calculation(hdf5_file)
