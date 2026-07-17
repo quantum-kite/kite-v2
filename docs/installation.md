@@ -237,6 +237,72 @@ deprecation warnings (safe to ignore, as noted in Section 3).
     backend. If you hit a problem on Linux/macOS with the sequence below, please report it so it can be
     tracked down.
 
+#### 2.4.1 Installing conda itself
+
+If you don't already have conda, the [Miniforge][miniforge] distribution is recommended — it's
+conda-forge-first (matching this project's `#!bash environment.yml`) and much lighter than a full Anaconda
+install. How you get it depends on what you already have on macOS.
+
+**If you use Homebrew:**
+
+``` bash
+brew install --cask miniforge
+```
+
+Then initialize your shell (only needed once):
+
+``` bash
+conda init "$(basename "${SHELL}")"
+```
+
+and open a new terminal window.
+
+**If you use MacPorts:**
+
+MacPorts does not package conda/miniforge (`#!bash port search miniforge` returns no match) — there's
+no MacPorts-specific install path. Use the official installer script instead, which is
+package-manager-agnostic and installs into its own prefix (`#!bash ~/miniforge3` by default), entirely
+separate from MacPorts' `#!bash /opt/local`:
+
+``` bash
+curl -L -O "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh"
+bash "Miniforge3-$(uname)-$(uname -m).sh"
+```
+
+Follow the prompts (accept the license, default install location is fine). When it asks about running
+`#!bash conda init`, either accept (so `#!bash conda activate` works in every new terminal) or decline
+if you'd rather activate manually each session — if you decline, run
+`#!bash source ~/miniforge3/bin/activate` once per terminal session before the commands below.
+
+#### 2.4.2 Does this conflict with an existing MacPorts/Homebrew install?
+
+No, in practice — verified directly on a machine with MacPorts' own `#!bash gcc14`, `#!bash hdf5`, and
+`#!bash fftw` already installed and active. Two things make conda's copies win without any manual PATH
+surgery:
+
+1. conda-forge's `#!bash cxx-compiler`/`#!bash c-compiler` packages (already in this project's
+   `#!bash environment.yml`) set the `#!bash CC`/`#!bash CXX` environment variables directly to conda's own
+   compiler when you activate the environment — CMake and `#!bash make` pick those up ahead of any
+   plain `#!bash gcc`/`#!bash g++` found via `#!bash PATH`, so a MacPorts- or Homebrew-installed compiler
+   never gets used by accident.
+2. The `#!bash cmake -DCMAKE_PREFIX_PATH=$CONDA_PREFIX ..` step below explicitly points CMake's
+   `#!bash find_package`/`#!bash find_library` at the active conda environment first, so it finds conda's
+   HDF5/FFTW3 even when MacPorts or Homebrew have their own separate copies installed.
+
+Confirmed by configuring KITE with conda active on a machine that also has MacPorts' `#!bash gcc14`+`#!bash hdf5`+`#!bash fftw`
+installed: CMake reported `#!bash Found HDF5` (version 2.1.0, from `#!bash .../miniforge3/envs/kite/...`),
+`#!bash Found FFTW3`, and a Clang 19 compiler — all from the conda environment, none from MacPorts.
+
+The one thing actually worth double-checking (this *is* a real, easy-to-hit gotcha, unlike the imagined PATH
+conflict above): if you declined `#!bash conda init`, you must re-run `#!bash source ~/miniforge3/bin/activate kite`
+in **every new terminal window** before building — otherwise `#!bash conda`/`#!bash cmake`/`#!bash pip` silently
+fall back to whatever your system or MacPorts/Homebrew already provides, with no obvious error. Verify with:
+
+``` bash
+which cmake        # should be .../miniforge3/envs/kite/bin/cmake
+echo $CC $CXX      # should both be set (not empty)
+```
+
 From the `#!bash kite/` directory:
 
 ``` bash
@@ -376,6 +442,7 @@ default (see [Section 2][get_dependencies]); install it yourself inside a runnin
 [hdf5]: https://github.com/HDFGroup/
 [openmp]: https://gcc.gnu.org/onlinedocs/libgomp/
 [homebrew]: https://brew.sh/
+[miniforge]: https://github.com/conda-forge/miniforge
 [ports]: https://www.macports.org 
 [pybinding]: https://docs.pybinding.site/en/stable/install/quick.html
 [tutorial]: documentation/index.md
