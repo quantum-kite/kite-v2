@@ -112,7 +112,13 @@ extra_css:
 
 extra_javascript:
   - assets/javascripts/mathjax-config.js
-  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  # polyfill.io was removed here: the domain was acquired by a new owner in
+  # mid-2024 and confirmed by multiple independent researchers (Cloudflare,
+  # Fastly, Sansec) to be serving malicious/injected JavaScript to visitors --
+  # it should never be referenced from any site. It was originally included
+  # for ES6 support in older browsers; MathJax's own "es5" build below is
+  # already pre-transpiled and needs no such polyfill on any currently
+  # supported browser.
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
   - https://unpkg.com/mermaid@7.1.2/dist/mermaid.min.js
 
