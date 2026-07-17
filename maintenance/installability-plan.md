@@ -346,6 +346,40 @@ Clang `-fsyntax-only` check of both changed files (using a minimal stub `omp.h`,
 runtime calls appear in the affected headers — only `#pragma omp` directives) to confirm the libc++ build
 path specifically now compiles clean.
 
-**Not yet pushed or re-verified by CI** — that's the next step. Windows' current failure mode is still
-unresolved (last seen failing at the CMake configure step with an `EnvironmentNameNotFound` annotation
-nearby, possibly unrelated to either fix above) — needs a fresh CI run to know current status.
+**Follow-up end-to-end check found and fixed a real bug in the first version of `BesselJ.hpp`, and
+surfaced a latent bug in libstdc++'s own `std::cyl_bessel_j` along the way.** Before pushing, ran an
+end-to-end numerical diff: compiled the actual `Coefficients::build_cplx_exp<double>` (not a standalone
+reimplementation) from both the pre-fix source (calling real `std::cyl_bessel_j` via GCC) and the post-fix
+source (calling the vendored function), across the realistic range of `t` values this function actually
+sees (`N_pols = max(32, ceil(2t))`), and diffed the real numeric output.
+
+- **Bug found**: for small `t` (e.g. `t=0.001`, giving `N_pols=32`), the vendored downward recurrence
+  produced `nan`. Root cause: the recurrence coefficient `2k/x` grows without bound as `x -> 0`, so the
+  unnormalized intermediate values overflowed `double` before the final normalization step had a chance to
+  rescale them back down — the original implementation never checked for this. Fixed by adding the
+  standard periodic-rescaling technique: whenever an intermediate value's magnitude exceeds `1e250`, every
+  value computed so far in the recurrence is rescaled by `1e-250`, preserving all the ratios between them
+  (all that matters, since the normalization sum fixes the absolute scale afterward anyway).
+- **Bigger finding**: the *reference* being compiled against — GCC's real `std::cyl_bessel_j` — turned out
+  to be unreliable at the other end of the range. At `t=2000` (`N_pols=4000`), it returned values as large
+  as `1e290` for orders around 1060+, which is mathematically impossible (`|J_n(x)| <= 1` always). This
+  means **libstdc++'s shipped `std::cyl_bessel_j` has its own latent overflow bug** for large order +
+  moderate/large argument combinations — a bug that's been present in every Linux build of KITE all along,
+  just never triggered because typical `NumMoments`/`N_pols` values in practice (the wave-packet example
+  script works out to roughly `t~46`, `N_pols~92`) stay well under where it kicks in. Confirmed this wasn't
+  a mistake in the vendored code by cross-checking both against a third, independent implementation
+  (`scipy.special.jv`) across the entire test matrix (5535 points total, `t` from 0.001 to 2000, full order
+  range per `t`): the vendored function matches `scipy` to double-precision accuracy everywhere (max
+  absolute diff `2.97e-14`, max relative diff `2.12e-9`), while GCC's `std::cyl_bessel_j` diverges sharply
+  from both once order exceeds roughly 1000 at `t=2000`. **Net effect: this fix is not just a macOS
+  portability shim — it also fixes a pre-existing correctness bug in the current Linux/GCC build**, for any
+  calculation whose `NumMoments` pushes `N_pols` into the low thousands or higher.
+- Re-ran the full verification suite after the rescaling fix: fresh GCC regression build of `KITEx`
+  (`cmake` configure + `make -j4`, both `Src/Tools/Coefficients.cpp` and
+  `Src/Simulation/SimulationGaussianWavePacket.cpp` compiling cleanly, `KITEx` binary produced, no new
+  warnings) and a repeat Clang `-fsyntax-only` check of both files (same stub-`omp.h` approach as before) —
+  both clean.
+
+Pushed as commit `c3636fd` (plus this doc update). Windows' current failure mode is still unresolved (last
+seen failing at the CMake configure step with an `EnvironmentNameNotFound` annotation nearby, possibly
+unrelated to either fix above) — needs a fresh CI run to know current status.

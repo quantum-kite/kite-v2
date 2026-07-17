@@ -49,8 +49,24 @@ inline void cyl_bessel_j_series(unsigned n_max, double x, double *out)
   std::vector<double> j(m + 2, 0.0);
   j[m] = 1.0; // arbitrary nonzero seed; overall scale fixed by normalization below
 
+  // The recurrence coefficient 2k/ax grows without bound as ax -> 0, so the
+  // unnormalized j[] values can overflow double before the final
+  // normalization gets a chance to rescale them back down (confirmed by a
+  // direct end-to-end test: small x combined with a large n_max produced
+  // inf/nan here). Standard fix: whenever a freshly computed value exceeds a
+  // safe threshold (still far below DBL_MAX, so a single recurrence step
+  // can't jump straight to overflow), rescale every value computed so far by
+  // the same factor. This preserves all ratios between j[] entries, which is
+  // all that matters -- the normalization sum below fixes the absolute scale
+  // anyway.
+  constexpr double big = 1.0e250;
+  constexpr double small_ = 1.0e-250;
   for (unsigned k = m; k >= 1; --k) {
     j[k - 1] = (2.0 * static_cast<double>(k) / ax) * j[k] - j[k + 1];
+    if (std::fabs(j[k - 1]) > big) {
+      for (unsigned idx = k - 1; idx <= m; ++idx)
+        j[idx] *= small_;
+    }
   }
 
   double sum = j[0];
