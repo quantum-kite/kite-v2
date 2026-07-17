@@ -383,3 +383,48 @@ sees (`N_pols = max(32, ceil(2t))`), and diffed the real numeric output.
 Pushed as commit `c3636fd` (plus this doc update). Windows' current failure mode is still unresolved (last
 seen failing at the CMake configure step with an `EnvironmentNameNotFound` annotation nearby, possibly
 unrelated to either fix above) — needs a fresh CI run to know current status.
+
+## Addendum — native Windows build dropped; Docker is the Windows path
+
+After the Bessel fix above, CI (commit `16151f1`) confirmed **`build-and-test (macos-latest)` now fully
+passes** (both the FFTW3 and Bessel fixes hold end-to-end). `build-and-test (windows-latest)` still failed,
+but at a *later* step than before — `cmake --build` itself, not conda/CMake setup. The `EnvironmentNameNotFound`
+annotation from the previous run turned out to be an unrelated, non-fatal artifact; the user pulled the
+actual raw log (GitHub's log viewer truncates very large steps — use "View raw logs" from the "..." menu to
+download the full text) and it showed real MSVC compile errors.
+
+**Investigated properly before deciding**: a `Plan` agent categorized the (~118,858-line) raw log into 5
+distinct, independent root causes (everything else is cascading fallout once one of these fails to parse):
+`M_PI` undeclared (14 files — MSVC needs `_USE_MATH_DEFINES` before `<cmath>`), `and`/`or`/`not` word-operators
+unrecognized (6 files — MSVC needs `<ciso646>` or `/permissive-`), `__DBL_EPSILON__` (1 file, a GCC/Clang-only
+builtin), an OpenMP loop requiring a signed index (1 file, MSVC's older OpenMP-2.0 implementation is stricter
+than GCC/Clang's), and an `Eigen::Map` overload failure (`LatticeStructure.cpp`'s dead-code `print_coordinates`
+using `Coordinates<long,...>` instead of the codebase-wide `Coordinates<std::ptrdiff_t,...>` convention — only
+visible on Windows' LLP64 model, where `long` is 32-bit unlike LP64's 64-bit). A `structure-auditor` review of
+that plan caught two real defects before it could reach an implementer (a nonexistent file path,
+`Src/Tools/Generic.hpp`, that would have silently no-op'd the fix — the real file is `Src/Generic.hpp` — and
+one missed file, `tools/Src/Tools/functions.cpp`), and confirmed the rest.
+
+**Decision**: don't implement this. Given the actual depth of MSVC-specific portability work required (5
+independent fixes across ~20 files, none of it verifiable locally without a Windows machine, and the log
+categorization's "everything else is fallout" premise itself unconfirmed until a real Windows CI run), and
+given Docker already provides a working, already-CI-verified (`docker-build` job, Linux runner, with a
+baked-in smoke test) path that runs unmodified on Windows via Docker Desktop's WSL2 backend, the user chose
+to drop native Windows support rather than chase it further. `windows-latest` removed from
+`.github/workflows/ci.yml`'s `build-and-test` matrix; `docs/installation.md`'s conda section (§2.4) updated
+to say Linux/macOS-only, pointing Windows users at [§6, Docker][docker_section] instead. conda-forge Windows
+support (`skip: True # [win]`) will be marked the same way once that recipe is actually drafted for
+submission — Phase 5's draft never got past the planning stage.
+
+The user is manually verifying the Docker path on a real Windows machine (`git clone` the actual
+`quantum-kite/kite-v2` repo — not `quantum-kite/kite.git`, which `docs/installation.md`'s §1 download
+instructions currently still reference; that's a separate, pre-existing stale-URL bug worth fixing, found
+while walking through this) with Docker Desktop installed, running `docker build -t kite .` — since the
+Dockerfile's baked-in smoke test (`shinada_single.py` → `KITEx`) runs as part of the build itself, a
+successful `docker build` on that machine is the actual end-to-end confirmation, not just a hope.
+
+**Separately, the user manually verified the conda path from scratch on their own Mac** (a genuinely fresh
+clone into a new directory, not the existing dev checkout) — `miniforge` install → `conda env create -f
+environment.yml` → `conda activate kite` → `pip install -e .` → CMake configure/build → smoke test — matching
+what CI already confirms on a clean `macos-latest` runner, now also confirmed on a real, independently-set-up
+machine.

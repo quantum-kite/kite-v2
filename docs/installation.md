@@ -14,7 +14,7 @@ In what follows, we provide detailed installation instructions and additional ti
 First download the source code from our official repository on GitHub [repository][repository]:
 
 ``` bash
-git clone https://github.com/quantum-kite/kite.git
+git clone https://github.com/quantum-kite/kite-v2.git
 ```
 
 !!! info
@@ -224,16 +224,18 @@ deprecation warnings (safe to ignore, as noted in Section 3).
 
 ### 2.4 Using conda (recommended for reproducibility) { #conda_section }
 
-!!! warning "Recommended path, but not yet verified end-to-end"
+!!! note "Linux/macOS only — see [Docker][docker_section] on Windows"
 
     This is intended to sidestep the dependency-hunting issues in sections 2.1–2.3 above (compiler/HDF5
     ABI mismatches, hunting down FFTW3's three separate precision packages, Eigen version drift), and is
-    the recommended starting point if you want to avoid those. However, unlike [section 2.3's verified
-    MacPorts recipe][macports_recipe], this exact sequence has **not** been confirmed to work end-to-end
-    yet: a CI run of this sequence failed on macOS with FFTW3 not found in any of the three precisions
-    (an open issue — see [Section 5.2][fftw3_common_issue]), and separately failed on Windows at checkout
-    (an unrelated, since-fixed issue, but not yet re-verified by a green CI run). If you hit either
-    problem, please report it so it can be tracked down.
+    the recommended starting point if you want to avoid those. It's CI-verified end-to-end on both
+    `ubuntu-latest` and `macos-latest`. A native (non-Docker) Windows/MSVC build is not supported — MSVC
+    rejects several constructs this codebase relies on (`M_PI`, the `and`/`or`/`not` word-operators, an
+    unsigned OpenMP loop index, an `Eigen::Map` overload that only resolves on LP64 platforms) that would
+    need real portability work across ~20 files to fix, and that work has been deliberately deprioritized
+    in favor of [Docker][docker_section], which runs unmodified on Windows via Docker Desktop's WSL2
+    backend. If you hit a problem on Linux/macOS with the sequence below, please report it so it can be
+    tracked down.
 
 From the `#!bash kite/` directory:
 
@@ -364,7 +366,7 @@ This drops you into a shell inside the container with `#!bash KITEx`, `#!bash KI
 default (see [Section 2][get_dependencies]); install it yourself inside a running container with
 `#!bash pip install pybinding` if you need it.
 
-[repository]: https://github.com/quantum-kite/kite
+[repository]: https://github.com/quantum-kite/kite-v2
 [eigen3]: https://eigen.tuxfamily.org/
 [cmake]: https://cmake.org/
 [gcc]: https://gcc.gnu.org/

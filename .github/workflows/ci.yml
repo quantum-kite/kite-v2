@@ -17,11 +17,17 @@ jobs:
       - run: pip install mkdocs-material
       - run: mkdocs gh-deploy --force
 
+  # Windows is not in this matrix: a native (non-Docker) MSVC build needs real
+  # portability work (M_PI, and/or/not word-operators, an OpenMP signed-index
+  # requirement, an Eigen::Map overload gap -- see maintenance/installability-plan.md's
+  # "Windows native build dropped" addendum for the full investigation) that's
+  # been deliberately deprioritized in favor of Docker, which already runs
+  # unmodified on Windows via Docker Desktop's WSL2 backend.
   build-and-test:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
