@@ -31,6 +31,7 @@ These are pure-KITE scripts (using `kite.lattice.Lattice`, `src/kite/lattice.py`
 | Script | What it demonstrates |
 | --- | --- |
 | `band_structure_graphene.py` | Tight-binding band structure of graphene computed directly from the lattice's own hoppings (`kite.visualize.hamiltonian_k`/`compute_bands`/`plot_bands`) — pure numpy, no KPM/Chebyshev run at all. A fast sanity check for a lattice definition (wrong sign/hopping/vector) before paying for an expensive KITEx run; verified against graphene's textbook E(Γ)=±3t, E(M)=±t, E(K)=0. |
+| `lattice_visualization_demo.py` | The runnable script behind the [getting-started tutorial][lattice-tutorial]: builds a simple square lattice, plots its unit cell/Brillouin zone/k-path (`kite.visualize.plot_unit_cell`/`plot_brillouin_zone`/`make_path`), and computes its band structure (E(Γ)=-4t, E(X)=0, E(S)=+4t). |
 
 **Density of states (DOS)**
 
@@ -152,6 +153,7 @@ python3
 [paper-examples-page]: paper.md
 [custom-local-potential-example]: custom_local_potential.md
 [disorder-list-shortcut]: ../disorder.md#adding-the-same-disorder-to-several-sublattices-at-once
+[lattice-tutorial]: ../tb_model.md
 [markov-maps-example]: ../examples/markov_local_maps.md
 [custom-vertex-example]: ../examples/custom_vertex_operators.md
 [altermagnet-example]: ../examples/altermagnet_arpes.md
