@@ -12,8 +12,14 @@ The target functions currently available are:
   : Calculates the local density of states (LDOS) as a function of energy (for a set of lattice positions).
 * [`#!python arpes`][calculation-arpes]
   : Calculates the one-particle spectral function of relevance to ARPES.
+* [`#!python ldos_map`][calculation-ldos_map]
+  : Calculates a full real-space map of the LDOS at one target energy.
+* [`#!python spectral_map`][calculation-spectral_map]
+  : Calculates a full momentum-resolved (k-space) map of the spectral function at one target energy.
 * [`#!python gaussian_wave_packet`][calculation-gaussian_wave_packet]
   : Simulates the propagation of a gaussian wave-packet.
+* [`#!python localized_wave_packet`][calculation-localized_wave_packet]
+  : Simulates the propagation of a localized or gaussian wave-packet with optional spectral filtering.
 * [`#!python conductivity_dc`][calculation-conductivity_dc]
   : Calculates a given component of the DC conductivity tensor.
 * [`#!python conductivity_optical`][calculation-conductivity_optical]
@@ -22,6 +28,10 @@ The target functions currently available are:
   : Calculates a given component of the 2nd-order nonlinear optical conductivity tensor.
 * [`#!python singleshot_conductivity_dc`][calculation-singleshot_conductivity_dc]
   : Calculates the longitudinal DC conductivity for a set of Fermi energies (uses the $\propto\mathcal{O}(N)$ single-shot method).
+* [`#!python custom_one`][calculation-custom_one], [`#!python custom_one_local`][calculation-custom_one_local], [`#!python custom_two`][calculation-custom_two], [`#!python custom_two_local`][calculation-custom_two_local], [`#!python custom_singleshot_two`][calculation-custom_singleshot_two]
+  : Calculate generalized rank-one/rank-two KPM traces of user-defined operators built from `#!python kite.custom.Vertex`.
+* [`#!python local_chern`][calculation-local_chern], [`#!python local_chern_map`][calculation-local_chern_map]
+  : Calculate a Bianco–Resta-type local Chern marker, at a single site or as a full real-space map.
   
 
 The table below shows to which level the KITE target functions have been implemented and tested at the time of writing (May, 2025). 
@@ -122,6 +132,75 @@ calculation.conductivity_optical_nonlinear(
     The user can decide what functions are used in a calculation.
     However, it is not possible to configure the same function twice in the same configuration file.
 
+## Additional target functions
+
+The functions below are also implemented but are not part of the compact example above; each has a
+full parameter reference (and any important caveats) linked from its name.
+
+### Real-space and momentum-space energy maps
+
+[`#!python ldos_map`][calculation-ldos_map] calculates a full real-space map of the local density of states at
+one target energy, using a stochastic (random-phase-vector) Chebyshev estimator — unlike
+[`#!python ldos`][calculation-ldos], which gives the energy dependence at a fixed position.
+[`#!python spectral_map`][calculation-spectral_map] is its momentum-resolved counterpart: an "all-k-at-once"
+stochastic sibling of [`#!python arpes`][calculation-arpes] that wraps the same filtering machinery in a
+real-space↔k-space FFT. Both evaluate a single disorder realization per call (there is no `#!python num_disorder`
+averaging), which is by design for visualizing one disorder configuration rather than a disorder-ensemble average.
+
+``` python
+calculation.ldos_map(0.0, 0.1, 10)      # energy, sigma, vectors
+calculation.spectral_map(0.0, 0.1, 10)  # energy, sigma, vectors
+```
+
+See the [full reference][calculation-ldos_map] for parameters and an important caveat about boundary conditions
+when using `#!python spectral_map`.
+
+### Localized wave packets
+
+[`#!python localized_wave_packet`][calculation-localized_wave_packet] simulates the propagation of a point-like
+or Gaussian-enveloped wave packet, optionally filtered to a chosen energy window before propagation. Unlike
+[`#!python gaussian_wave_packet`][calculation-gaussian_wave_packet], it reports spatial spread statistics, return
+probability, propagator amplitude, spectral moments, and transmission weights at chosen probe positions — useful
+for wave-packet-spreading/transport studies in a disordered channel embedded between clean leads. See the
+[full reference][calculation-localized_wave_packet] for the complete parameter list; there is no worked example
+script for it yet.
+
+### Custom operators: `custom_one`, `custom_two`, and their local/single-shot variants
+
+KITE also supports generalized KPM traces of user-defined operators, built from a
+[`#!python kite.custom.Vertex`][calculation-custom_one] object (`#!python from kite import custom`) using a
+compact operator-string grammar (e.g. `#!python "vy.rx"` for a velocity–position operator product). The full
+grammar, and how to register custom orbital-space operators with
+[`#!python add_orbital_index`][calculation-add_orbital_index]/[`#!python add_orbital_coupling`][calculation-add_orbital_coupling],
+is described in the [full reference][calculation-custom_one]. The available functions are:
+
+* [`#!python custom_one`][calculation-custom_one] / [`#!python custom_one_local`][calculation-custom_one_local]
+  : The rank-one trace `#!python Tr[Tn(H)·J]` for one operator $J$, either as a lattice-wide trace or resolved at
+    one position/energy.
+* [`#!python custom_two`][calculation-custom_two] / [`#!python custom_two_local`][calculation-custom_two_local] / [`#!python custom_singleshot_two`][calculation-custom_singleshot_two]
+  : The rank-two trace `#!python Tr[Tn(H)·A·Tm(H)·B]` for two operators $A$, $B$ — as an energy-integrated
+    (Fermi-sea) quantity, resolved at chosen positions, or evaluated single-shot at chosen energies (KITEx-only,
+    no post-processing).
+
+Two example scripts, `#!python examples/shinada_fs.py` and `#!python examples/shinada_single.py`, use
+`#!python custom_two` and `#!python custom_singleshot_two` respectively to build a 3-orbital tight-binding model.
+Their vertex structure (a symmetrized position-velocity product paired with a pure velocity operator) is
+*plausibly* related to a real-space spectral approach to orbital magnetization, though this was not
+independently confirmed in detail — see the [full reference][calculation-custom_two] for the hedged discussion
+and citation.
+
+### Local Chern marker
+
+[`#!python local_chern`][calculation-local_chern] and [`#!python local_chern_map`][calculation-local_chern_map]
+calculate a Bianco–Resta-type local Chern marker — at a single site, or as a full real-space map, respectively —
+using a Fermi-Dirac-smoothed KPM projector (`#!python beta`/`#!python miu` set the inverse temperature and
+chemical potential of the filter). See the [full reference][calculation-local_chern] for parameter details and
+two important caveats: the marker construction is only exact for `#!python miu=0.0` (the center of your
+configured [`#!python spectrum_range`][configuration-spectrum_range], not necessarily your intended Fermi level),
+and the `#!python get_chern_map` convenience property currently has a known bug (it returns
+[`#!python local_chern`][calculation-local_chern]'s data instead of
+[`#!python local_chern_map`][calculation-local_chern_map]'s).
+
 When these objects are defined, we can set up the I/O instructions for [KITEx][kitex]
 using the [`#!python kite.config_system`][config_system] function:  
 ``` python
@@ -220,12 +299,24 @@ python plot_dos.py                # display the data
 [calculation]: ../api/kite.md#calculation
 [calculation-dos]: ../api/kite.md#calculation-dos
 [calculation-ldos]: ../api/kite.md#calculation-ldos
+[calculation-ldos_map]: ../api/kite.md#calculation-ldos_map
+[calculation-spectral_map]: ../api/kite.md#calculation-spectral_map
 [calculation-arpes]: ../api/kite.md#calculation-arpes
 [calculation-gaussian_wave_packet]: ../api/kite.md#calculation-gaussian_wave_packet
+[calculation-localized_wave_packet]: ../api/kite.md#calculation-localized_wave_packet
 [calculation-conductivity_dc]: ../api/kite.md#calculation-conductivity_dc
 [calculation-conductivity_optical]: ../api/kite.md#calculation-conductivity_optical
 [calculation-conductivity_optical_nonlinear]: ../api/kite.md#calculation-conductivity_optical_nonlinear
 [calculation-singleshot_conductivity_dc]: ../api/kite.md#calculation-singleshot_conductivity_dc
+[calculation-add_orbital_index]: ../api/kite.md#calculation-add_orbital_index
+[calculation-add_orbital_coupling]: ../api/kite.md#calculation-add_orbital_coupling
+[calculation-custom_one]: ../api/kite.md#calculation-custom_one
+[calculation-custom_one_local]: ../api/kite.md#calculation-custom_one_local
+[calculation-custom_two]: ../api/kite.md#calculation-custom_two
+[calculation-custom_two_local]: ../api/kite.md#calculation-custom_two_local
+[calculation-custom_singleshot_two]: ../api/kite.md#calculation-custom_singleshot_two
+[calculation-local_chern]: ../api/kite.md#calculation-local_chern
+[calculation-local_chern_map]: ../api/kite.md#calculation-local_chern_map
 
 [modification-modification-par-magnetic_field]: ../api/kite.md#modification-par-magnetic_field
 

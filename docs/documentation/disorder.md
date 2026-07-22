@@ -115,6 +115,53 @@ kite.config_system(lattice, configuration, calculation, filename='on_site_disord
 </div>
 
 
+### Adding the same disorder to several sublattices at once
+
+[`#!python add_disorder(sublattice, dis_type, mean_value, standard_deviation=0.)`][disorder-add_disorder]
+accepts `#!python sublattice` as either a single name (`#!python str`) or a **list** of names
+(`#!python list(str)`). Two independent things can vary between orbitals/sublattices in a single call, and
+it is important to keep them apart:
+
+* `#!python sublattice` as a `#!python list` lets you target several sublattices in one call.
+* `#!python dis_type`, `#!python mean_value` and `#!python standard_deviation` can *also* be given as lists,
+  but that list form is for giving **different disorder to different orbitals of a single, multi-orbital
+  sublattice** (its length must match the number of orbitals on that sublattice) — it is not a way to give
+  different sublattices in the `sublattice` list different disorder.
+
+When `#!python dis_type`/`#!python mean_value`/`#!python standard_deviation` are left as plain scalars
+(not lists) while `#!python sublattice` is a list, the *exact same* disorder configuration — same
+distribution, same mean, same standard deviation — is applied identically to every sublattice named in the
+list, in a single call. This is a genuine shortcut, not just shorter syntax: the two forms produce the same
+result. For example, `#!python examples/arpes_bilayer.py` currently sets up identical uniform disorder on
+all 8 sublattices of a bilayer-graphene-with-Rashba-SOC lattice with an explicit Python loop:
+
+``` python
+sublattices = ['A1u', 'A2u', 'A1d', 'A2d', 'B1u', 'B2u', 'B1d', 'B2d']
+
+disorder = kite.Disorder(lattice)
+for subl in sublattices:
+    disorder.add_disorder(subl, 'Uniform', mean, stddev)
+```
+
+Since every sublattice here gets the same `'Uniform'`, `mean` and `stddev`, this is equivalent to a single
+call with the list form of `sublattice`:
+
+``` python
+sublattices = ['A1u', 'A2u', 'A1d', 'A2d', 'B1u', 'B2u', 'B1d', 'B2d']
+
+disorder = kite.Disorder(lattice)
+disorder.add_disorder(sublattices, 'Uniform', mean, stddev)
+```
+
+Use the list form of `#!python sublattice` with scalar `#!python dis_type`/`#!python mean_value`/
+`#!python standard_deviation` whenever several sublattices should carry *identical* disorder. If different
+sublattices need *different* disorder (different type, mean, or standard deviation per sublattice), call
+`#!python add_disorder` once per sublattice instead, as in the [example above](#on-site-disorder), where
+sublattice `A` gets `'Gaussian'` disorder and `B` gets `'Uniform'` disorder. The list form of
+`#!python dis_type`/`#!python mean_value`/`#!python standard_deviation` is reserved for varying disorder
+*across the orbitals of one multi-orbital sublattice* within a single `sublattice` argument, not across
+different named sublattices.
+
 ## Structural disorder
 
 The [`#!python kite.StructuralDisorder`][structural_disorder] class adds the possibility of selecting between two different short-range disorder types: 

@@ -80,7 +80,8 @@ def main(onsite=(0, 0), t=1):
                                        precision=1,
                                        spectrum_range=[e_min, e_max],
                                        custom_local=True,
-                                       custom_local_print=True)
+                                       custom_local_print=True,
+                                       custom_potential=1)
 
     calculation = kite.Calculation(configuration)
     moments = 2048

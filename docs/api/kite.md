@@ -257,12 +257,22 @@ The KITE package for pre-processing is split up in various subclasses and contai
         |----------------------------------------------------------------------------------------------------------------------------------| --------------------------------------------------------------------------------------------------------------------------- |
         | <span id="calculation-get_dos">`#!python get_dos`:*`#!python dict`*</span>                                                       | Returns the requested DOS functions.                                                                                        |
         | <span id="calculation-get_ldos">`#!python get_ldos`:*`#!python dict`*</span>                                                     | Returns the requested LDOS functions.                                                                                       |
+        | <span id="calculation-get_ldos_map">`#!python get_ldos_map`:*`#!python dict`*</span>                                             | Returns the requested LDOS-map functions.                                                                                   |
+        | <span id="calculation-get_spectral_map">`#!python get_spectral_map`:*`#!python dict`*</span>                                     | Returns the requested spectral-map functions.                                                                               |
         | <span id="calculation-get_arpes">`#!python get_arpes`:*`#!python dict`*</span>                                                   | Returns the requested ARPES functions.                                                                                      |
         | <span id="calculation-get_gaussian_wave_packet">`#!python get_gaussian_wave_packet`:*`#!python dict`*</span>                     | Returns the requested wave packet time evolution function, with a gaussian wavepacket mutiplied with different plane waves. |
+        | <span id="calculation-get_localized_wave_packet">`#!python get_localized_wave_packet`:*`#!python dict`*</span>                   | Returns the requested localized wave packet time evolution function, with spectral filtering.                              |
         | <span id="calculation-get_conductivity_dc">`#!python get_conductivity_dc`:*`#!python dict`*</span>                               | Returns the requested DC conductivity functions.                                                                            |
         | <span id="calculation-get_conductivity_optical">`#!python get_conductivity_optical`:*`#!python dict`*</span>                     | Returns the requested optical conductivity functions.                                                                       |
         | <span id="calculation-get_conductivity_optical_nonlinear">`#!python get_conductivity_optical_nonlinear`:*`#!python dict`*</span> | Returns the requested nonlinear optical conductivity functions.                                                             |
         | <span id="calculation-get_singleshot_conductivity_dc">`#!python get_singleshot_conductivity_dc`:*`#!python dict`*</span>         | Returns the requested singleshot DC conductivity functions.                                                                 |
+        | <span id="calculation-get_custom_one">`#!python get_custom_one`:*`#!python dict`*</span>                                         | Returns the requested rank-one custom-operator trace functions.                                                             |
+        | <span id="calculation-get_custom_one_local">`#!python get_custom_one_local`:*`#!python dict`*</span>                             | Returns the requested local (position/energy-resolved) rank-one custom-operator functions.                                  |
+        | <span id="calculation-get_custom_two">`#!python get_custom_two`:*`#!python dict`*</span>                                         | Returns the requested rank-two custom-operator trace functions.                                                             |
+        | <span id="calculation-get_custom_two_local">`#!python get_custom_two_local`:*`#!python dict`*</span>                             | Returns the requested local rank-two custom-operator functions.                                                             |
+        | <span id="calculation-get_custom_ss_two">`#!python get_custom_ss_two`:*`#!python dict`*</span>                                   | Returns the requested single-shot rank-two custom-operator functions.                                                       |
+        | <span id="calculation-get_local_chern">`#!python get_local_chern`:*`#!python dict`*</span>                                       | Returns the requested single-site local Chern marker functions.                                                             |
+        | <span id="calculation-get_chern_map">`#!python get_chern_map`:*`#!python dict`*</span>                                           | Intended to return the requested local-Chern-marker *map* functions. **Known issue:** as currently implemented this property returns the same data as [`#!python get_local_chern`][calculation-get_local_chern] (i.e. the single-site [`#!python local_chern()`][calculation-local_chern] request), not [`#!python local_chern_map()`][calculation-local_chern_map] — likely a copy-paste bug. The HDF5 export performed by [`#!python config_system()`][config_system] does **not** go through this property and is unaffected; only this convenience accessor is wrong. |
 
 
 :   **Methods**
@@ -270,12 +280,24 @@ The KITE package for pre-processing is split up in various subclasses and contai
         |------------------------------------------------------------------------------------------------| --------------------------------------------------------------------------- |
         | [`#!python dos(num_points, num_moments, [, ...]`)][calculation-dos]                            | Calculate the density of states as a function of energy.                    |
         | [`#!python ldos(energy, num_moments, [, ...])`][calculation-ldos]                              | Calculate the local density of states as a function of energy.              |
+        | [`#!python ldos_map(energy_, sigma_, vectors_ [, ...])`][calculation-ldos_map]                  | Calculate a real-space map of the local density of states at one energy.    |
+        | [`#!python spectral_map(energy_, sigma_, vectors_ [, ...])`][calculation-spectral_map]          | Calculate a momentum-space (k-resolved) map of the spectral function at one energy. |
         | [`#!python arpes(k_vector, weight [, ...])`][calculation-arpes]                                | Calculate the spectral contribution for given k-points and weights.         |
         | [`#!python gaussian_wave_packet(num_points [, ...])`][calculation-gaussian_wave_packet]        | Calculate the time evolution function of a wave packet.                     |
+        | [`#!python localized_wave_packet(time, num_measures, initial_pos [, ...])`][calculation-localized_wave_packet] | Calculate the time evolution of a localized/gaussian wave packet with spectral filtering. |
         | [`#!python conductivity_dc(direction, [, ...])`][calculation-conductivity_dc]                  | Calculate the DC conductivity for a given direction.                        |
         | [`#!python conductivity_optical(direction, [, ...])`][calculation-conductivity_optical]        | Calculate optical conductivity for a given direction.                       |
         | [`#!python conductivity_optical_nonlinear([...])`][calculation-conductivity_optical_nonlinear] | Calculate nonlinear optical conductivity for a given direction.             |
         | [`#!python singleshot_conductivity_dc(energy, [...])`][calculation-singleshot_conductivity_dc] | Calculate the DC conductivity using KITEx for a given direction and energy. |
+        | [`#!python add_orbital_index(label_, idx_)`][calculation-add_orbital_index]                    | Register a name for an orbital index, for use in custom operator strings.   |
+        | [`#!python add_orbital_coupling(start_, last_, c_, label_)`][calculation-add_orbital_coupling] | Define one matrix element of a custom orbital-space operator.               |
+        | [`#!python custom_one(stream_, num_random_, num_disorder_)`][calculation-custom_one]           | Calculate the rank-one custom-operator trace `#!python Tr[Tn(H)·J]`.        |
+        | [`#!python custom_one_local(stream_, energy_, position_, sublattice_ [, ...])`][calculation-custom_one_local] | Calculate the rank-one custom-operator trace at a chosen energy and position. |
+        | [`#!python custom_two(stream_, num_random_, num_disorder_, num_points_, temperature_)`][calculation-custom_two] | Calculate the rank-two custom-operator trace `#!python Tr[Tn(H)·A·Tm(H)·B]`. |
+        | [`#!python custom_two_local(stream_, positions_)`][calculation-custom_two_local]               | Calculate the rank-two custom-operator trace at chosen positions.           |
+        | [`#!python custom_singleshot_two(stream_, num_random_, num_disorder_ [, ...])`][calculation-custom_singleshot_two] | Calculate the rank-two custom-operator trace at chosen energies, using KITEx (single-shot method). |
+        | [`#!python local_chern(num_disorder_, beta_, miu_, pos_)`][calculation-local_chern]             | Calculate a Bianco–Resta-type local Chern marker at a single site.          |
+        | [`#!python local_chern_map(num_vectors_, beta_, miu_)`][calculation-local_chern_map]            | Calculate a full real-space map of the local Chern marker.                  |
 
     :   !!! declaration-function "<span id="calculation-dos">*function* `#!python dos(num_points, num_moments, num_random, num_disorder=1)`</span>"
             
@@ -306,7 +328,75 @@ The KITE package for pre-processing is split up in various subclasses and contai
                 | `#!python position`:*`#!python int`*                        | Relative index of the unit cell where the LDOS will be calculated. |
                 | `#!python sublattice`:*`#!python list`*                     | Name of the sublattice at which the LDOS will be calculated.       |
                 | `#!python num_disorder`:*`#!python str` or `#!python list`* | Number of different disorder realisations.                         |
-    
+
+    :   !!! declaration-function "<span id="calculation-ldos_map">*function*`#!python ldos_map(energy_, sigma_, vectors_, coef="gaussian")`</span>"
+
+
+        :   Calculate a full real-space map of the local density of states at one target energy.
+
+            KITE evaluates this at every lattice site simultaneously with a stochastic (random-phase-vector)
+            Chebyshev/KPM estimator combined with a Gaussian- or window-broadened energy filter $f(H)$.
+            Up to the overall normalization, the stored quantity is $\mathbb{E}[\text{map}_r] = \text{factor}\cdot\langle r|f(H)^2|r\rangle$
+            — a filtered-random-state local-intensity estimator, *not* simply $\langle r|f(H)|r\rangle$. This is a standard
+            stochastic-trace technique; see the review by Weiße, Wellein, Alvermann, and Fehske.[^1]
+
+            **Parameters**
+
+            :   | Parameter                                   | Description                                                                                          |
+                |-----------------------------------------------|-------------------------------------------------------------------------------------------------------|
+                | `#!python energy_`:*`#!python float`*         | Target energy where the map is evaluated.                                                             |
+                | `#!python sigma_`:*`#!python float`*          | Width of the Gaussian (or window) that approximates the Dirac delta.                                  |
+                | `#!python vectors_`:*`#!python int`*          | Number of independent random-phase vectors to average over (analogous to `#!python num_random` for [`#!python dos()`][calculation-dos] — *not* a number of k-points or spatial points). |
+                | `#!python coef`:*`#!python str`*              | Choice of energy-filter kernel, either `#!python "gaussian"` or `#!python "window"`.                  |
+
+            !!! Note "Disorder is not ensemble-averaged"
+
+                Unlike [`#!python dos()`][calculation-dos] and [`#!python arpes()`][calculation-arpes], `#!python ldos_map()`
+                has no `#!python num_disorder` parameter: a single disorder realisation is generated per call. This is a
+                deliberate design choice appropriate for visualizing the real-space structure of *one* disorder
+                realization (e.g. impurity resonances), not an oversight — but the output of a single call should not be
+                interpreted as a disorder-ensemble average.
+
+    :   !!! declaration-function "<span id="calculation-spectral_map">*function*`#!python spectral_map(energy_, sigma_, vectors_, coef="gaussian")`</span>"
+
+
+        :   Calculate a full momentum-space (k-resolved) map of the spectral function at one target energy — the
+            k-resolved analogue of [`#!python ldos_map()`][calculation-ldos_map]. It uses the same random-phase/Chebyshev-filter
+            machinery, but wraps the filtering loop in a unitary FFT that transforms between the real-space (site) and
+            momentum-space (k) bases — a proper Bloch transform that includes intra-cell sublattice phases, not a naive
+            plane DFT — before and after applying $H$: $\mathbb{E}[\text{map}_k] = \text{factor}\cdot\langle k|f(H)^2|k\rangle$.
+
+            **Parameters**
+
+            :   | Parameter                                   | Description                                                                                          |
+                |-----------------------------------------------|-------------------------------------------------------------------------------------------------------|
+                | `#!python energy_`:*`#!python float`*         | Target energy where the map is evaluated.                                                             |
+                | `#!python sigma_`:*`#!python float`*          | Width of the Gaussian (or window) that approximates the Dirac delta.                                  |
+                | `#!python vectors_`:*`#!python int`*          | Number of independent random-phase vectors to average over.                                           |
+                | `#!python coef`:*`#!python str`*              | Choice of energy-filter kernel, either `#!python "gaussian"` or `#!python "window"`.                  |
+
+            !!! Info "Relation to `arpes()`"
+
+                `#!python spectral_map()` is conceptually the "all-k-at-once" stochastic sibling of
+                [`#!python arpes()`][calculation-arpes], which instead evaluates exact Chebyshev moments at a handful of
+                user-chosen k-points via a genuine plane-wave state (no FFT, no randomness). The FFT in `spectral_map()`
+                only does non-trivial work because real-space disorder breaks translation symmetry inside the sandwiched
+                Chebyshev recursion — for a clean/periodic system it would trivially return the same map at every k-point
+                regardless of averaging.
+
+            !!! Warning "Disorder and boundary conditions are not ensemble-averaged consistently"
+
+                As with [`#!python ldos_map()`][calculation-ldos_map], disorder is frozen per call (no `#!python num_disorder`).
+                In addition, if you configure random or twisted boundary conditions (see [`#!python kite.Configuration`][configuration]),
+                each realization samples a different, randomly-twisted boundary condition while the FFT's k-grid is fixed
+                from the untwisted lattice size — averaging realizations under that combination is not accounted for by
+                the normalization and may not do what you expect. Fixed (non-twisted) boundaries are recommended when using
+                `#!python spectral_map()` unless you specifically understand this interaction.
+
+            See the base KITE method paper[^2] for the general LDOS/ARPES-of-disordered-materials methodology
+            demonstrated by this family of target functions; the specific real-space↔k-space basis-change construction
+            used internally by `#!python spectral_map()` does not have a separately located dedicated reference.
+
     :   !!! declaration-function "<span id="calculation-arpes">*function*`#!python arpes(k_vector, weight, num_moments, num_disorder=1)`</span>"
             
             
@@ -341,7 +431,38 @@ The KITE package for pre-processing is split up in various subclasses and contai
                 | `#!python num_disorder`:*`#!python int`*                           | Number of different disorder realisations.                                                                      |
                 | `#!python probing_point`:*`#!python int` or `#!python array_like`* | Forward probing point, defined with x, y coordinate were the wavepacket will be checked at different timesteps. |
 
-    
+    :   !!! declaration-function "<span id="calculation-localized_wave_packet">*function*`#!python localized_wave_packet(time, num_measures, initial_pos, num_moments=0, width=-1., energy_window=[0.,0.], initial_wavevector=None, probes=None, sample_start=-1, sample_L=-1)`</span>"
+
+
+        :   Calculate the time evolution of a localized (point-like) or Gaussian-envelope wave packet, with optional
+            spectral filtering. This is distinct from [`#!python gaussian_wave_packet()`][calculation-gaussian_wave_packet]:
+            the initial state is dispatched between a point-like or a Gaussian-envelope wave packet depending on
+            whether `#!python width > 0`, it can be band/energy-filtered to `#!python energy_window` before propagation,
+            and it reports richer observables (spatial spread statistics, return probability, propagator amplitude,
+            spectral moments, and transmission weights at chosen probe positions) than the plain spin expectation
+            values returned by `#!python gaussian_wave_packet()`.
+
+            **Parameters**
+
+            :   | Parameter                                              | Description                                                                                                                          |
+                |----------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------|
+                | `#!python time`:*`#!python float`*                       | Total dimensionless time over which the wave packet is evolved. Together with `#!python num_measures`, this sets the time step between measurements. |
+                | `#!python num_measures`:*`#!python int`*                 | Number of times the evolved state is probed.                                                                                          |
+                | `#!python initial_pos`:*`#!python array_like`*           | Initial position of the localized wave packet in lattice coordinates, `#!python [n_x, n_y[, n_z], n_orbital]`.                       |
+                | `#!python num_moments`:*`#!python int`*                  | Number of Chebyshev moments to calculate for the spectral function of the propagated state.                                          |
+                | `#!python width`:*`#!python float`*                      | Width of the Gaussian envelope in real space. If `#!python width <= 0` a point-like (not Gaussian-enveloped) wave packet is used.     |
+                | `#!python energy_window`:*`#!python array_like`*         | The localized packet is filtered to keep only eigenstates with energy inside this window.                                            |
+                | `#!python initial_wavevector`:*`#!python array_like`*    | Wavevector the Gaussian envelope is centered around, in reciprocal lattice coordinates.                                               |
+                | `#!python probes`:*`#!python array_like`*                | List of positions, in lattice coordinates, where the propagator/transmission weights are evaluated.                                  |
+                | `#!python sample_start`:*`#!python int`*                 | Start (in the x-direction) of a disordered sample region embedded between clean leads, for transport/localization-length studies.     |
+                | `#!python sample_L`:*`#!python int`*                     | Length of the disordered sample region described by `#!python sample_start`.                                                          |
+
+            !!! Note "No worked example yet"
+
+                There is currently no example script in `#!bash examples/` that uses `#!python localized_wave_packet()`.
+                See the C++ implementation (`Src/Simulation/SimulationLocalizedWavePacket.cpp`) and the parameter reference
+                above for now.
+
     :   !!! declaration-function "<span id="calculation-conductivity_dc">*function*`#!python conductivity_dc(direction, num_points, num_moments, num_random, num_disorder=1, temperature=0)`</span>"
             
             
@@ -430,6 +551,257 @@ The KITE package for pre-processing is split up in various subclasses and contai
                 | `#!python num_random`:*`#!python int`*                        | Number of random vectors to use for the stochastic evaluation of trace.                                                                   |
                 | `#!python num_disorder`:*`#!python int`*                      | Number of different disorder realisations.                                                                                                |
                 | `#!python preserve_disorder`:*`#!python bool`*                | Optional.                                                                                                                                 |
+
+    :   !!! declaration-function "<span id="calculation-add_orbital_index">*function*`#!python add_orbital_index(label_, idx_)`</span>"
+
+
+        :   Register a name for an orbital index, for later reference inside a custom operator string
+            (see [`#!python custom_one()`][calculation-custom_one] below). Must be called once per orbital before
+            using [`#!python add_orbital_coupling()`][calculation-add_orbital_coupling].
+
+            **Parameters**
+
+            :   | Parameter                          | Description                                                                                          |
+                |--------------------------------------|--------------------------------------------------------------------------------------------------------|
+                | `#!python label_`:*`#!python str`*   | Name used to refer to this orbital when calling [`#!python add_orbital_coupling()`][calculation-add_orbital_coupling]. |
+                | `#!python idx_`:*`#!python int`*     | Index (0-based) assigned to this orbital inside the custom orbital-space operator matrices.            |
+
+    :   !!! declaration-function "<span id="calculation-add_orbital_coupling">*function*`#!python add_orbital_coupling(start_, last_, c_, label_)`</span>"
+
+
+        :   Set one matrix element of a named, custom orbital-space operator matrix $M_{\texttt{label\_}}$, for use as an
+            `#!python "l"`-type token inside a custom operator string (see below). Internally this sets
+            $M_{\texttt{label\_}}[\text{idx}(\texttt{last\_}),\,\text{idx}(\texttt{start\_})] = \texttt{c\_}$, where
+            `#!python idx(...)` is the mapping registered with [`#!python add_orbital_index()`][calculation-add_orbital_index].
+            Calling this repeatedly with the same `#!python label_` accumulates further matrix elements into the same
+            operator matrix (which is otherwise initialized to zero).
+
+            **Parameters**
+
+            :   | Parameter                            | Description                                                                                                        |
+                |----------------------------------------|-----------------------------------------------------------------------------------------------------------------------|
+                | `#!python start_`:*`#!python str`*     | Name (registered via [`#!python add_orbital_index()`][calculation-add_orbital_index]) of the orbital coupled *from*. |
+                | `#!python last_`:*`#!python str`*      | Name of the orbital coupled *to*.                                                                                     |
+                | `#!python c_`:*`#!python complex`*     | Value of the matrix element.                                                                                          |
+                | `#!python label_`:*`#!python str`*     | Name of this custom orbital operator; must begin with `#!python "l"` (raises `#!python ValueError` otherwise).       |
+
+            !!! Info "The `kite.custom.Vertex` operator language"
+                <span id="calculation-vertex-grammar"></span>
+
+                A [`#!python kite.custom.Vertex(num_moments, stream)`][calculation-custom_one] object (import with
+                `#!python from kite import custom`) defines a custom operator $J = \sum_i c_i O_i$ as a weighted sum of
+                operator-string products, to be traced against Chebyshev polynomials of $H$. `#!python num_moments` is
+                the number of Chebyshev moments computed for this vertex — note that in the shipped example scripts this
+                argument is passed as a variable named `#!python pol_A`/`#!python pol_B`, which is *not* a polarization,
+                it is a moment count. `#!python stream` is a list of `#!python [coefficient, operator_string]` pairs;
+                operators can also be appended afterwards with `#!python vertex.add_operator(coef, operator_string)`.
+
+                Each `#!python operator_string` is a dot-separated chain of tokens, e.g. `#!python "vy.rx"`. The first
+                character of each token selects the operator type:
+
+                - `#!python "v" + component` (e.g. `#!python "vy"`) — the velocity operator along that Cartesian direction
+                  (`#!python "x"`, `#!python "y"`, or `#!python "z"`).
+                - `#!python "r" + component` (e.g. `#!python "rx"`) — the real-space position operator along that direction.
+                - `#!python "l" + digit` (e.g. `#!python "l0"`) — a custom orbital-space matrix registered with
+                  [`#!python add_orbital_index()`][calculation-add_orbital_index] /
+                  [`#!python add_orbital_coupling()`][calculation-add_orbital_coupling].
+
+                A dotted chain composes the tokens as an operator product applied to the state right-to-left as written,
+                i.e. `#!python "vy.rx"` applies `#!python "rx"` to the state first and then `#!python "vy"` — equivalent
+                to the ordinary matrix product $v_y r_x$ acting on a ket.
+
+                !!! Warning "Only single-digit orbital-operator indices are supported"
+
+                    Because the C++ reader consumes exactly one character after `#!python "l"`, only labels
+                    `#!python "l0"`–`#!python "l9"` can be addressed inside an operator string — a hard limit of 10
+                    distinct custom orbital operators per model. The token's digit selects the orbital operator
+                    *positionally* from the operators exported to the HDF5 file; this was not independently verified
+                    end-to-end against the HDF5 read-back order beyond the `#!python "l0", "l1", ...` naming convention,
+                    so it is safest to register your custom orbital operators as `#!python "l0"`, `#!python "l1"`,
+                    `#!python "l2"`, … in the same order you intend to reference them.
+
+    :   !!! declaration-function "<span id="calculation-custom_one">*function*`#!python custom_one(stream_, num_random_, num_disorder_)`</span>"
+
+
+        :   Calculate the generalized rank-one KPM trace `#!python Tr[Tn(H)·J]` for an arbitrary custom operator $J$
+            built from a [`#!python kite.custom.Vertex`][calculation-custom_one] (see the operator-language box above).
+
+            **Parameters**
+
+            :   | Parameter                                | Description                                                                     |
+                |---------------------------------------------|------------------------------------------------------------------------------------|
+                | `#!python stream_`:*`#!python kite.custom.Vertex`* | Vertex object defining the operator $J$ as a weighted sum of operator strings.       |
+                | `#!python num_random_`:*`#!python int`*     | Number of random vectors to use for the stochastic evaluation of the trace.        |
+                | `#!python num_disorder_`:*`#!python int`*   | Number of different disorder realisations.                                         |
+
+            !!! Note "No worked example yet"
+
+                There is currently no example script that uses `#!python custom_one()`; the two shipped examples that
+                exercise this operator machinery (`#!python examples/shinada_fs.py` and
+                `#!python examples/shinada_single.py`) use the rank-two functions below instead.
+
+    :   !!! declaration-function "<span id="calculation-custom_one_local">*function*`#!python custom_one_local(stream_, energy_, position_, sublattice_, num_disorder_=1)`</span>"
+
+
+        :   The position/energy-resolved (LDOS-like) sibling of [`#!python custom_one()`][calculation-custom_one]: evaluates
+            the same rank-one trace at one chosen real-space position and sublattice, as a function of energy, instead of
+            as a single lattice-wide trace.
+
+            **Parameters**
+
+            :   | Parameter                                              | Description                                                                     |
+                |-----------------------------------------------------------|--------------------------------------------------------------------------------|
+                | `#!python stream_`:*`#!python kite.custom.Vertex`*        | Vertex object defining the operator $J$ (see [`#!python custom_one()`][calculation-custom_one]). |
+                | `#!python energy_`:*`#!python array_like`*                | List of energy points at which the trace will be calculated.                    |
+                | `#!python position_`:*`#!python array_like`*              | Relative index of the unit cell where the trace will be calculated.             |
+                | `#!python sublattice_`:*`#!python str` or `#!python list`*| Name of the sublattice at which the trace will be calculated.                  |
+                | `#!python num_disorder_`:*`#!python int`*                 | Number of different disorder realisations.                                     |
+
+    :   !!! declaration-function "<span id="calculation-custom_two">*function*`#!python custom_two(stream_, num_random_, num_disorder_, num_points_, temperature_)`</span>"
+
+
+        :   Calculate the generalized rank-two KPM trace `#!python Tr[Tn(H)·A·Tm(H)·B]` for two independently-defined
+            [`#!python kite.custom.Vertex`][calculation-custom_one] operator streams `#!python A`, `#!python B`, passed
+            as `#!python stream_=[A, B]`.
+
+            **Parameters**
+
+            :   | Parameter                                         | Description                                                                                                                                                                                                                                      |
+                |-------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+                | `#!python stream_`:*`#!python list(kite.custom.Vertex, kite.custom.Vertex)`* | The two vertices `#!python [A, B]` defining the operators $A$ and $B$.                                                                                                                                     |
+                | `#!python num_random_`:*`#!python int`*               | Number of random vectors to use for the stochastic evaluation of the trace.                                                                                                                                                                       |
+                | `#!python num_disorder_`:*`#!python int`*             | Number of different disorder realisations.                                                                                                                                                                                                        |
+                | `#!python num_points_`:*`#!python int`*               | Number of energy points used by post-processing to reconstruct the energy dependence.                                                                                                                                                            |
+                | `#!python temperature_`:*`#!python float`*            | Value of the temperature at which the response is calculated. If $eV$ is used as unit for energy, then $k_B\cdot T$ is also in $eV$. To define the temperature in arbitrary units, specify the quantity $K_B \cdot T$, which has units of energy. |
+
+            !!! Info "Example and physical interpretation"
+
+                `#!python examples/shinada_fs.py` uses `#!python custom_two()` to build a 3-orbital ($d$, $p_x$,
+                $p_y$) square-lattice tight-binding model with vertices `#!python A = Vertex(pol_A, [[1j,"vy.rx"],[1j,"rx.vy"]])`
+                (a symmetrized position-velocity product) and `#!python B = Vertex(pol_B, [[1j,"vy"]])` (pure velocity),
+                and reconstructs a Fermi-sea (energy-integrated) quantity — consistent with the `#!python temperature`/
+                `#!python num_points` arguments and the `#!python _fs` filename suffix. This vertex structure (one operator
+                built from a position-velocity commutator/product, the other pure velocity) is *likely* consistent with a
+                real-space spectral approach to orbital magnetization[^4], which describes exactly this
+                commutator-form-operator → energy-resolved-spectral-function → Fermi-level-integral structure — but this
+                was not independently confirmed equation-by-equation, so treat it as a plausible interpretation rather
+                than a certainty. What "Shinada" refers to in the example filenames could not be identified from the
+                repository.
+
+    :   !!! declaration-function "<span id="calculation-custom_two_local">*function*`#!python custom_two_local(stream_, positions_)`</span>"
+
+
+        :   The position-resolved sibling of [`#!python custom_two()`][calculation-custom_two]: evaluates the same
+            rank-two trace at a list of chosen positions, with no random-vector/disorder averaging, energy-point count,
+            or temperature argument.
+
+            **Parameters**
+
+            :   | Parameter                                    | Description                                                                                      |
+                |---------------------------------------------------|----------------------------------------------------------------------------------------------------|
+                | `#!python stream_`:*`#!python list(kite.custom.Vertex, kite.custom.Vertex)`* | The two vertices `#!python [A, B]` defining the operators $A$ and $B$. |
+                | `#!python positions_`:*`#!python array_like`*     | Array of shape `#!python (number_of_positions, D + 1)` listing the positions at which the trace is evaluated ($D$ lattice directions plus a sublattice/orbital index). |
+
+            !!! Note "No worked example yet"
+
+                There is currently no example script that uses `#!python custom_two_local()`. In particular,
+                `#!python examples/shinada_single.py` — whose name might suggest it does — actually uses
+                [`#!python custom_singleshot_two()`][calculation-custom_singleshot_two] below, not this function.
+
+    :   !!! declaration-function "<span id="calculation-custom_singleshot_two">*function*`#!python custom_singleshot_two(stream_, num_random_, num_disorder_, gamma_, sigma_, energies_)`</span>"
+
+
+        :   The energy-resolved, single-shot sibling of [`#!python custom_two()`][calculation-custom_two]: evaluated
+            directly by [KITEx][kitex] at fixed broadening and a chosen list of energies, analogous to how
+            [`#!python singleshot_conductivity_dc()`][calculation-singleshot_conductivity_dc] relates to
+            [`#!python conductivity_dc()`][calculation-conductivity_dc] — no [KITE-tools][kitetools] post-processing step
+            is required.
+
+            **Parameters**
+
+            :   | Parameter                                        | Description                                                                                                          |
+                |-------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------|
+                | `#!python stream_`:*`#!python list(kite.custom.Vertex, kite.custom.Vertex)`* | The two vertices `#!python [A, B]` defining the operators $A$ and $B$.                            |
+                | `#!python num_random_`:*`#!python int`*               | Number of random vectors to use for the stochastic evaluation of the trace.                                          |
+                | `#!python num_disorder_`:*`#!python int`*             | Number of different disorder realisations.                                                                           |
+                | `#!python gamma_`:*`#!python float`*                  | Imaginary broadening (self-energy) parameter, as in [`#!python singleshot_conductivity_dc()`][calculation-singleshot_conductivity_dc]'s `#!python eta`. |
+                | `#!python sigma_`:*`#!python float`*                  | Width of the Gaussian broadening applied to the reconstructed spectral quantity.                                     |
+                | `#!python energies_`:*`#!python array_like`*          | List of energies at which `#!python custom_singleshot_two()` will be calculated.                                     |
+
+            !!! Warning "`energies_`/`gamma_`/`sigma_` are not shifted by `energy_shift`"
+
+                Unlike [`#!python singleshot_conductivity_dc()`][calculation-singleshot_conductivity_dc], which subtracts
+                [`#!python config.energy_shift`][configuration-energy_shift] from `#!python energy` before exporting it,
+                `#!python custom_singleshot_two()`'s `#!python energies_`/`#!python gamma_`/`#!python sigma_` are only
+                divided by `#!python config.energy_scale` (this division happens on the KITEx/C++ side, not in Python) —
+                `#!python energy_shift` is never subtracted. If your `#!python spectrum_range` is not symmetric about
+                zero, `#!python energies_` is measured relative to the Hamiltonian's raw zero, not the center of your
+                configured `#!python spectrum_range`.
+
+            !!! Info "Example"
+
+                `#!python examples/shinada_single.py` uses this function with the same vertex structure as
+                [`#!python custom_two()`][calculation-custom_two]'s example — see the physical-interpretation note there.
+                Its explicit `#!python energies_`/`#!python sigma_`/`#!python gamma_` arguments match a single-shot,
+                fixed-broadening spectral evaluation, consistent with the `#!python _single` filename suffix.
+
+    :   !!! declaration-function "<span id="calculation-local_chern">*function*`#!python local_chern(num_disorder_, beta_, miu_, pos_)`</span>"
+
+
+        :   Calculate a KPM-evaluated local Chern marker at a single lattice site, structurally of the Bianco–Resta
+            form[^3] $C(r) \propto \text{Im}\langle r|P\,X\,Q\,Y\,P|r\rangle$, where $P = f_{FD}(H)$ is a Fermi-Dirac-smoothed
+            occupation projector built from `#!python beta_`/`#!python miu_`, and $X$, $Y$ are the position operators.
+            No KITE-team paper describing this exact KPM-adapted construction was located; the base reference for the
+            marker itself is Bianco & Resta.[^3]
+
+            **Parameters**
+
+            :   | Parameter                                  | Description                                                                                                 |
+                |-----------------------------------------------|------------------------------------------------------------------------------------------------------------------|
+                | `#!python num_disorder_`:*`#!python int`*     | Number of different disorder realisations.                                                                       |
+                | `#!python beta_`:*`#!python float`*           | Inverse temperature $\beta$ of the Fermi-Dirac filter. This is a genuine finite-temperature generalization of the marker (not merely a numerical convenience): as $\beta\to\infty$ it recovers the sharp ground-state projector. |
+                | `#!python miu_`:*`#!python float`*            | Target chemical potential $\mu$ of the Fermi-Dirac filter.                                                       |
+                | `#!python pos_`:*`#!python array_like`*       | `#!python [x, y]` relative position (site) at which the marker is evaluated.                                     |
+
+            !!! Warning "Exact only for `miu_=0.0`, and relative to the center of `spectrum_range`, not necessarily your Fermi level"
+
+                The C++ implementation's $Q$ term uses a hard-coded constant `#!cpp 0.5` in place of what the exact
+                Bianco–Resta construction requires, `#!cpp (1 - coefs(0))`. These are only equal when the Fermi-Dirac
+                filter's zeroth Chebyshev coefficient is exactly `#!cpp 0.5`, which is the case if and only if
+                `#!python miu_ = 0.0` (verified: for a symmetric Chebyshev node distribution, the zeroth Fermi-Dirac
+                coefficient equals exactly $0.5$ when the target is $0$). Separately — and unlike every other
+                energy-valued `#!python Calculation` parameter in this codebase — `#!python miu_` is used directly with
+                no `#!python -config.energy_shift` correction (verified directly in `Src/Simulation/SimulationLCM.cpp`),
+                so the "zero" that makes the marker exact is the center of your configured
+                [`#!python spectrum_range`][configuration-spectrum_range], not necessarily the physical Fermi level you
+                have in mind. **For an exact Bianco–Resta-form marker, pass `#!python miu_=0.0`, keeping in mind this
+                corresponds to the midpoint of your configured `#!python spectrum_range`.** Other values introduce a
+                small additive correction whose size has not been numerically characterized.
+
+    :   !!! declaration-function "<span id="calculation-local_chern_map">*function*`#!python local_chern_map(num_vectors_, beta_, miu_)`</span>"
+
+
+        :   The full-lattice, stochastic sibling of [`#!python local_chern()`][calculation-local_chern]: evaluates the
+            same Bianco–Resta-type marker as a real-space map over all sites simultaneously, via `#!python num_vectors_`
+            random-phase realizations, instead of at one fixed site.
+
+            **Parameters**
+
+            :   | Parameter                                | Description                                                                                                 |
+                |-----------------------------------------------|------------------------------------------------------------------------------------------------------------------|
+                | `#!python num_vectors_`:*`#!python int`*      | Number of independent random-phase vectors to average over.                                                       |
+                | `#!python beta_`:*`#!python float`*           | Inverse temperature $\beta$ of the Fermi-Dirac filter — see the note under [`#!python local_chern()`][calculation-local_chern]. |
+                | `#!python miu_`:*`#!python float`*            | Target chemical potential $\mu$ of the Fermi-Dirac filter — see the note under [`#!python local_chern()`][calculation-local_chern] about exactness at `#!python miu_=0.0` and the missing `#!python energy_shift` correction. |
+
+            !!! Warning "Known issue: `get_chern_map` returns the wrong data"
+
+                [`#!python Calculation.get_chern_map`][calculation-get_chern_map] (a Python property intended to expose
+                the results of `#!python local_chern_map()`) currently returns the data from
+                [`#!python local_chern()`][calculation-local_chern] instead — a likely copy-paste bug in that one
+                convenience accessor. The actual HDF5 export path used by
+                [`#!python config_system()`][config_system] bypasses this property and is unaffected, so calculations
+                themselves are unaffected — only this accessor is wrong if you call it after
+                `#!python local_chern_map()`.
 
 ## make_pybinding_model
 
@@ -529,21 +901,43 @@ The KITE package for pre-processing is split up in various subclasses and contai
 [comment]: <> (Class Attributes)
 [calculation-get_dos]: #calculation-get_dos
 [calculation-get_ldos]: #calculation-get_ldos
+[calculation-get_ldos_map]: #calculation-get_ldos_map
+[calculation-get_spectral_map]: #calculation-get_spectral_map
 [calculation-get_arpes]: #calculation-get_arpes
 [calculation-get_gaussian_wave_packet]: #calculation-get_gaussian_wave_packet
+[calculation-get_localized_wave_packet]: #calculation-get_localized_wave_packet
 [calculation-get_conductivity_dc]: #calculation-get_conductivity_dc
 [calculation-get_conductivity_optical]: #calculation-get_conductivity_optical
 [calculation-get_conductivity_optical_nonlinear]: #calculation-get_conductivity_optical_nonlinear
 [calculation-get_singleshot_conductivity_dc]: #calculation-get_singleshot_conductivity_dc
+[calculation-get_custom_one]: #calculation-get_custom_one
+[calculation-get_custom_one_local]: #calculation-get_custom_one_local
+[calculation-get_custom_two]: #calculation-get_custom_two
+[calculation-get_custom_two_local]: #calculation-get_custom_two_local
+[calculation-get_custom_ss_two]: #calculation-get_custom_ss_two
+[calculation-get_local_chern]: #calculation-get_local_chern
+[calculation-get_chern_map]: #calculation-get_chern_map
 [comment]: <> (Class Methods)
 [calculation-dos]: #calculation-dos
 [calculation-ldos]: #calculation-ldos
+[calculation-ldos_map]: #calculation-ldos_map
+[calculation-spectral_map]: #calculation-spectral_map
 [calculation-arpes]: #calculation-arpes
 [calculation-gaussian_wave_packet]: #calculation-gaussian_wave_packet
+[calculation-localized_wave_packet]: #calculation-localized_wave_packet
 [calculation-conductivity_dc]: #calculation-conductivity_dc
 [calculation-conductivity_optical]: #calculation-conductivity_optical
 [calculation-conductivity_optical_nonlinear]: #calculation-conductivity_optical_nonlinear
 [calculation-singleshot_conductivity_dc]: #calculation-singleshot_conductivity_dc
+[calculation-add_orbital_index]: #calculation-add_orbital_index
+[calculation-add_orbital_coupling]: #calculation-add_orbital_coupling
+[calculation-custom_one]: #calculation-custom_one
+[calculation-custom_one_local]: #calculation-custom_one_local
+[calculation-custom_two]: #calculation-custom_two
+[calculation-custom_two_local]: #calculation-custom_two_local
+[calculation-custom_singleshot_two]: #calculation-custom_singleshot_two
+[calculation-local_chern]: #calculation-local_chern
+[calculation-local_chern_map]: #calculation-local_chern_map
 
 [comment]: <> (Class Configuration)
 [configuration]: #configuration
@@ -583,3 +977,8 @@ The KITE package for pre-processing is split up in various subclasses and contai
 [tutorial-hdf5]: ../documentation/editing_hdf_files.md
 
 [magnetic-field]: ../documentation/magnetic.md
+
+[^1]: A. Weiße, G. Wellein, A. Alvermann, and H. Fehske, [Rev. Mod. Phys. 78, 275 (2006)](https://doi.org/10.1103/RevModPhys.78.275).
+[^2]: S. M. João, M. Anđelković, L. Covaci, T. G. Rappoport, João M. Viana Parente Lopes, and A. Ferreira, [R. Soc. open sci. 7, 191809 (2020)](https://royalsocietypublishing.org/doi/10.1098/rsos.191809).
+[^3]: R. Bianco and R. Resta, [Phys. Rev. B 84, 241106(R) (2011)](https://doi.org/10.1103/PhysRevB.84.241106).
+[^4]: Vidarte, Veiga, Viana Parente Lopes, Cardias, Ferreira, Cysne, and Rappoport, "Real-Space Spectral Approach to Orbital Magnetization," [arXiv:2512.01575](https://arxiv.org/abs/2512.01575) (full author initials not independently verified against the preprint at the time of writing).
