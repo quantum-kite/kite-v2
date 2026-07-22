@@ -330,7 +330,7 @@ void Simulation<T, D>::store_custom_one(
 #pragma omp barrier
 #pragma omp critical
   Global.general_gamma.matrix() +=
-    0.5 * (gamma_.matrix() + gamma_.matrix().adjoint());
+    0.5 * (gamma_.matrix() + gamma_.matrix().conjugate());
 #pragma omp barrier
 #pragma omp master
   {
