@@ -14,8 +14,10 @@ Scope of this module for now (see maintenance/native-lattice-viz-plan.md):
   - `make_path`: dimension-agnostic (1D/2D/3D) piecewise-linear k-path builder
     through a sequence of high-symmetry points, uniform point density measured
     in actual Cartesian reciprocal-space distance.
-
-Band structure / H(k) construction is explicitly out of scope for this module.
+  - `hamiltonian_k` / `compute_bands` / `plot_bands`: build the Bloch Hamiltonian
+    directly from a lattice's own hoppings and plot the resulting tight-binding
+    band structure along a k-path -- one orbital per sublattice (see
+    `hamiltonian_k`'s docstring for the exact scope/gauge convention).
 """
 
 import numpy as np
@@ -348,5 +350,157 @@ def plot_brillouin_zone(lattice, ax=None, k_path=None, length_unit="nm"):
     margin = 0.15 * max(span.max(), 1e-12)
     ax.set_xlim(all_pts[:, 0].min() - margin, all_pts[:, 0].max() + margin)
     ax.set_ylim(all_pts[:, 1].min() - margin, all_pts[:, 1].max() + margin)
+    return ax
+
+
+def hamiltonian_k(lattice, k):
+    """Build the Bloch tight-binding Hamiltonian H(k) directly from a Lattice's hoppings.
+
+    Scope: `kite.lattice.Lattice.add_one_sublattice`/`add_one_hopping` only ever store a
+    scalar onsite energy / hopping amplitude (each wrapped as a 1x1 array internally) --
+    there is no multi-orbital-per-sublattice matrix support at this level (that lives in
+    the separate `kite.custom` orbital-coupling machinery, used for building observables
+    like spin/orbital operators, not the base tight-binding Hamiltonian). Consequently one
+    sublattice == one orbital here: H(k) has shape (lattice.nsub, lattice.nsub), indexed by
+    `Sublattice.alias_id`.
+
+    Gauge / sign convention (derived, not assumed -- see maintenance/native-lattice-viz-plan.md
+    section 5): matches KITE's own ARPES plane-wave state
+    |k> = (1/sqrt(N)) sum_{r,alpha} w_alpha * exp(i k.(r + d_alpha)) |r,alpha>
+    (docs/documentation/examples/spectral_function.md), which carries the FULL atomic
+    position (unit cell + sublattice offset), not just the cell index. Fourier-transforming
+    a HoppingFamily entry (relative_index=R, from_sub=a, to_sub=b, energy=t) with this same
+    phase gives, with a MINUS sign in the exponent (not the naive plus -- get this backwards
+    and centrosymmetric bands still look right while anything valley/Rashba/Weyl-asymmetric
+    comes out mirror-flipped):
+
+        H[b, a](k) += t * exp(-i k . (R_cartesian + d_b - d_a))
+
+    `add_one_hopping` only ever stores one direction of a bond ("Does not add the complex
+    conjugate hopping", per its own docstring) -- this function builds the one-directional
+    sum H0(k) from exactly the stored hoppings, then returns H0(k) + H0(k)^dagger + onsite,
+    which reproduces the missing reverse-direction terms automatically (the same effective
+    result as `src/kite/__init__.py`'s own explicit reverse-hopping generation for the real
+    HDF5 export, just built directly in k-space here rather than in real space per-bond).
+
+    Parameters
+    ----------
+    lattice : kite.lattice.Lattice
+    k : array-like, length D
+        A single Cartesian reciprocal-space k-point (same units as
+        `lattice.reciprocal_vectors()`'s output), D matching `lattice.vectors`' dimensionality.
+
+    Returns
+    -------
+    numpy.ndarray, shape (nsub, nsub), complex
+        Hermitian by construction; verified numerically before returning
+        (raises `RuntimeError` rather than silently returning a broken matrix).
+    """
+    k = np.asarray(k, dtype=float)
+    n = lattice.nsub
+    H0 = np.zeros((n, n), dtype=complex)
+    onsite = np.zeros((n, n), dtype=complex)
+
+    for sub in lattice.sublattices.values():
+        e = np.asarray(sub.energy)
+        onsite[sub.alias_id, sub.alias_id] = e[0, 0]
+
+    vectors_matrix = np.array(lattice.vectors, dtype=float)  # (m, D)
+
+    for hop in lattice.hoppings.values():
+        t = np.asarray(hop.energy)[0, 0]
+        d_a = np.asarray(lattice.sublattices[hop.from_sub].position, dtype=float)
+        d_b = np.asarray(lattice.sublattices[hop.to_sub].position, dtype=float)
+        for term in hop.terms:
+            R_cartesian = np.asarray(term.relative_index, dtype=float) @ vectors_matrix
+            phase = np.exp(-1j * np.dot(k, R_cartesian + d_b - d_a))
+            H0[term.to_id, term.from_id] += t * phase
+
+    H = H0 + H0.conj().T + onsite
+
+    if not np.allclose(H, H.conj().T, atol=1e-10):
+        raise RuntimeError(
+            "hamiltonian_k built a non-Hermitian matrix -- this indicates a bug in the "
+            "lattice's hopping definitions or in this function itself, not something to "
+            "paper over by symmetrizing after the fact."
+        )
+    return H
+
+
+def compute_bands(lattice, k_path):
+    """Diagonalize `hamiltonian_k` at every point of a k-path.
+
+    Parameters
+    ----------
+    lattice : kite.lattice.Lattice
+    k_path : array-like, shape (N, D), or the 3-tuple returned by `make_path`
+        Cartesian reciprocal-space k-points; pass either raw points or
+        `make_path(...)`'s full return value directly.
+
+    Returns
+    -------
+    numpy.ndarray, shape (N, lattice.nsub), real
+        Eigenvalues at each k-point, ascending order along axis 1.
+    """
+    if isinstance(k_path, tuple) and len(k_path) == 3:
+        k_points, _, _ = k_path
+    else:
+        k_points = k_path
+    k_points = np.asarray(k_points, dtype=float)
+
+    n = lattice.nsub
+    bands = np.empty((k_points.shape[0], n), dtype=float)
+    for i, k in enumerate(k_points):
+        H = hamiltonian_k(lattice, k)
+        bands[i] = np.linalg.eigvalsh(H)
+    return bands
+
+
+def plot_bands(lattice, k_path, ax=None, ylabel="Energy (eV)"):
+    """Plot the tight-binding band structure along a k-path.
+
+    Parameters
+    ----------
+    lattice : kite.lattice.Lattice
+    k_path : array-like, shape (N, D), or the 3-tuple returned by `make_path`
+        If the `make_path` 3-tuple is passed, high-symmetry points are marked with
+        vertical grid lines and labeled on the x-axis (if `point_labels` were given
+        to `make_path`); otherwise the x-axis is a plain 0..N-1 running index.
+    ax : matplotlib.axes.Axes, optional
+        Axes to draw into; a new figure/axes is created if not given.
+    ylabel : str, optional
+        Energy-axis label, since the energy unit is whatever the lattice's own
+        hopping/onsite values are given in (not fixed by this function).
+
+    Returns
+    -------
+    matplotlib.axes.Axes
+    """
+    if isinstance(k_path, tuple) and len(k_path) == 3:
+        k_points, tick_indices, tick_labels = k_path
+    else:
+        k_points, tick_indices, tick_labels = k_path, None, None
+
+    bands = compute_bands(lattice, k_points)
+    x = np.arange(bands.shape[0])
+
+    if ax is None:
+        _, ax = plt.subplots()
+
+    for band_index in range(bands.shape[1]):
+        ax.plot(x, bands[:, band_index], color="tab:blue", linewidth=1.2)
+
+    if tick_indices is not None:
+        for idx in tick_indices:
+            ax.axvline(idx, color="0.7", linewidth=0.7, zorder=0)
+        ax.set_xticks(tick_indices)
+        if tick_labels is not None:
+            ax.set_xticklabels(tick_labels)
+    else:
+        ax.set_xlim(x[0], x[-1])
+
+    ax.set_ylabel(ylabel)
+    ax.margins(x=0)
+    return ax
 
     return ax

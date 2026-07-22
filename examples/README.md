@@ -26,6 +26,12 @@ Depending on the type of calculation, various output files will be created in th
 
 These are pure-KITE scripts (using `kite.lattice.Lattice`, `src/kite/lattice.py`) — no pybinding dependency required.
 
+**Lattice inspection (no KITEx/KITE-tools at all)**
+
+| Script | What it demonstrates |
+| --- | --- |
+| `band_structure_graphene.py` | Tight-binding band structure of graphene computed directly from the lattice's own hoppings (`kite.visualize.hamiltonian_k`/`compute_bands`/`plot_bands`) — pure numpy, no KPM/Chebyshev run at all. A fast sanity check for a lattice definition (wrong sign/hopping/vector) before paying for an expensive KITEx run; verified against graphene's textbook E(Γ)=±3t, E(M)=±t, E(K)=0. |
+
 **Density of states (DOS)**
 
 | Script | What it demonstrates |

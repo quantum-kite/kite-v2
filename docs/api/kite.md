@@ -764,6 +764,84 @@ The KITE package for pre-processing is split up in various subclasses and contai
 
                 There is currently no example script that uses `#!python custom_singleshot_two()`.
 
+## kite.visualize
+
+:   Pure-Python (numpy/matplotlib/scipy) tools for inspecting a native `#!python kite.lattice.Lattice`
+    directly — unit cell, Brillouin zone, k-paths, and tight-binding band structure — with **no
+    dependency on KITEx/KITE-tools or pybinding**. Meant as a fast sanity check of a lattice definition
+    (wrong sign, wrong hopping, wrong lattice vector) before paying for an expensive KPM/Chebyshev run,
+    not as a replacement for KITE's own stochastic machinery. Import as `#!python from kite import
+    visualize as viz`.
+
+    !!! declaration-function "<span id="visualize-make_path">*function* `#!python viz.make_path(*points, step=0.1, point_labels=None)`</span>"
+
+        :   Build a piecewise-linear k-path through a sequence of high-symmetry points, with point
+            density set by each segment's actual Cartesian reciprocal-space distance (not a fixed count
+            per segment, and not fractional-coordinate distance). `#!python points` must be given in
+            Cartesian reciprocal-space coordinates — the same units `#!python
+            lattice.reciprocal_vectors()` returns — not fractional/reduced coordinates (a native
+            `#!python kite.lattice.Lattice` method; no separate API doc page exists for this class yet).
+            Returns `#!python (k_points, tick_indices, tick_labels)`; `#!python tick_indices`
+            locates each input high-symmetry point's row in `#!python k_points`, for tick placement on a
+            band-structure plot's x-axis.
+
+    !!! declaration-function "<span id="visualize-plot_unit_cell">*function* `#!python viz.plot_unit_cell(lattice, repeat=(1, 1), ax=None, sublattice_colors=None)`</span>"
+
+        :   Scatter each sublattice's position (stably colored/labeled by name) and draw a line for every
+            hopping term to its actual neighbor (including across unit-cell boundaries), repeated over a
+            small window of neighboring cells so boundary-crossing bonds are visible. 2D lattices only.
+
+    !!! declaration-function "<span id="visualize-plot_brillouin_zone">*function* `#!python viz.plot_brillouin_zone(lattice, ax=None, k_path=None, length_unit="nm")`</span>"
+
+        :   Draw the 2D Brillouin zone (the Voronoi cell of the reciprocal lattice around $\mathbf k=0$,
+            via `#!python lattice.brillouin_zone()`) plus the reciprocal lattice vectors.
+            `#!python k_path` optionally overlays a path — either raw points, or
+            `#!python make_path(...)`'s full 3-tuple return value directly (in which case high-symmetry
+            points get marked and labeled). 2D lattices only.
+
+    !!! declaration-function "<span id="visualize-hamiltonian_k">*function* `#!python viz.hamiltonian_k(lattice, k)`</span>"
+
+        :   Build the Bloch tight-binding Hamiltonian $H(\mathbf k)$ directly from a lattice's own
+            hoppings — one sublattice = one orbital (`#!python kite.lattice.Lattice` only stores a scalar
+            onsite/hopping value per sublattice pair; multi-orbital-per-sublattice matrices are a separate
+            `#!python kite.custom` concern for building observables, not this base Hamiltonian).
+
+            !!! Info "Gauge convention (derived, not assumed)"
+
+                Matches KITE's own ARPES plane-wave state (the full atomic position, cell + sublattice
+                offset, enters the phase — see [Spectral Function][spectral-function-example]). For a
+                hopping family with `#!python relative_index=R`, `#!python from_sub=a`, `#!python
+                to_sub=b`, `#!python energy=t`:
+                $$
+                H_{ba}(\mathbf k)\mathrel{+}= t\;e^{-i\,\mathbf k\cdot(\mathbf R_{\text{cart}}+\mathbf d_b-\mathbf d_a)}
+                $$
+                **with a minus sign in the exponent** — get this backwards and centrosymmetric bands
+                (e.g. graphene) still look right while anything valley/Rashba/Weyl-asymmetric comes out
+                mirror-flipped. Since `#!python add_one_hopping` only ever stores one bond direction, this
+                function builds the one-directional sum $H_0(\mathbf k)$ and returns $H_0(\mathbf
+                k)+H_0(\mathbf k)^\dagger+\text{onsite}$, reproducing the missing reverse-direction terms
+                automatically. The result is checked numerically Hermitian before being returned; a
+                non-Hermitian result raises `#!python RuntimeError` rather than being silently returned.
+
+            !!! Example "Verified against graphene's known tight-binding values"
+
+                `#!python examples/band_structure_graphene.py` checks the three textbook graphene
+                energies directly: $E(\Gamma)=\pm3t$, $E(M)=\pm t$, $E(K)=0$ (the Dirac point, exactly
+                two-fold degenerate) — all three reproduced to floating-point precision. The Haldane
+                model's gap ($2\times3\sqrt3\,t_2\sin\phi$) was also checked and matches exactly at both
+                inequivalent BZ corners.
+
+    !!! declaration-function "<span id="visualize-compute_bands">*function* `#!python viz.compute_bands(lattice, k_path)`</span>"
+
+        :   Diagonalize [`#!python hamiltonian_k`][visualize-hamiltonian_k] at every point of a k-path
+            (raw points, or `#!python make_path(...)`'s 3-tuple return value). Returns eigenvalues, shape
+            `#!python (n_k, lattice.nsub)`, ascending order.
+
+    !!! declaration-function "<span id="visualize-plot_bands">*function* `#!python viz.plot_bands(lattice, k_path, ax=None, ylabel="Energy (eV)")`</span>"
+
+        :   Plot the band structure along a k-path. If `#!python make_path(...)`'s 3-tuple is passed,
+            high-symmetry points get vertical grid lines and x-axis tick labels.
+
 ## make_pybinding_model
 
 :   !!! declaration-function "*function* `#!python kite.make_pybinding_model(lattice, disorder=None, disorder_structural=None, shape=None)`"
@@ -936,6 +1014,7 @@ The KITE package for pre-processing is split up in various subclasses and contai
 
 [magnetic-field]: ../documentation/magnetic.md
 [custom-vertex-example]: ../documentation/examples/custom_vertex_operators.md
+[spectral-function-example]: ../documentation/examples/spectral_function.md
 
 [^1]: A. Weiße, G. Wellein, A. Alvermann, and H. Fehske, [Rev. Mod. Phys. 78, 275 (2006)](https://doi.org/10.1103/RevModPhys.78.275).
 [^2]: S. M. João, M. Anđelković, L. Covaci, T. G. Rappoport, João M. Viana Parente Lopes, and A. Ferreira, [R. Soc. open sci. 7, 191809 (2020)](https://royalsocietypublishing.org/doi/10.1098/rsos.191809).
