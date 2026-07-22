@@ -18,6 +18,7 @@
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.colors import LogNorm
 
 import kite_style
 
@@ -81,20 +82,31 @@ def plot_pocket_comparison(up_file, down_file, n_kgrid, target_energy,
 
     fig, axs = plt.subplots(1, 2, figsize=(14, 6), sharex=True, sharey=True)
     cmap = kite_style.kite_spectral_cmap()
-    vmax = max(grid_up.max(), grid_dn.max())
+
+    # Intensity is dominated by a handful of very bright pixels (van Hove-like
+    # points near the BZ boundary), which on a linear scale swamps everything
+    # else to near-black -- a log scale (as used for the piflux LDOS map)
+    # recovers the pocket shape across the full dynamic range. Floor at the
+    # smallest positive value present in either map (not literal 0, which a
+    # log scale cannot display).
+    both = np.concatenate([grid_up.ravel(), grid_dn.ravel()])
+    vmin = both[both > 0].min()
+    vmax = both.max()
+    norm = LogNorm(vmin=vmin, vmax=vmax)
 
     for ax, grid, title, E in (
         (axs[0], grid_up, "spin up", E_up),
         (axs[1], grid_dn, "spin down", E_dn),
     ):
-        mesh = ax.pcolormesh(kxs, kys, grid.T, cmap=cmap, vmin=0, vmax=vmax,
+        plotted = np.clip(grid.T, vmin, None)
+        mesh = ax.pcolormesh(kxs, kys, plotted, cmap=cmap, norm=norm,
                               shading="auto", rasterized=True)
         ax.set_xlabel(r"$k_x$", fontsize=20)
         ax.set_title(f"{title}  ($E={E:.3f}\\,t$)", fontsize=20)
         ax.set_aspect("equal")
     axs[0].set_ylabel(r"$k_y$", fontsize=20)
     cbar = fig.colorbar(mesh, ax=axs, shrink=0.85)
-    cbar.set_label(r"$A(\mathbf{k},E)$ (arb. units)", fontsize=18)
+    cbar.set_label(r"$A(\mathbf{k},E)$ (arb. units, log scale)", fontsize=18)
 
     fig.suptitle("Altermagnet spin-split ARPES pockets: "
                   "90-degree rotation between spin channels", fontsize=16)

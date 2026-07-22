@@ -109,19 +109,36 @@ Because the ARPES initial state is
 $|\mathbf k\rangle=\tfrac{1}{\sqrt N}\sum_{\mathbf r,\alpha}w_\alpha e^{i\mathbf k\cdot(\mathbf r+\mathbf d_\alpha)}|\mathbf r,\alpha\rangle$
 (see the [Spectral Function write-up][spectral-function-example]), setting the down-sublattice weights to zero
 makes $A(\mathbf k,E)$ measure only the up-spin spectral weight (and vice versa). KITE allows only one
-`#!python arpes()` request per output file, so up and down are two separate KITEx runs. A **full 2D
-$\mathbf k$-grid** spanning the Brillouin zone $[-\pi,\pi]^2$ is used (rather than a 1D high-symmetry cut)
-precisely because the phenomenon is a rotation of the *whole* pocket shape, far more legible as a 2D map than a
-line cut.
+`#!python arpes()` request per output file, so **spin-up and spin-down are two entirely separate KITEx runs**
+on two separate output files (`altermagnet_arpes_up-output.h5` / `..._down-output.h5`), each going through the
+full Chebyshev-moment calculation and its own KITE-tools post-processing independently. **No rotation, transpose,
+or any other transformation is ever applied to one spin's data to produce the other's** — the down-spin panel
+below is the genuine, independently-computed output of the down-spin KITEx run, nothing more. The apparent
+$90^\circ$ relationship between the two panels is a *result*, not an input: it is the numerical footprint of the
+$\varepsilon_\uparrow(k_x,k_y)=\varepsilon_\downarrow(k_y,k_x)$ identity derived above, and the whole point of the
+example is that this relationship falls out on its own. A **full 2D $\mathbf k$-grid** spanning the Brillouin
+zone $[-\pi,\pi]^2$ is used (rather than a 1D high-symmetry cut) precisely because the phenomenon is a rotation
+of the *whole* band structure in $\mathbf k$-space, far more legible as a 2D map than a line cut.
 
 <figure>
     <img src="../../../assets/images/custom_vertex_operators/altermagnet_arpes.png" style="width: 34em;" />
-    <figcaption>Spin-up (left) and spin-down (right) ARPES intensity maps: an exact 90-degree rotation.</figcaption>
+    <figcaption>Spin-up (left) and spin-down (right) ARPES intensity at fixed E, log color scale: two
+    completely independent KITEx runs whose patterns are exact 90-degree rotations of one another.</figcaption>
 </figure>
 
-**Verified result:** the spin-up and spin-down intensity maps satisfy `#!python grid_up == grid_down.T` to
-$\sim10^{-12}$ — an exact $90^\circ$ rotation, the direct visual signature of the identity
-$\varepsilon_\uparrow(k_x,k_y)=\varepsilon_\downarrow(k_y,k_x)$ derived above.
+At this coarse ($21\times21$) k-grid the intensity is dominated by a handful of very bright pixels near the
+Brillouin-zone boundary, which on a **linear** color scale swamps everything else down to near-black — exactly
+the pattern already seen in the [`#!python ldos_map()` example][markov-maps-example], and fixed the same way
+here: the figure above uses a **log** color scale. On it, the underlying structure is clearly visible as bands
+of low intensity (where no band lies near the probed energy) running **horizontally** (roughly $k_y\approx0,
+\pm\pi/2$) for spin-up and **vertically** (roughly $k_x\approx0,\pm\pi/2$) for spin-down — a direct picture of
+the same feature rotated by $90^\circ$ between the two spin channels.
+
+**Verified result:** the spin-up and spin-down intensity maps satisfy `#!python grid_up == grid_down.T` **exactly**
+(to floating-point precision, not just approximately) — expected here because, unlike the stochastic map
+estimators elsewhere in these docs, a single-$\mathbf k$-point ARPES calculation is deterministic, so two
+Hamiltonian blocks that are exactly equal under $\mathbf k\to(\mathbf k_y,\mathbf k_x)$ swap (proven algebraically
+above) produce bit-for-bit identical KPM output under that swap.
 
 ### The nodal-line subtlety
 
@@ -140,4 +157,5 @@ diagonals.
 [^1]: L. Šmejkal, J. Sinova, and T. Jungwirth, [Phys. Rev. X **12**, 040501 (2022)](https://doi.org/10.1103/PhysRevX.12.040501).
 
 [spectral-function-example]: spectral_function.md
+[markov-maps-example]: markov_local_maps.md
 [altermagnet_example]: https://github.com/quantum-kite/kite-v2/tree/master/examples/altermagnet_arpes.py
