@@ -54,19 +54,27 @@ reconstruction broadening is a cheap post-processing step — no re-run of KITEx
 
 ### Why this generalizes conductivity
 
-KITE's built-in `#!python conductivity_dc` is the special case $A=\tfrac12\{\hat v_x,\hat v_y\}$-type,
-$B=\hat v$ — velocity-only vertices — fed to exactly this trace. The generalization is immediate, and is the
-entire point of exposing `#!python Vertex`: **swap the operator $A$** and you obtain a whole family of response
-functions from the same machinery:
+KITE's built-in [`#!python conductivity_dc`][calculation-conductivity_dc] is the same trace with plain velocity
+vertices — confirmed directly in `Src/Tools/Gamma2D.cpp`, which builds $\Gamma_{mn}$ by applying
+`#!cpp kpm0.Velocity(...)` for one Cartesian direction and `#!cpp kpm1.Velocity(...)` for the other, i.e.
+$A=\hat v_x$, $B=\hat v_y$ directly — **no anticommutator**. The bare velocity operator is already the correct,
+Hermitian charge-current operator in that direction, so no symmetrization is needed.
+
+The anticommutator *does* appear once you replace one of the velocities with a genuinely different
+quantum-number operator (spin, orbital moment): $\tfrac12\{\hat v_x,\hat s_z\}$ is the standard definition of a
+**spin current** — the object that represents "spin flowing in the $x$ direction," which is a nontrivial
+physical construction distinct from either operator alone, and needs the symmetrized (anticommutator) form to
+stay Hermitian in general. Swapping the vertex is still what generalizes the calculation — it's just that
+different physical currents are built differently from the elementary operators:
 
 | response | vertex $A$ | vertex $B$ |
 |---|---|---|
-| charge Hall conductivity | $\tfrac12\{\hat v_x,\hat v_y\}$ | $\hat v_y$ |
-| **spin Hall** (this page) | $\tfrac12\{\hat v_x,\hat s_z\}$ | $\hat v_y$ |
+| charge Hall conductivity (`conductivity_dc`) | $\hat v_x$ | $\hat v_y$ |
+| **spin Hall** (this page, via `custom_two`) | $\tfrac12\{\hat v_x,\hat s_z\}$ | $\hat v_y$ |
 | orbital Hall | $\tfrac12\{\hat v_x,\hat L_z\}$ | $\hat v_y$ |
 | spin/orbital Edelstein | $\hat s_z$ / $\hat L_z$ (bare density) | $\hat v_y$ |
 
-The topology of the calculation never changes — only the operator you register.
+The Kubo-Bastin trace machinery never changes — only the operators you feed it.
 
 ### The Kane-Mele spin Hall walkthrough
 
