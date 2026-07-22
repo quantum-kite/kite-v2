@@ -105,8 +105,14 @@ jobs:
 
       - name: Install kite (editable) with the Homebrew python
         run: |
-          echo "PYTHON_BIN=$(brew --prefix)/bin/python3" >> "$GITHUB_ENV"
-          "$(brew --prefix)/bin/python3" -m pip install -e .
+          # Modern Homebrew Python is "externally managed" (PEP 668) -- a bare
+          # `pip install` is refused to protect Homebrew's own Python-dependent
+          # formulae. A venv is the standard, recommended way around this (not
+          # a workaround specific to CI): --break-system-packages would also
+          # "fix" this but risks corrupting the Homebrew-managed interpreter.
+          "$(brew --prefix)/bin/python3" -m venv .venv
+          echo "PYTHON_BIN=$(pwd)/.venv/bin/python3" >> "$GITHUB_ENV"
+          "$(pwd)/.venv/bin/python3" -m pip install -e .
 
       - name: Configure (CMake), passing the Homebrew compiler explicitly
         run: |

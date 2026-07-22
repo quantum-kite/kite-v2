@@ -144,20 +144,32 @@ Calculations on KITE are configured using a Python script. KITE's own `#!python 
 needs nothing beyond the packages below; Pybinding is optional (see the note at the top of
 [Section 2][get_dependencies]):
 
-!!! warning
+!!! warning "Use the Homebrew Python, in its own virtual environment"
 
-    To install the python requirements, you **must** run the Homebrew-python version.
-    You can find the Homebrew-python binary at `#!bash /opt/homebrew/bin/python3`.
+    You **must** use the Homebrew-installed Python, not the system one — find it with
+    `#!bash $(brew --prefix)/bin/python3` (this resolves correctly on both Intel Macs,
+    `#!bash /usr/local/bin/python3`, and Apple Silicon, `#!bash /opt/homebrew/bin/python3`,
+    rather than hardcoding one).
+
+    Modern Homebrew Python is ["externally managed"][pep668] — a bare `#!bash pip install`
+    is refused to protect Homebrew's own Python-dependent formulae from being silently
+    broken. Install into a virtual environment instead (the standard fix, not a
+    KITE-specific workaround):
 
 ``` bash
-/usr/local/bin/python3 -m pip install -e .
+$(brew --prefix)/bin/python3 -m venv ~/.venvs/kite
+source ~/.venvs/kite/bin/activate
+python3 -m pip install -e .
 ```
 
 To also install pybinding (optional):
 
 ``` bash
-/usr/local/bin/python3 -m pip install -e ".[pybinding]"
+python3 -m pip install -e ".[pybinding]"
 ```
+
+Activate this virtual environment (`#!bash source ~/.venvs/kite/bin/activate`) in every new
+terminal session before running KITE's Python scripts.
 
 Next, download the source code by the command given in section 1. When configuring with CMake in
 [Section 3][kitex_kitetools], pass the Homebrew-installed compiler explicitly instead of editing
@@ -442,6 +454,7 @@ default (see [Section 2][get_dependencies]); install it yourself inside a runnin
 [hdf5]: https://github.com/HDFGroup/
 [openmp]: https://gcc.gnu.org/onlinedocs/libgomp/
 [homebrew]: https://brew.sh/
+[pep668]: https://peps.python.org/pep-0668/
 [miniforge]: https://github.com/conda-forge/miniforge
 [ports]: https://www.macports.org 
 [pybinding]: https://docs.pybinding.site/en/stable/install/quick.html
