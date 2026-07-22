@@ -154,13 +154,6 @@ rescaled $[-1,1]$ Chebyshev domain and make $T_m(\hat H)$ diverge exponentially.
 qualitative demo (`#!python num_disorder_` = 1–3), so the large-$W$ curves are legitimately noisy — small
 wiggles there are stochastic, not physical structure.
 
-### Cross-reference
-
-The same rank-two custom-vertex machinery is used in `#!python examples/shinada_fs.py` /
-`#!python shinada_single.py` for a plausibly orbital-magnetization-related quantity (see the
-[full reference][calculation-custom_two] for the hedged discussion). This page is the spin Hall case as the
-clean pedagogical entry point into the general mechanism.
-
 !!! example
 
     Get more familiar with KITE: run [`#!python examples/kane_mele_spin_hall.py`][kane_mele_example] and its

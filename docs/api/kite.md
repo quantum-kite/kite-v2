@@ -668,9 +668,9 @@ The KITE package for pre-processing is split up in various subclasses and contai
 
             !!! Note "No worked example yet"
 
-                There is currently no example script that uses `#!python custom_one()`; the two shipped examples that
-                exercise this operator machinery (`#!python examples/shinada_fs.py` and
-                `#!python examples/shinada_single.py`) use the rank-two functions below instead.
+                There is currently no example script that uses `#!python custom_one()` in this page's API
+                reference; see the rank-two functions below for the currently-shipped worked examples of the
+                custom-vertex machinery.
 
     :   !!! declaration-function "<span id="calculation-custom_one_local">*function*`#!python custom_one_local(stream_, energy_, position_, sublattice_, num_disorder_=1)`</span>"
 
@@ -706,19 +706,11 @@ The KITE package for pre-processing is split up in various subclasses and contai
                 | `#!python num_points_`:*`#!python int`*               | Number of energy points used by post-processing to reconstruct the energy dependence.                                                                                                                                                            |
                 | `#!python temperature_`:*`#!python float`*            | Value of the temperature at which the response is calculated. If $eV$ is used as unit for energy, then $k_B\cdot T$ is also in $eV$. To define the temperature in arbitrary units, specify the quantity $K_B \cdot T$, which has units of energy. |
 
-            !!! Info "Example and physical interpretation"
+            !!! Info "Example"
 
-                `#!python examples/shinada_fs.py` uses `#!python custom_two()` to build a 3-orbital ($d$, $p_x$,
-                $p_y$) square-lattice tight-binding model with vertices `#!python A = Vertex(pol_A, [[1j,"vy.rx"],[1j,"rx.vy"]])`
-                (a symmetrized position-velocity product) and `#!python B = Vertex(pol_B, [[1j,"vy"]])` (pure velocity),
-                and reconstructs a Fermi-sea (energy-integrated) quantity — consistent with the `#!python temperature`/
-                `#!python num_points` arguments and the `#!python _fs` filename suffix. This vertex structure (one operator
-                built from a position-velocity commutator/product, the other pure velocity) is *likely* consistent with a
-                real-space spectral approach to orbital magnetization[^4], which describes exactly this
-                commutator-form-operator → energy-resolved-spectral-function → Fermi-level-integral structure — but this
-                was not independently confirmed equation-by-equation, so treat it as a plausible interpretation rather
-                than a certainty. What "Shinada" refers to in the example filenames could not be identified from the
-                repository.
+                See `#!python examples/kane_mele_spin_hall.py` (and its disorder extension
+                `#!python kane_mele_spin_hall_disorder.py`) for a worked example of `#!python custom_two()`,
+                walked through in depth in [Custom Vertex Operators][custom-vertex-example].
 
     :   !!! declaration-function "<span id="calculation-custom_two_local">*function*`#!python custom_two_local(stream_, positions_)`</span>"
 
@@ -736,9 +728,7 @@ The KITE package for pre-processing is split up in various subclasses and contai
 
             !!! Note "No worked example yet"
 
-                There is currently no example script that uses `#!python custom_two_local()`. In particular,
-                `#!python examples/shinada_single.py` — whose name might suggest it does — actually uses
-                [`#!python custom_singleshot_two()`][calculation-custom_singleshot_two] below, not this function.
+                There is currently no example script that uses `#!python custom_two_local()`.
 
     :   !!! declaration-function "<span id="calculation-custom_singleshot_two">*function*`#!python custom_singleshot_two(stream_, num_random_, num_disorder_, gamma_, sigma_, energies_)`</span>"
 
@@ -770,12 +760,9 @@ The KITE package for pre-processing is split up in various subclasses and contai
                 zero, `#!python energies_` is measured relative to the Hamiltonian's raw zero, not the center of your
                 configured `#!python spectrum_range`.
 
-            !!! Info "Example"
+            !!! Note "No worked example yet"
 
-                `#!python examples/shinada_single.py` uses this function with the same vertex structure as
-                [`#!python custom_two()`][calculation-custom_two]'s example — see the physical-interpretation note there.
-                Its explicit `#!python energies_`/`#!python sigma_`/`#!python gamma_` arguments match a single-shot,
-                fixed-broadening spectral evaluation, consistent with the `#!python _single` filename suffix.
+                There is currently no example script that uses `#!python custom_singleshot_two()`.
 
 ## make_pybinding_model
 
@@ -948,8 +935,8 @@ The KITE package for pre-processing is split up in various subclasses and contai
 [tutorial-hdf5]: ../documentation/editing_hdf_files.md
 
 [magnetic-field]: ../documentation/magnetic.md
+[custom-vertex-example]: ../documentation/examples/custom_vertex_operators.md
 
 [^1]: A. Weiße, G. Wellein, A. Alvermann, and H. Fehske, [Rev. Mod. Phys. 78, 275 (2006)](https://doi.org/10.1103/RevModPhys.78.275).
 [^2]: S. M. João, M. Anđelković, L. Covaci, T. G. Rappoport, João M. Viana Parente Lopes, and A. Ferreira, [R. Soc. open sci. 7, 191809 (2020)](https://royalsocietypublishing.org/doi/10.1098/rsos.191809).
 [^3]: H. P. Veiga, D. R. Pinheiro, J. P. Santos Pires, and J. M. Viana Parente Lopes, "Markov Inequality as a Tool for Linear-Scaling Estimation of Local Observables," [Phys. Rev. Research, doi 10.1103/qb1w-44r1](https://journals.aps.org/prresearch/abstract/10.1103/qb1w-44r1), [arXiv:2510.21688](https://arxiv.org/abs/2510.21688).
-[^4]: Vidarte, Veiga, Viana Parente Lopes, Cardias, Ferreira, Cysne, and Rappoport, "Real-Space Spectral Approach to Orbital Magnetization," [arXiv:2512.01575](https://arxiv.org/abs/2512.01575) (full author initials not independently verified against the preprint at the time of writing).

@@ -367,11 +367,9 @@ To generate an input file using [KITE's python-interface][kitepython], try one o
 python dos_graphene.py
 ```
 
-!!! info "This example needs the optional pybinding extra"
-
-    `#!bash dos_graphene.py` builds its lattice with Pybinding, so it needs `#!bash pip install -e ".[pybinding]"`
-    (see [Section 2][get_dependencies]). If you'd rather not install Pybinding, try `#!bash shinada_single.py`
-    or `#!bash weyl_lt.py` instead — both use KITE's native, dependency-free `#!python kite.lattice.Lattice`.
+`#!bash dos_graphene.py` uses KITE's native, dependency-free `#!python kite.lattice.Lattice` interface, so it
+needs no optional extra — running it (and every other pure-KITE script directly under `#!bash examples/`, as
+opposed to `#!bash examples/pybinding/`) only requires the core install from [Section 2][get_dependencies].
 
 It creates a file named *graphene_lattice-output.h5* that is used as an input for [KITEx][kitex]:
 
@@ -420,7 +418,7 @@ combination yourself would involve.
 distribution for some platform/Python combinations — building its C++ extension can fail depending on your
 compiler setup. Since `pybinding` is an optional extra (see the note at the top of
 [Section 2][get_dependencies]), you don't need it at all to use KITE — the native
-`#!python kite.lattice.Lattice` interface (used by `#!bash shinada_single.py`, `#!bash weyl_lt.py`, and
+`#!python kite.lattice.Lattice` interface (used by `#!bash dos_graphene.py`, `#!bash weyl_lt.py`, and
 others in `#!bash examples/`) needs no compiled dependency and always installs cleanly.
 
 ## 6. Using Docker

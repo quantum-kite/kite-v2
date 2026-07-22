@@ -73,8 +73,6 @@ These are pure-KITE scripts (using `kite.lattice.Lattice`, `src/kite/lattice.py`
 
 | Script | What it demonstrates |
 | --- | --- |
-| `shinada_single.py` | A 3-orbital (`d`, `px`, `py`) "cuprate-like" lattice with complex Rashba-like hoppings, evaluated with KITE's `custom.Vertex`/`calculation.custom_singleshot_two` machinery at a fixed list of energies. |
-| `shinada_fs.py` | The same lattice and Vertex construction as `shinada_single.py`, but swept over an energy grid at finite temperature via `calculation.custom_two`. |
 | `kane_mele_spin_hall.py` | The Kane-Mele model's quantized spin Hall conductivity, computed via `custom.Vertex` + `calculation.custom_two` (spin current vertex `A = (1/2){v_x, s_z}`, `s_z` built from `add_orbital_index`/`add_orbital_coupling`). Shows a genuinely flat plateau at σ ≈ −2.02 across the bulk gap. Post-process with `kane_mele_spin_hall_process.py`. See the [in-depth write-up][custom-vertex-example]. |
 | `kane_mele_spin_hall_disorder.py` | Extension of `kane_mele_spin_hall.py`: sweeps onsite Anderson disorder strength and shows the spin Hall plateau eroding once disorder approaches/exceeds the bulk gap scale. See the [in-depth write-up][custom-vertex-example]. |
 

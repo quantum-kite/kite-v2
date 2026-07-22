@@ -180,12 +180,8 @@ is described in the [full reference][calculation-custom_one]. The available func
     (Fermi-sea) quantity, resolved at chosen positions, or evaluated single-shot at chosen energies (KITEx-only,
     no post-processing).
 
-Two example scripts, `#!python examples/shinada_fs.py` and `#!python examples/shinada_single.py`, use
-`#!python custom_two` and `#!python custom_singleshot_two` respectively to build a 3-orbital tight-binding model.
-Their vertex structure (a symmetrized position-velocity product paired with a pure velocity operator) is
-*plausibly* related to a real-space spectral approach to orbital magnetization, though this was not
-independently confirmed in detail — see the [full reference][calculation-custom_two] for the hedged discussion
-and citation.
+See [Custom Vertex Operators][custom-vertex-example] for a fully worked example (`#!python custom_two`, the
+Kane-Mele spin Hall effect).
 
 When these objects are defined, we can set up the I/O instructions for [KITEx][kitex]
 using the [`#!python kite.config_system`][config_system] function:  
@@ -301,6 +297,7 @@ python plot_dos.py                # display the data
 [calculation-custom_two]: ../api/kite.md#calculation-custom_two
 [calculation-custom_two_local]: ../api/kite.md#calculation-custom_two_local
 [calculation-custom_singleshot_two]: ../api/kite.md#calculation-custom_singleshot_two
+[custom-vertex-example]: examples/custom_vertex_operators.md
 
 [modification-modification-par-magnetic_field]: ../api/kite.md#modification-par-magnetic_field
 

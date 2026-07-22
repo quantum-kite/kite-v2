@@ -64,8 +64,8 @@ jobs:
         shell: bash -el {0}
         run: |
           cd examples
-          python shinada_single.py
-          ../build/KITEx single.h5
+          python dos_graphene.py
+          ../build/KITEx graphene_lattice-output.h5
 
       # NOTE: tests/start_tests.sh is not run here yet. Most of its cases need
       # the optional `pybinding` extra to regenerate configs, and at least one
@@ -126,5 +126,5 @@ jobs:
       - name: Smoke test — generate a config and run KITEx
         run: |
           cd examples
-          "$PYTHON_BIN" shinada_single.py
-          ../build/KITEx single.h5
+          "$PYTHON_BIN" dos_graphene.py
+          ../build/KITEx graphene_lattice-output.h5

@@ -28,9 +28,9 @@ RUN mkdir -p build_cxx && cd build_cxx && \
 # (pybinding isn't installed in this image -- see the optional-extra
 # decision in maintenance/installability-plan.md).
 RUN cd examples && \
-    python shinada_single.py && \
-    KITEx single.h5 && \
-    rm -f single.h5
+    python dos_graphene.py && \
+    KITEx graphene_lattice-output.h5 && \
+    rm -f graphene_lattice-output.h5
 
 FROM condaforge/miniforge3:26.3.2-3 AS runtime
 
