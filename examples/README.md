@@ -31,7 +31,7 @@ These are pure-KITE scripts (using `kite.lattice.Lattice`, `src/kite/lattice.py`
 | Script | What it demonstrates |
 | --- | --- |
 | `dos_graphene.py` | DOS of monolayer graphene. See the [in-depth Graphene write-up][graphene-example]. |
-| `dos_checkerboard_lattice.py` | DOS of a 2D checkerboard lattice. |
+| `dos_checkerboard_lattice.py` | DOS of a 2D checkerboard-patterned (A/B site-colored) square lattice with only A-B nearest-neighbor hopping; note this gives a nodal-line Dirac-like dispersion, not the flat band associated with the (different) flat-band checkerboard/pyrochlore-derived lattice sometimes meant by the same name. |
 | `dos_cube.py` | DOS of a simple cubic lattice (3D). |
 | `dos_cubic_lattice_twisted_bc.py` | DOS of a simple cubic lattice with random twisted boundary conditions. |
 | `dos_square_lattice.py` | DOS of a square lattice, automatic energy rescaling. |
@@ -40,14 +40,14 @@ These are pure-KITE scripts (using `kite.lattice.Lattice`, `src/kite/lattice.py`
 | `dos_t_symmetric_cubic_weyl_sm.py` | DOS of a time-reversal-symmetric cubic Weyl semimetal (two orbitals per site) with Anderson disorder [Pixley, Goswami & Das Sarma, PRB 93, 085103 (2016)]. |
 | `dos_fu_kane_mele_model.py` | DOS of the Fu-Kane-Mele topological insulator on the diamond lattice [Fu, Kane & Mele, PRL 98, 106803 (2007)]. |
 | `dos_vacancies.py` | Honeycomb lattice with structural vacancy disorder (`kite.StructuralDisorder`) at two different concentrations, one per sublattice. |
-| `dos_dccond_square_lattice.py` | DOS and DC conductivity of a square lattice, combined in one script. |
+| `dos_dccond_square_lattice.py` | DOS and Hall (`xy`) DC conductivity of a square lattice threaded by a real, Peierls-substituted magnetic field (`kite.Modification(magnetic_field=...)`) — a lattice Landau-level / Hofstadter-type calculation, not a zero-field demo. |
 | `dos_dccond_haldane.py` | DOS and DC (xy) conductivity of the Haldane model, with uniform on-site disorder on both sublattices. |
 
 **Optical / DC conductivity**
 
 | Script | What it demonstrates |
 | --- | --- |
-| `hbn_optcond2_vacancies.py` | Optical conductivity of hexagonal boron nitride with vacancy disorder. |
+| `hbn_optcond2_vacancies.py` | **Second-order (nonlinear)** optical conductivity σ<sub>xxy</sub> of hexagonal boron nitride with vacancy disorder — not the ordinary linear σ<sub>ab</sub>(ω) computed elsewhere in this table. The gapped honeycomb (hBN) lattice is essential, not incidental: its onsite A/B potential breaks inversion symmetry, which is required for this third-rank response to be nonzero at all. See the docstring in the script itself for what its `special=1` flag actually skips in the C++ core. |
 | `optcond_t_symmetric_cubic_weyl_sm.py` | Linear optical conductivity (\(\sigma_{xx}\)) of the T-symmetric cubic Weyl semimetal; a heavily-parallelized example. See also the [Optical Conductivity write-up][optical-conductivity-example]. |
 | `dccond_phosphorene.py` | Single-shot DC conductivity (`xx`/`yy`) of bilayer phosphorene. See the [in-depth Phosphorene write-up][phosphorene-example]. |
 | `weyl_lt.py` | The same Weyl-semimetal optical-conductivity calculation as `optcond_t_symmetric_cubic_weyl_sm.py`, built using KITE's own `kite.lattice.Lattice` API rather than pybinding — compare directly against `pybinding/weyl_pb.py`. |
@@ -61,7 +61,7 @@ These are pure-KITE scripts (using `kite.lattice.Lattice`, `src/kite/lattice.py`
 
 | Script | What it demonstrates |
 | --- | --- |
-| `ldos_graphene.py` | Local density of states of graphene at a set of chosen positions/orbitals. |
+| `ldos_graphene.py` | Local density of states of graphene around a near-decoupled resonant impurity (a site with its 3 nearest-neighbor hoppings zeroed out and a strong onsite potential shift) — maps the resulting sublattice-polarized impurity-resonance LDOS pattern on a 10x10-unit-cell grid around the defect. |
 | `arpes_bilayer.py` | One-particle spectral function (ARPES-like) of bilayer graphene with Rashba spin-orbit coupling, with uniform on-site disorder applied identically across all 8 sublattices. See [Disorder: adding the same disorder to several sublattices at once][disorder-list-shortcut] for how this script's disorder setup can be simplified. |
 | `arpes_cubic.py` | One-particle spectral function of a simple cubic lattice with on-site disorder. |
 | `arpes_tmd.py` | One-particle spectral function of a monolayer transition-metal dichalcogenide (3-band `dz2`/`dxy`/`dx2-y2` model), built from `kite.repository.group6_tmd.monolayer_3band()`. See the [in-depth Spectral Function write-up][spectral-function-example]. |

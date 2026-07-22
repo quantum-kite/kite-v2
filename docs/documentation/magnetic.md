@@ -86,5 +86,5 @@ KITE assumes that the primitive vectors in the Python configuration script are g
 
 
 [modification-par-magnetic_field]: ../api/kite.md#modification-par-magnetic_field
-[configuration-boundaries]: ../api/kite.md#configuration-boundaries
+[configuration-boundaries]: settings.md#boundaries
 [examples-folder]: more_examples/additional_examples.md

@@ -192,8 +192,10 @@ The KITE package for pre-processing is split up in various subclasses and contai
     : <span id="configuration-length">`#!python length`: *`#!python int` or `#!python tuple(int, int)` or `#!python tuple(int, int, int)`*</span>
         : Number of unit cells in each direction.
     : <span id="configuration-boundaries">`#!python boundaries`: *`#!python str` or `#!python tuple(str, str)` or `#!python tuple(str, str, str)`*</span>
-        : Periodic boundary conditions each direction. Possible values are `#!python "periodic"`, `#!python "open"`,
-          `#!python "twisted"`*(this option needs the extra argument `#!python angles` and `#!python "random"` 
+        : Boundary conditions per direction. Possible values are `#!python "periodic"`, `#!python "open"`,
+          `#!python "twisted"`*(this option needs the extra argument `#!python angles` and `#!python "random"`.
+          See [Settings: Boundaries][settings-boundaries] for what each mode physically means and when
+          to choose one over another.
     : <span id="configuration-is_complex">`#!python is_complex`: *`#!python bool`*</span>
         : Boolean that reflects whether the type of Hamiltonian is complex or not.
     : <span id="configuration-precision">`#!python precision`: *`#!python int`*</span>
@@ -913,6 +915,7 @@ The KITE package for pre-processing is split up in various subclasses and contai
 [configuration-divisions]: #configuration-divisions
 [configuration-length]: #configuration-length
 [configuration-boundaries]: #configuration-boundaries
+[settings-boundaries]: ../documentation/settings.md#boundaries
 [configuration-is_complex]: #configuration-is_complex
 [configuration-precision]: #configuration-precision
 [configuration-spectrum_range]: #configuration-spectrum_range

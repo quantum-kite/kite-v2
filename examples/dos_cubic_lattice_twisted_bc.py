@@ -40,7 +40,7 @@ def cubic_lattice(onsite=(0, 0, 0), t=1):
     # Add hoppings
     lat.add_hoppings(
         # between neighboring cells, between which atoms, and the value
-        ([1, 0, 1], 'A', 'A', -t),
+        ([1, 0, 0], 'A', 'A', -t),
         ([0, 1, 0], 'A', 'A', -t),
         ([0, 0, 1], 'A', 'A', -t)
     )

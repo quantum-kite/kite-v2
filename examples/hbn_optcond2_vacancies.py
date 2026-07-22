@@ -10,7 +10,20 @@
     Disorder: Vacancies
     Configuration: Periodic boundary conditions, double precision,
                     given rescaling, size of the system flexible, with domain decomposition (nx=ny=2)
-    Calculation type: Optical Conductivity
+    Calculation type: Second-order (nonlinear) optical conductivity sigma_xxy -- NOT the ordinary linear
+                       sigma_ab(omega) computed by conductivity_optical elsewhere in this folder.
+                       conductivity_optical_nonlinear evaluates a third-rank response tensor, which is
+                       identically zero in any inversion-symmetric lattice (plain graphene, say); this
+                       example uses gapped honeycomb (hexagonal boron nitride: +-gap/2 onsite potential on
+                       the A/B sublattices) specifically because that staggered potential is what breaks
+                       inversion symmetry and makes sigma_xxy nonzero in the first place.
+                       `special=1` selects a hard-coded fast path in Src/Simulation/SimulationCondOpt2.cpp's
+                       CondOpt2(): the general case computes 4 Chebyshev-moment tensors (Gamma0/1/2/3), but
+                       the special=1 branch used here only computes Gamma1 and Gamma2, skipping Gamma0 and
+                       Gamma3 -- per the C++ source comment, this is a materials-specific simplification for
+                       HBN ("nonlinear but only has simple objects that need calculating"), not a generic
+                       numerical shortcut; do not reuse special=1 for a different lattice without checking
+                       whether the same simplification actually applies there.
     Last updated: 08/05/2025
 """
 from kite import lattice as latt

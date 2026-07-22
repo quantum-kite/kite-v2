@@ -77,7 +77,7 @@ The tutorial is structured as follows:
 [configuration]: ../api/kite.md#configuration
 [configuration-divisions]: ../api/kite.md#configuration-divisions
 [configuration-length]: ../api/kite.md#configuration-length
-[configuration-boundaries]: ../api/kite.md#configuration-boundaries
+[configuration-boundaries]: settings.md#boundaries
 [configuration-is_complex]: ../api/kite.md#configuration-is_complex
 [configuration-precision]: ../api/kite.md#configuration-precision
 [configuration-spectrum_range]: ../api/kite.md#configuration-spectrum_range

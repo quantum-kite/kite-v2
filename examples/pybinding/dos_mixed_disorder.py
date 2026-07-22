@@ -10,9 +10,8 @@
     Configuration: Periodic boundary conditions, double precision,
                     manual scaling, size of the system 256x256, without domain decomposition (nx=ny=1),
     Disorder: Disorder class Deterministic and Uniform at different sublattices,
-               StructuralDisorder class vacancy and bond disorder
+               StructuralDisorder class vacancy disorder
     Calculation type: Average DOS
-    Note: automatic scaling is not supported when bond disorder is present
     Last updated: 08/05/2025
 """
 

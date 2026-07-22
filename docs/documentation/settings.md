@@ -52,7 +52,7 @@ Below, we explain each of the arguments in the [`#!python kite.Configuration`][c
    
     
     
-    The [`#!python boundaries`][configuration-boundaries] is a string. 
+    The [`#!python boundaries`][api-configuration-boundaries] is a string. 
     Use `#!python 'periodic'` for *periodic* BCs, `#!python 'open'` for *open* BCs, `#!python 'twisted'` for *twisted* BCs and `#!python 'random'` for *random* BCs. 
     In all cases, the system has the geometry of the unit cell, which is replicated `#!python lx, ly, lz ` times in the directions of the unit vectors. 
     If *twisted* boundary conditions are used, the twist [`#!python angles`][configuration-angles] must be provided in radians.
@@ -85,6 +85,22 @@ Below, we explain each of the arguments in the [`#!python kite.Configuration`][c
     ### Random BC
 
     Random BCs are defined using `mode = 'random'`. No extra arguments are required, but this option implicitly assumes that many random vectors (and/or disorder configurations) will be used  (see Sec. [Calculation][calculation]). For a single system realization, this option is equivalent to a mere twisted-BC simulation with randomly chosen twist-angles along `#!python x, y` and `#!python z` lattice directions.
+
+    !!! Info "Random BC vs. disorder averaging over `num_disorder`"
+
+        These are two different, complementary sources of averaging, and many of the disordered examples in
+        this repo use only the second one at fixed `#!python 'periodic'` BC — that is a perfectly valid,
+        standard choice, not a mistake. Averaging over many `#!python num_disorder` impurity configurations
+        already self-averages a trace-like quantity even without twisting the boundary. What twist-averaging
+        (`#!python 'random'` BC) adds on top is a further suppression of residual **finite-size, boundary-
+        condition-dependent level-quantization artifacts** — the discrete level spacing set by the finite
+        supercell itself, which persists no matter how many disorder realizations are averaged at a *fixed*
+        boundary phase. These artifacts are most visible in features sensitive to the discreteness of the
+        single-particle spectrum: sharp DOS spikes near band edges, or transport quantities computed on a
+        small system. Reach for `#!python 'random'` BC in addition to disorder averaging when such finite-
+        size artifacts are the concern; disorder averaging at fixed `#!python 'periodic'` BC alone is enough
+        when the physical disorder is the only thing being sampled and the system is already large compared
+        to the relevant length scale.
 
 
 ## [Complex][configuration-is_complex]
@@ -143,7 +159,8 @@ Below, we explain each of the arguments in the [`#!python kite.Configuration`][c
 [configuration]: ../api/kite.md#configuration
 [configuration-divisions]: ../api/kite.md#configuration-divisions
 [configuration-length]: ../api/kite.md#configuration-length
-[configuration-boundaries]: ../api/kite.md#configuration-boundaries
+[configuration-boundaries]: settings.md#boundaries
+[api-configuration-boundaries]: ../api/kite.md#configuration-boundaries
 [configuration-is_complex]: ../api/kite.md#configuration-is_complex
 [configuration-precision]: ../api/kite.md#configuration-precision
 [configuration-spectrum_range]: ../api/kite.md#configuration-spectrum_range
