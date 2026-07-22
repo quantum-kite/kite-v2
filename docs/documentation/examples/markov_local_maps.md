@@ -148,24 +148,26 @@ energy, so the constant-energy surface is a pair of small spheres around the two
 A $(k_y,k_z)$ slice at $k_x=0$ therefore cuts each Weyl sphere in a **closed ring**:
 
 <figure>
-    <img src="../../../assets/images/markov_local_maps/weyl_spectral_map.png" style="width: 36em;" />
-    <figcaption>Momentum-space spectral function of a Weyl semimetal at E=0.7: two ring contours (left),
-    and sharp momentum resolution along periodic axes vs. smeared along the open axis (right).</figcaption>
+    <img src="../../../assets/images/markov_local_maps/weyl_spectral_map.png" style="width: 32em;" />
+    <figcaption>Momentum-space spectral function of a Weyl semimetal at E=0.7: two ring contours, the iso-energy
+    cut through the two Weyl cones.</figcaption>
 </figure>
 
 The verified result is exactly that: two clean closed-ring contours in the $(k_y,k_z)$ plane — the iso-energy
 cut through two separated Weyl cones.
 
-**The open-boundary caveat (real physics, not an artifact).** The momentum resolution is produced by wrapping
-the Chebyshev recursion between an inverse and a forward FFT — the k-space sibling of the real-space identity
-above, with the same $f^2\!\to\!\delta$ renormalization. Crucially, this FFT runs over **all declared lattice
-axes**. A momentum label is only physically meaningful along a direction with translational symmetry; along an
-**open (hard-wall) boundary** momentum is not conserved, so Fourier-transforming that axis smears the spectral
-weight into a flat, featureless distribution instead of sharp peaks. The example sets
-`#!python boundaries=["open","random","random"]` on purpose — $x$ open, $y,z$ periodic (twist-averaged) — and
-the comparison panel above shows the smeared behavior along the open $x$-direction directly. This tells you
-that `#!python spectral_map()` gives meaningful $\mathbf k$-resolution only along periodic/twist-averaged
-directions.
+**The open-boundary caveat (real physics, not an artifact — mentioned here, not illustrated).** The momentum
+resolution is produced by wrapping the Chebyshev recursion between an inverse and a forward FFT — the k-space
+sibling of the real-space identity above, with the same $f^2\!\to\!\delta$ renormalization. Crucially, this FFT
+runs over **all declared lattice axes**. A momentum label is only physically meaningful along a direction with
+translational symmetry; along an **open (hard-wall) boundary** momentum is not conserved, so Fourier-transforming
+that axis smears the spectral weight into a flat, featureless distribution instead of sharp peaks. The example
+sets `#!python boundaries=["open","random","random"]` on purpose — $x$ open, $y,z$ periodic (twist-averaged) —
+so $k_x$ itself is not a meaningful label; that is exactly why the figure above only shows the $(k_y,k_z)$ slice
+and never plots anything against $k_x$. At this lattice size the periodic-axis resolution isn't clean enough to
+make a convincing side-by-side comparison of sharp-vs-smeared peaks, so no such plot is shown here — the point is
+made as a caveat in words: `#!python spectral_map()` gives meaningful $\mathbf k$-resolution only along
+periodic/twist-averaged directions.
 
 ### Relationship to the single-target calculations
 

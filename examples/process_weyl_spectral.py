@@ -53,7 +53,7 @@ def load_spectral_map(h5_name, L, norb=2):
 
 
 def plot_spectral_map(h5_name, L, out_path="plots/weyl_spectral_map_preview.png"):
-    """(ky, kz) slice at kx=0, plus a kz lineout at (kx, ky)=(0, 0)."""
+    """(ky, kz) slice at kx=0: the two Weyl-node ring contours."""
     mean, _ = load_spectral_map(h5_name, L)
     total = mean.sum(axis=0)  # sum over sublattice, shape (kz, ky, kx)
 
@@ -61,29 +61,18 @@ def plot_spectral_map(h5_name, L, out_path="plots/weyl_spectral_map_preview.png"
     k_axis = np.arange(-c, L - c)
 
     kykz_slice = total[:, :, c]       # (kz, ky) at kx = 0
-    kz_lineout = total[:, c, c]       # kz profile at kx = ky = 0
-    kx_lineout = total[c, c, :]       # kx profile at ky = kz = 0, for comparison
 
-    fig, axs = plt.subplots(1, 2, figsize=(13, 5.5))
+    fig, ax = plt.subplots(figsize=(6.5, 5.5))
 
     cmap = kite_style.kite_spectral_cmap()
-    mesh = axs[0].pcolormesh(k_axis, k_axis, kykz_slice, cmap=cmap,
-                              shading="auto", rasterized=True)
-    axs[0].set_xlabel(r"$k_y$ (grid index)", fontsize=14)
-    axs[0].set_ylabel(r"$k_z$ (grid index)", fontsize=14)
-    axs[0].set_title(r"$A(\mathbf{k},E{=}0.7)$ slice at $k_x{=}0$", fontsize=13)
-    axs[0].set_aspect("equal")
-    cbar = fig.colorbar(mesh, ax=axs[0])
+    mesh = ax.pcolormesh(k_axis, k_axis, kykz_slice, cmap=cmap,
+                          shading="auto", rasterized=True)
+    ax.set_xlabel(r"$k_y$ (grid index)", fontsize=14)
+    ax.set_ylabel(r"$k_z$ (grid index)", fontsize=14)
+    ax.set_title(r"$A(\mathbf{k},E{=}0.7)$ slice at $k_x{=}0$", fontsize=13)
+    ax.set_aspect("equal")
+    cbar = fig.colorbar(mesh, ax=ax)
     cbar.set_label("spectral weight (arb. units)", fontsize=11)
-
-    axs[1].plot(k_axis, kz_lineout, color=kite_style.KITE_PRIMARY,
-                label=r"$k_z$ lineout ($k_x{=}k_y{=}0$, random/twisted axis)")
-    axs[1].plot(k_axis, kx_lineout, color=kite_style.KITE_ACCENT,
-                label=r"$k_x$ lineout ($k_y{=}k_z{=}0$, OPEN axis)")
-    axs[1].set_xlabel("grid index", fontsize=14)
-    axs[1].set_ylabel("spectral weight (arb. units)", fontsize=14)
-    axs[1].set_title("Periodic axis (sharp) vs. open axis (smeared)", fontsize=13)
-    axs[1].legend(fontsize=9, loc="upper right")
 
     plt.tight_layout()
     plt.savefig(out_path, dpi=150)
