@@ -10,11 +10,25 @@
         ##############################################################################      
 """
 
+import os
+import sys
+
 import numpy as np
 import matplotlib.pyplot as plt
-import sys
-from matplotlib import rc
 
+# This file is normally accessed via the examples/process_arpes.py symlink
+# (see tools/README.md / examples/arpes_*.py), so cwd is typically examples/
+# and `import kite_style` would just work off sys.path[0]. But it can also be
+# invoked with its real tools/ path directly (e.g. from a script running with
+# cwd == tools/), where examples/ would not otherwise be on sys.path. Resolve
+# the shared style module's location relative to *this file's own* location
+# (like run_all_examples.py's _this_dir pattern) so both invocation styles work.
+_examples_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "examples")
+if _examples_dir not in sys.path:
+    sys.path.insert(0, _examples_dir)
+import kite_style
+
+kite_style.apply()
 
 
 def process_arpes(name):
@@ -69,14 +83,35 @@ def process_arpes(name):
     print("Done.")
 
     print("Plotting 2D color map. ", end="")
-    fig, axs = plt.subplots(1,1,figsize=(20,15))
-    axs.pcolor(X,Y,arpes,cmap='hot', rasterized=True)
-    axs.set_xlabel("k-points", fontsize=30)
-    axs.set_ylabel("Energy", fontsize=30)
+    fig, axs = plt.subplots(1, 1, figsize=(20, 15))
+    # A(k,E) is a dense continuous field, not a small set of discrete series --
+    # it needs a perceptually-ordered sequential colormap, not the qualitative
+    # brand-color line cycle used elsewhere in these examples (kite_style.KITE_COLORS).
+    # kite_spectral_cmap() is KITE-branded in the same spirit (dark -> brand
+    # color -> bright highlight, echoing magma/inferno's structure) while
+    # staying monotonic in luminance -- unlike the previous 'hot', it won't
+    # visually flatten real intensity variation, and unlike 'jet' it can't
+    # introduce false banding/edges. See kite_style.py for the luminance check.
+    mesh = axs.pcolormesh(X, Y, arpes, cmap=kite_style.kite_spectral_cmap(), rasterized=True, shading="auto")
+    cbar = fig.colorbar(mesh, ax=axs)
+    cbar.set_label(r"$A(\mathbf{k},E)$ (arb. units)", fontsize=26)
+    cbar.ax.tick_params(labelsize=20)
+    axs.set_xlabel("k-point index (along path)", fontsize=30)
+    axs.set_ylabel("Energy (eV)", fontsize=30)
     print("Done.")
 
     print("Saving figure.", end="")
-    plt.savefig("arpes.pdf", format="pdf", dpi=50)
+    # Figure is saved as a vector PDF (publication-quality), but the mesh
+    # itself is rasterized (rasterized=True above) to keep file size sane for
+    # a dense k x E grid -- dpi below controls only that rasterized layer's
+    # resolution. Raised from the previous 50 dpi (visibly blocky on a
+    # 20x15in canvas) to 150: a real, deliberate size/sharpness trade-off,
+    # not the 300+ dpi this project otherwise defaults to for raster output --
+    # 300 dpi at this figure size (20x15in) produces a much heavier PDF for
+    # marginal visual gain at typical (screen/docs) viewing sizes. Bump to
+    # 300 in `plt.savefig` below if a print-quality copy is specifically needed.
+    plt.savefig("arpes.pdf", format="pdf", dpi=150)
+    plt.close(fig)
     print("Done.")
 
 if __name__ == "__main__":

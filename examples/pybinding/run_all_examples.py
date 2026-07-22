@@ -15,11 +15,16 @@ sys.path.append("..")
 import numpy as np
 import matplotlib.pyplot as plt
 import process_arpes as pa
+import kite_style
 from os import system as terminal
 from os.path import exists
-from matplotlib import rc
-rc('font',size=14)
-rc('axes',labelsize=14,linewidth=2)
+
+# Apply the KITE-branded house style (color cycle + typography/spine/grid
+# settings, see kite_style.py / kite.mplstyle) once, globally, before any
+# figure in this script is created. This replaces the previous ad hoc
+# `rc('font', ...)` / `rc('axes', ...)` calls -- those only set font size and
+# axis-label size/linewidth and left the color cycle at matplotlib's default.
+kite_style.apply()
 
 # Anchored to this file's own location (not the caller's current working directory),
 # so these still resolve correctly both when this module is run directly (expected
@@ -135,12 +140,12 @@ def print_title(text=""):
 
 def main(selection=None):
     if selection is None:
-        selection = np.arange(17, dtype=int) + 1
+        # Covers every "if N in selection:" block actually defined below (1-23,
+        # through hbn_optcond2_vacancies). Keep this in sync whenever a block is
+        # added/removed -- it silently drifted out of date once before (examples
+        # 18-22 were unreachable via the default selection).
+        selection = np.arange(23, dtype=int) + 1
         #selection =[1]
-   
-
-
-    colors = ['#A95C8E', '#7BB274','#357EDD','#FFC107','#A0A0A0']
 
 
     # Header
@@ -235,7 +240,12 @@ def main(selection=None):
         pre_file_name = hdf5_file.replace("-output.h5", "")
         run_calculation(hdf5_file)
         run_tools(hdf5_file)
-        from pybinding.repository.graphene import monolayer as lattice
+        # ldos_graphene.py itself is native kite (kite.lattice/kite.repository), not
+        # pybinding -- this driver used to import the equivalent lattice from
+        # pybinding.repository.graphene, which was a leftover inconsistency. Use the
+        # verified kite.repository port instead (exact port of the same lattice).
+        from kite import repository
+        lattice = repository.graphene.monolayer
         for energy in np.linspace(-1, 1, 101):
             print_command("Making a figure for LDOS at energy {energy:.6f}".format(energy=energy))
             ldos_data = "{0}.dat".format(pre_file_name)
@@ -469,12 +479,16 @@ def main(selection=None):
         hdf5_file = example.main()
 
         pre_file_name = hdf5_file.replace("-output.h5", "")
-        arpes_data = "{0}-image.png".format(pre_file_name)
+        # process_arpes.process_arpes() always writes "arpes.pdf" (see
+        # examples/process_arpes.py / tools/process_arpes.py), never "arpes.png" --
+        # the previous "mv arpes.png ..." here was a stale/broken rename that would
+        # silently fail (the file never existed), leaving arpes_data never created.
+        arpes_data = "{0}-image.pdf".format(pre_file_name)
 
         run_calculation(hdf5_file)
         run_tools(hdf5_file, options="--ARPES -K green 0.1 -E -10 10 2048 -F 100")
         pa.process_arpes("arpes.dat")
-        terminal("mv arpes.png {0}".format(arpes_data))
+        terminal("mv arpes.pdf {0}".format(arpes_data))
 
     if 21 in selection:
         # Example 22: ARPES in cubic lattice
@@ -485,16 +499,37 @@ def main(selection=None):
         hdf5_file = example.main()
 
         pre_file_name = hdf5_file.replace("-output.h5", "")
-        arpes_data = "{0}-image.png".format(pre_file_name)
+        arpes_data = "{0}-image.pdf".format(pre_file_name)
 
         run_calculation(hdf5_file)
         run_tools(hdf5_file, options="--ARPES -K green 0.1 -E -10 10 2048 -F 100")
         pa.process_arpes("arpes.dat")
-        terminal("mv arpes.png {0}".format(arpes_data))
+        terminal("mv arpes.pdf {0}".format(arpes_data))
 
     if 22 in selection:
-        # Example 23: second-order optical conductivity
-        print_command("======= Example 23: second-order photoconductivity in hexagonal Boron Nitride =======")
+        # Example 23: ARPES/spectral function in monolayer TMD (MoS2, 3-band model)
+        print_command("======= Example 23: spectral function A(k,E) in monolayer TMD (MoS2)       =======")
+        import arpes_tmd as example
+
+        print_command("- - - -            Making the configuration file                 - - - - -")
+        hdf5_file = example.main()
+
+        pre_file_name = hdf5_file.replace("-output.h5", "")
+        arpes_data = "{0}-image.pdf".format(pre_file_name)
+
+        run_calculation(hdf5_file)
+        # arpes_tmd.py computes the bare spectral function (no photoemission matrix
+        # element / temperature weighting), not the broadened-ARPES variant used by
+        # arpes_bilayer/arpes_cubic above -- see arpes_tmd.py's own "complete" mode
+        # and docs/documentation/examples/spectral_function.md's "Post-processing"
+        # section for the flags: Jackson kernel, "-S" for the bare spectral function.
+        run_tools(hdf5_file, options="--ARPES -K jackson -S")
+        pa.process_arpes("arpes.dat")
+        terminal("mv arpes.pdf {0}".format(arpes_data))
+
+    if 23 in selection:
+        # Example 24: second-order optical conductivity
+        print_command("======= Example 24: second-order photoconductivity in hexagonal Boron Nitride =======")
         import hbn_optcond2_vacancies as example
 
         print_command("- - - -            Making the configuration file                 - - - - -")

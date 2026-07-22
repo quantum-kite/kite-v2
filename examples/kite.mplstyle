@@ -1,0 +1,45 @@
+# KITE documentation-site brand style for matplotlib figures.
+#
+# Typography / spine / grid / output settings only -- the actual color
+# palette (line-color cycle, spectral-function colormap) lives in
+# kite_style.py as the single source of truth, so it isn't duplicated (and
+# can't drift) between two files. Load this via kite_style.apply(), not
+# directly with plt.style.use(), so both layers get applied together.
+#
+# Colors referenced in these rcParams are pulled from the site's own theme:
+#   docs/assets/stylesheets/extra.css, [data-md-color-scheme="kite"]:
+#     body text color: #404040
+
+font.family: sans-serif
+font.size: 12
+axes.titlesize: 13
+axes.titleweight: bold
+axes.labelsize: 13
+axes.linewidth: 1.1
+axes.edgecolor: 404040
+axes.labelcolor: 404040
+text.color: 404040
+xtick.color: 404040
+ytick.color: 404040
+xtick.direction: out
+ytick.direction: out
+axes.grid: True
+grid.color: cccccc
+grid.linewidth: 0.6
+grid.alpha: 0.5
+axes.spines.top: False
+axes.spines.right: False
+axes.axisbelow: True
+legend.frameon: False
+legend.fontsize: 11
+lines.linewidth: 2.0
+lines.solid_capstyle: round
+figure.facecolor: white
+savefig.facecolor: white
+savefig.bbox: tight
+savefig.dpi: 300
+# Embed real (Type 42/TrueType) fonts in vector output instead of matplotlib's
+# default Type 3 bitmap fonts -- keeps text crisp/selectable/searchable in the
+# PDFs this repo's examples actually publish.
+pdf.fonttype: 42
+ps.fonttype: 42
