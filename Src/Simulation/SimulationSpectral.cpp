@@ -81,15 +81,18 @@ void Simulation<T, D>::spectral(
   debug_message("Entered ldos\n");
   if constexpr (is_tt<std::complex, T>::value) {
     value_type energy_scale;
+    value_type energy_shift;
 #pragma omp critical
     {
       H5::H5File file(name, H5F_ACC_RDONLY);
       std::string tmp = "/EnergyScale";
       get_hdf5<value_type>(&energy_scale, &file, tmp);
+      tmp = "/EnergyShift";
+      get_hdf5<value_type>(&energy_shift, &file, tmp);
       file.close();
     }
 #pragma omp barrier
-    const value_type target = energy_ / energy_scale;
+    const value_type target = (energy_ - energy_shift) / energy_scale;
     const value_type sigma = sigma_ / energy_scale;
     const value_type size = r.Sizet - r.SizetVacancies;
     const value_type factor =
