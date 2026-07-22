@@ -65,6 +65,9 @@ These are pure-KITE scripts (using `kite.lattice.Lattice`, `src/kite/lattice.py`
 | `arpes_bilayer.py` | One-particle spectral function (ARPES-like) of bilayer graphene with Rashba spin-orbit coupling, with uniform on-site disorder applied identically across all 8 sublattices. See [Disorder: adding the same disorder to several sublattices at once][disorder-list-shortcut] for how this script's disorder setup can be simplified. |
 | `arpes_cubic.py` | One-particle spectral function of a simple cubic lattice with on-site disorder. |
 | `arpes_tmd.py` | One-particle spectral function of a monolayer transition-metal dichalcogenide (3-band `dz2`/`dxy`/`dx2-y2` model), built from `kite.repository.group6_tmd.monolayer_3band()`. See the [in-depth Spectral Function write-up][spectral-function-example]. |
+| `altermagnet_arpes.py` | Spin-resolved ARPES on a minimal 2D d-wave altermagnet (square lattice, Néel exchange + sublattice-swapped anisotropic NNN hopping): spin-up and spin-down Fermi pockets come out exactly 90°-rotated copies of each other, the defining altermagnet signature (zero net moment, non-relativistic spin splitting). Post-process with `process_altermagnet_arpes.py`. See the [in-depth write-up][altermagnet-example], including the full Bloch Hamiltonian. |
+| `piflux_ldos_map.py` | Real-space local-density-of-states map (`calculation.ldos_map`) around a single vacancy in a π-flux (Dirac) square lattice, at the Dirac-point energy. Post-process with `process_piflux_ldos.py`. See the [in-depth write-up][markov-maps-example]. |
+| `weyl_spectral_map.py` | Momentum-space spectral-function map (`calculation.spectral_map`) of a 3D Weyl semimetal, showing the Weyl-node iso-energy ring contours. Post-process with `process_weyl_spectral.py`. See the [in-depth write-up][markov-maps-example]. |
 
 **Custom two-operator (Vertex) correlation functions**
 
@@ -72,6 +75,8 @@ These are pure-KITE scripts (using `kite.lattice.Lattice`, `src/kite/lattice.py`
 | --- | --- |
 | `shinada_single.py` | A 3-orbital (`d`, `px`, `py`) "cuprate-like" lattice with complex Rashba-like hoppings, evaluated with KITE's `custom.Vertex`/`calculation.custom_singleshot_two` machinery at a fixed list of energies. |
 | `shinada_fs.py` | The same lattice and Vertex construction as `shinada_single.py`, but swept over an energy grid at finite temperature via `calculation.custom_two`. |
+| `kane_mele_spin_hall.py` | The Kane-Mele model's quantized spin Hall conductivity, computed via `custom.Vertex` + `calculation.custom_two` (spin current vertex `A = (1/2){v_x, s_z}`, `s_z` built from `add_orbital_index`/`add_orbital_coupling`). Shows a genuinely flat plateau at σ ≈ −2.02 across the bulk gap. Post-process with `kane_mele_spin_hall_process.py`. See the [in-depth write-up][custom-vertex-example]. |
+| `kane_mele_spin_hall_disorder.py` | Extension of `kane_mele_spin_hall.py`: sweeps onsite Anderson disorder strength and shows the spin Hall plateau eroding once disorder approaches/exceeds the bulk gap scale. See the [in-depth write-up][custom-vertex-example]. |
 
 **Custom local potential**
 
@@ -143,6 +148,9 @@ python3
 [paper-examples-page]: paper.md
 [custom-local-potential-example]: custom_local_potential.md
 [disorder-list-shortcut]: ../disorder.md#adding-the-same-disorder-to-several-sublattices-at-once
+[markov-maps-example]: ../examples/markov_local_maps.md
+[custom-vertex-example]: ../examples/custom_vertex_operators.md
+[altermagnet-example]: ../examples/altermagnet_arpes.md
 [graphene-example]: ../examples/graphene.md
 [haldane-example]: ../examples/haldane.md
 [phosphorene-example]: ../examples/phosphorene.md

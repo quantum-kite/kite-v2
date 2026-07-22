@@ -271,8 +271,6 @@ The KITE package for pre-processing is split up in various subclasses and contai
         | <span id="calculation-get_custom_two">`#!python get_custom_two`:*`#!python dict`*</span>                                         | Returns the requested rank-two custom-operator trace functions.                                                             |
         | <span id="calculation-get_custom_two_local">`#!python get_custom_two_local`:*`#!python dict`*</span>                             | Returns the requested local rank-two custom-operator functions.                                                             |
         | <span id="calculation-get_custom_ss_two">`#!python get_custom_ss_two`:*`#!python dict`*</span>                                   | Returns the requested single-shot rank-two custom-operator functions.                                                       |
-        | <span id="calculation-get_local_chern">`#!python get_local_chern`:*`#!python dict`*</span>                                       | Returns the requested single-site local Chern marker functions.                                                             |
-        | <span id="calculation-get_chern_map">`#!python get_chern_map`:*`#!python dict`*</span>                                           | Intended to return the requested local-Chern-marker *map* functions. **Known issue:** as currently implemented this property returns the same data as [`#!python get_local_chern`][calculation-get_local_chern] (i.e. the single-site [`#!python local_chern()`][calculation-local_chern] request), not [`#!python local_chern_map()`][calculation-local_chern_map] — likely a copy-paste bug. The HDF5 export performed by [`#!python config_system()`][config_system] does **not** go through this property and is unaffected; only this convenience accessor is wrong. |
 
 
 :   **Methods**
@@ -296,8 +294,6 @@ The KITE package for pre-processing is split up in various subclasses and contai
         | [`#!python custom_two(stream_, num_random_, num_disorder_, num_points_, temperature_)`][calculation-custom_two] | Calculate the rank-two custom-operator trace `#!python Tr[Tn(H)·A·Tm(H)·B]`. |
         | [`#!python custom_two_local(stream_, positions_)`][calculation-custom_two_local]               | Calculate the rank-two custom-operator trace at chosen positions.           |
         | [`#!python custom_singleshot_two(stream_, num_random_, num_disorder_ [, ...])`][calculation-custom_singleshot_two] | Calculate the rank-two custom-operator trace at chosen energies, using KITEx (single-shot method). |
-        | [`#!python local_chern(num_disorder_, beta_, miu_, pos_)`][calculation-local_chern]             | Calculate a Bianco–Resta-type local Chern marker at a single site.          |
-        | [`#!python local_chern_map(num_vectors_, beta_, miu_)`][calculation-local_chern_map]            | Calculate a full real-space map of the local Chern marker.                  |
 
     :   !!! declaration-function "<span id="calculation-dos">*function* `#!python dos(num_points, num_moments, num_random, num_disorder=1)`</span>"
             
@@ -357,6 +353,25 @@ The KITE package for pre-processing is split up in various subclasses and contai
                 realization (e.g. impurity resonances), not an oversight — but the output of a single call should not be
                 interpreted as a disorder-ensemble average.
 
+            !!! Warning "`is_complex=True` is mandatory, even for real-valued hoppings"
+
+                `#!python ldos_map()` (and `#!python spectral_map()`) are only compiled into KITEx for the complex
+                Hamiltonian instantiation (`#!cpp if constexpr (is_tt<std::complex, T>::value)` in
+                `Src/Simulation/SimulationLDoS.cpp`). With `#!python is_complex=False`, that branch is compiled away
+                *entirely* — KITEx runs, prints "Calculating LDoS. Done.", and exits normally, but **no**
+                `#!python /Calculation/ldos_map/Map` dataset is ever written. This is a silent no-op, not an error:
+                verified directly by running with `#!python is_complex=False` and finding the expected dataset simply
+                absent from the output file. Always set `#!python is_complex=True` for these two methods, even if
+                every hopping in your lattice is real.
+
+            !!! Info "Example"
+
+                `#!python examples/piflux_ldos_map.py` maps the LDOS at the Dirac-point energy ($E=0$) around a
+                single vacancy in a $\pi$-flux square lattice — the LDOS vanishes exactly at the vacancy site and
+                shows a decaying, oscillatory enhancement around it. See the [in-depth write-up][markov_maps_example]
+                for the full explanation and plots. This is the reference method for stochastic real-space/momentum-space
+                maps with a rigorous, Markov-inequality-bounded per-site sampling error.[^3]
+
     :   !!! declaration-function "<span id="calculation-spectral_map">*function*`#!python spectral_map(energy_, sigma_, vectors_, coef="gaussian")`</span>"
 
 
@@ -392,6 +407,21 @@ The KITE package for pre-processing is split up in various subclasses and contai
                 from the untwisted lattice size — averaging realizations under that combination is not accounted for by
                 the normalization and may not do what you expect. Fixed (non-twisted) boundaries are recommended when using
                 `#!python spectral_map()` unless you specifically understand this interaction.
+
+            !!! Warning "The FFT runs over every axis, regardless of its declared boundary condition"
+
+                `Src/FFT/FFT.cpp` performs the momentum-space transform over *all* axes unconditionally, even an
+                axis declared `#!python "open"` (a real, hard-wall boundary where momentum isn't actually conserved).
+                Verified directly in `#!python examples/weyl_spectral_map.py`: with `#!python boundaries=["open", "random", "random"]`,
+                the spectral weight along the two periodic/twisted axes is sharply peaked, while along the open axis
+                it is smeared and nearly flat — a real, physically-expected consequence of transforming an axis with
+                no translational symmetry, not a bug, but easy to misread as a broken/noisy result if you don't expect it.
+
+            !!! Info "Example"
+
+                `#!python examples/weyl_spectral_map.py` computes $A(\mathbf{k}, E{=}0.7)$ for a 3D Weyl semimetal and
+                shows two clean ring contours — constant-energy cuts through the two Weyl nodes' linearly-dispersing
+                cones. See the [in-depth write-up][markov_maps_example] for the full explanation and plots.
 
             See the base KITE method paper[^2] for the general LDOS/ARPES-of-disordered-materials methodology
             demonstrated by this family of target functions; the specific real-space↔k-space basis-change construction
@@ -745,64 +775,6 @@ The KITE package for pre-processing is split up in various subclasses and contai
                 Its explicit `#!python energies_`/`#!python sigma_`/`#!python gamma_` arguments match a single-shot,
                 fixed-broadening spectral evaluation, consistent with the `#!python _single` filename suffix.
 
-    :   !!! declaration-function "<span id="calculation-local_chern">*function*`#!python local_chern(num_disorder_, beta_, miu_, pos_)`</span>"
-
-
-        :   Calculate a KPM-evaluated local Chern marker at a single lattice site, structurally of the Bianco–Resta
-            form[^3] $C(r) \propto \text{Im}\langle r|P\,X\,Q\,Y\,P|r\rangle$, where $P = f_{FD}(H)$ is a Fermi-Dirac-smoothed
-            occupation projector built from `#!python beta_`/`#!python miu_`, and $X$, $Y$ are the position operators.
-            No KITE-team paper describing this exact KPM-adapted construction was located; the base reference for the
-            marker itself is Bianco & Resta.[^3]
-
-            **Parameters**
-
-            :   | Parameter                                  | Description                                                                                                 |
-                |-----------------------------------------------|------------------------------------------------------------------------------------------------------------------|
-                | `#!python num_disorder_`:*`#!python int`*     | Number of different disorder realisations.                                                                       |
-                | `#!python beta_`:*`#!python float`*           | Inverse temperature $\beta$ of the Fermi-Dirac filter. This is a genuine finite-temperature generalization of the marker (not merely a numerical convenience): as $\beta\to\infty$ it recovers the sharp ground-state projector. |
-                | `#!python miu_`:*`#!python float`*            | Target chemical potential $\mu$ of the Fermi-Dirac filter.                                                       |
-                | `#!python pos_`:*`#!python array_like`*       | `#!python [x, y]` relative position (site) at which the marker is evaluated.                                     |
-
-            !!! Warning "Exact only for `miu_=0.0`, and relative to the center of `spectrum_range`, not necessarily your Fermi level"
-
-                The C++ implementation's $Q$ term uses a hard-coded constant `#!cpp 0.5` in place of what the exact
-                Bianco–Resta construction requires, `#!cpp (1 - coefs(0))`. These are only equal when the Fermi-Dirac
-                filter's zeroth Chebyshev coefficient is exactly `#!cpp 0.5`, which is the case if and only if
-                `#!python miu_ = 0.0` (verified: for a symmetric Chebyshev node distribution, the zeroth Fermi-Dirac
-                coefficient equals exactly $0.5$ when the target is $0$). Separately — and unlike every other
-                energy-valued `#!python Calculation` parameter in this codebase — `#!python miu_` is used directly with
-                no `#!python -config.energy_shift` correction (verified directly in `Src/Simulation/SimulationLCM.cpp`),
-                so the "zero" that makes the marker exact is the center of your configured
-                [`#!python spectrum_range`][configuration-spectrum_range], not necessarily the physical Fermi level you
-                have in mind. **For an exact Bianco–Resta-form marker, pass `#!python miu_=0.0`, keeping in mind this
-                corresponds to the midpoint of your configured `#!python spectrum_range`.** Other values introduce a
-                small additive correction whose size has not been numerically characterized.
-
-    :   !!! declaration-function "<span id="calculation-local_chern_map">*function*`#!python local_chern_map(num_vectors_, beta_, miu_)`</span>"
-
-
-        :   The full-lattice, stochastic sibling of [`#!python local_chern()`][calculation-local_chern]: evaluates the
-            same Bianco–Resta-type marker as a real-space map over all sites simultaneously, via `#!python num_vectors_`
-            random-phase realizations, instead of at one fixed site.
-
-            **Parameters**
-
-            :   | Parameter                                | Description                                                                                                 |
-                |-----------------------------------------------|------------------------------------------------------------------------------------------------------------------|
-                | `#!python num_vectors_`:*`#!python int`*      | Number of independent random-phase vectors to average over.                                                       |
-                | `#!python beta_`:*`#!python float`*           | Inverse temperature $\beta$ of the Fermi-Dirac filter — see the note under [`#!python local_chern()`][calculation-local_chern]. |
-                | `#!python miu_`:*`#!python float`*            | Target chemical potential $\mu$ of the Fermi-Dirac filter — see the note under [`#!python local_chern()`][calculation-local_chern] about exactness at `#!python miu_=0.0` and the missing `#!python energy_shift` correction. |
-
-            !!! Warning "Known issue: `get_chern_map` returns the wrong data"
-
-                [`#!python Calculation.get_chern_map`][calculation-get_chern_map] (a Python property intended to expose
-                the results of `#!python local_chern_map()`) currently returns the data from
-                [`#!python local_chern()`][calculation-local_chern] instead — a likely copy-paste bug in that one
-                convenience accessor. The actual HDF5 export path used by
-                [`#!python config_system()`][config_system] bypasses this property and is unaffected, so calculations
-                themselves are unaffected — only this accessor is wrong if you call it after
-                `#!python local_chern_map()`.
-
 ## make_pybinding_model
 
 :   !!! declaration-function "*function* `#!python kite.make_pybinding_model(lattice, disorder=None, disorder_structural=None, shape=None)`"
@@ -915,8 +887,6 @@ The KITE package for pre-processing is split up in various subclasses and contai
 [calculation-get_custom_two]: #calculation-get_custom_two
 [calculation-get_custom_two_local]: #calculation-get_custom_two_local
 [calculation-get_custom_ss_two]: #calculation-get_custom_ss_two
-[calculation-get_local_chern]: #calculation-get_local_chern
-[calculation-get_chern_map]: #calculation-get_chern_map
 [comment]: <> (Class Methods)
 [calculation-dos]: #calculation-dos
 [calculation-ldos]: #calculation-ldos
@@ -936,8 +906,6 @@ The KITE package for pre-processing is split up in various subclasses and contai
 [calculation-custom_two]: #calculation-custom_two
 [calculation-custom_two_local]: #calculation-custom_two_local
 [calculation-custom_singleshot_two]: #calculation-custom_singleshot_two
-[calculation-local_chern]: #calculation-local_chern
-[calculation-local_chern_map]: #calculation-local_chern_map
 
 [comment]: <> (Class Configuration)
 [configuration]: #configuration
@@ -980,5 +948,5 @@ The KITE package for pre-processing is split up in various subclasses and contai
 
 [^1]: A. Weiße, G. Wellein, A. Alvermann, and H. Fehske, [Rev. Mod. Phys. 78, 275 (2006)](https://doi.org/10.1103/RevModPhys.78.275).
 [^2]: S. M. João, M. Anđelković, L. Covaci, T. G. Rappoport, João M. Viana Parente Lopes, and A. Ferreira, [R. Soc. open sci. 7, 191809 (2020)](https://royalsocietypublishing.org/doi/10.1098/rsos.191809).
-[^3]: R. Bianco and R. Resta, [Phys. Rev. B 84, 241106(R) (2011)](https://doi.org/10.1103/PhysRevB.84.241106).
+[^3]: H. P. Veiga, D. R. Pinheiro, J. P. Santos Pires, and J. M. Viana Parente Lopes, "Markov Inequality as a Tool for Linear-Scaling Estimation of Local Observables," [Phys. Rev. Research, doi 10.1103/qb1w-44r1](https://journals.aps.org/prresearch/abstract/10.1103/qb1w-44r1), [arXiv:2510.21688](https://arxiv.org/abs/2510.21688).
 [^4]: Vidarte, Veiga, Viana Parente Lopes, Cardias, Ferreira, Cysne, and Rappoport, "Real-Space Spectral Approach to Orbital Magnetization," [arXiv:2512.01575](https://arxiv.org/abs/2512.01575) (full author initials not independently verified against the preprint at the time of writing).

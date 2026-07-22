@@ -30,8 +30,6 @@ The target functions currently available are:
   : Calculates the longitudinal DC conductivity for a set of Fermi energies (uses the $\propto\mathcal{O}(N)$ single-shot method).
 * [`#!python custom_one`][calculation-custom_one], [`#!python custom_one_local`][calculation-custom_one_local], [`#!python custom_two`][calculation-custom_two], [`#!python custom_two_local`][calculation-custom_two_local], [`#!python custom_singleshot_two`][calculation-custom_singleshot_two]
   : Calculate generalized rank-one/rank-two KPM traces of user-defined operators built from `#!python kite.custom.Vertex`.
-* [`#!python local_chern`][calculation-local_chern], [`#!python local_chern_map`][calculation-local_chern_map]
-  : Calculate a Bianco–Resta-type local Chern marker, at a single site or as a full real-space map.
   
 
 The table below shows to which level the KITE target functions have been implemented and tested at the time of writing (May, 2025). 
@@ -189,18 +187,6 @@ Their vertex structure (a symmetrized position-velocity product paired with a pu
 independently confirmed in detail — see the [full reference][calculation-custom_two] for the hedged discussion
 and citation.
 
-### Local Chern marker
-
-[`#!python local_chern`][calculation-local_chern] and [`#!python local_chern_map`][calculation-local_chern_map]
-calculate a Bianco–Resta-type local Chern marker — at a single site, or as a full real-space map, respectively —
-using a Fermi-Dirac-smoothed KPM projector (`#!python beta`/`#!python miu` set the inverse temperature and
-chemical potential of the filter). See the [full reference][calculation-local_chern] for parameter details and
-two important caveats: the marker construction is only exact for `#!python miu=0.0` (the center of your
-configured [`#!python spectrum_range`][configuration-spectrum_range], not necessarily your intended Fermi level),
-and the `#!python get_chern_map` convenience property currently has a known bug (it returns
-[`#!python local_chern`][calculation-local_chern]'s data instead of
-[`#!python local_chern_map`][calculation-local_chern_map]'s).
-
 When these objects are defined, we can set up the I/O instructions for [KITEx][kitex]
 using the [`#!python kite.config_system`][config_system] function:  
 ``` python
@@ -315,8 +301,6 @@ python plot_dos.py                # display the data
 [calculation-custom_two]: ../api/kite.md#calculation-custom_two
 [calculation-custom_two_local]: ../api/kite.md#calculation-custom_two_local
 [calculation-custom_singleshot_two]: ../api/kite.md#calculation-custom_singleshot_two
-[calculation-local_chern]: ../api/kite.md#calculation-local_chern
-[calculation-local_chern_map]: ../api/kite.md#calculation-local_chern_map
 
 [modification-modification-par-magnetic_field]: ../api/kite.md#modification-par-magnetic_field
 
