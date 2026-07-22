@@ -413,7 +413,21 @@ def hamiltonian_k(lattice, k):
         d_b = np.asarray(lattice.sublattices[hop.to_sub].position, dtype=float)
         for term in hop.terms:
             R_cartesian = np.asarray(term.relative_index, dtype=float) @ vectors_matrix
-            phase = np.exp(-1j * np.dot(k, R_cartesian + d_b - d_a))
+            # Sublattice positions may carry more components than the lattice vectors do
+            # (e.g. a buckled monolayer like phosphorene, where each site has an
+            # out-of-plane z-offset with no corresponding periodic direction / reciprocal
+            # k-component). R_cartesian is zero-padded to match d_b - d_a's dimensionality
+            # (translating by a whole lattice vector never changes an out-of-plane offset),
+            # then the dot product with k is truncated to k's own length -- k has no
+            # component along a non-periodic direction, so that part of the position
+            # difference simply contributes no phase (same top-down-projection convention
+            # used by plot_unit_cell for buckled lattices).
+            diff = d_b - d_a
+            pad = len(diff) - len(R_cartesian)
+            if pad > 0:
+                R_cartesian = np.concatenate([R_cartesian, np.zeros(pad)])
+            total = R_cartesian + diff
+            phase = np.exp(-1j * np.dot(k, total[:len(k)]))
             H0[term.to_id, term.from_id] += t * phase
 
     H = H0 + H0.conj().T + onsite

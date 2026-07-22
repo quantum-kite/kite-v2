@@ -823,13 +823,30 @@ The KITE package for pre-processing is split up in various subclasses and contai
                 automatically. The result is checked numerically Hermitian before being returned; a
                 non-Hermitian result raises `#!python RuntimeError` rather than being silently returned.
 
-            !!! Example "Verified against graphene's known tight-binding values"
+            !!! Example "Verified against several known models, not just graphene"
 
                 `#!python examples/band_structure_graphene.py` checks the three textbook graphene
                 energies directly: $E(\Gamma)=\pm3t$, $E(M)=\pm t$, $E(K)=0$ (the Dirac point, exactly
-                two-fold degenerate) — all three reproduced to floating-point precision. The Haldane
-                model's gap ($2\times3\sqrt3\,t_2\sin\phi$) was also checked and matches exactly at both
-                inequivalent BZ corners.
+                two-fold degenerate) — all three reproduced to floating-point precision. Also checked
+                (not shipped as example scripts, but confirmed while building this feature): the Haldane
+                model's gap ($2\times3\sqrt3\,t_2\sin\phi$) matches exactly at both inequivalent BZ
+                corners; `#!python kite.repository.group6_tmd.monolayer_3band('MoS2')` (3 coincident-
+                position sublattices) gives a clean ~1.85 eV direct gap at K with no accidental
+                degeneracy; the T-symmetric cubic Weyl semimetal (`#!python examples/weyl_lt.py`, 3D, two
+                sublattices, hoppings given by the model with same-$\mathbf R$ forward/backward terms
+                rather than relying on the automatic Hermitian-conjugate addition) reproduces its Weyl
+                node exactly at $(\pi/2,\pi/2,\pi/2)$, matching the closed-form
+                $H(\mathbf k)=t[\cos k_x\,\sigma_x+\cos k_y\,\sigma_y+\cos k_z\,\sigma_z]$ to machine
+                precision — confirming the automatic $H_0+H_0^\dagger$ construction is safe even when a
+                lattice's own hopping list already contains what looks like a manually-added return path.
+                `#!python kite.repository.phosphorene.monolayer_4band()` (4 sublattices with an
+                out-of-plane buckling offset) gives a physically sane, anisotropic, direct ~1.5 eV gap at
+                $\Gamma$ — this case caught a real bug (a shape-mismatch crash whenever a sublattice
+                position has more components than the lattice has primitive vectors), now fixed by
+                zero-padding the in-plane cell-translation vector and truncating the dot product with
+                $\mathbf k$ to $\mathbf k$'s own dimensionality, exactly mirroring
+                [`#!python plot_unit_cell`][visualize-plot_unit_cell]'s top-down-projection convention for
+                buckled lattices.
 
     !!! declaration-function "<span id="visualize-compute_bands">*function* `#!python viz.compute_bands(lattice, k_path)`</span>"
 
