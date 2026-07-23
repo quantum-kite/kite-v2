@@ -666,11 +666,24 @@ The KITE package for pre-processing is split up in various subclasses and contai
                 | `#!python num_random_`:*`#!python int`*     | Number of random vectors to use for the stochastic evaluation of the trace.        |
                 | `#!python num_disorder_`:*`#!python int`*   | Number of different disorder realisations.                                         |
 
-            !!! Note "No worked example yet"
+            !!! Info "The `#!python \"v\"` (velocity) building block and NumVelocities"
 
-                There is currently no example script that uses `#!python custom_one()` in this page's API
-                reference; see the rank-two functions below for the currently-shipped worked examples of the
-                custom-vertex machinery.
+                KITE's raw `#!python "vx"`/`#!python "vy"` DSL token is $[\hat H,\hat r]$ — missing the
+                $i/\hbar$ factor of the textbook Hermitian velocity operator. `#!python custom_one()` counts
+                how many `#!python "v"`-type tokens appear in `#!python stream_` itself (every term must
+                carry the same count, or a `#!python ValueError` is raised) and writes it as `NumVelocities`
+                in the output file. This determines whether `#!python Tr[Tn(H)·J]` is physically real (even
+                count) or purely imaginary (odd count) — both are genuine signal, not noise — and lets
+                [`#!bash KITE-tools --CustomOne`][kite-tools-customone] reconstruct the correct component
+                automatically. You do not need to insert a compensating `#!python i` into the vertex
+                yourself; see `#!python examples/haldane_orbital_magnetization.py` for a worked example with
+                an odd (single) velocity operator.
+
+            !!! Example "Worked example"
+
+                `#!python examples/haldane_orbital_magnetization.py` computes the orbital magnetization of a
+                Haldane-model Chern insulator via `#!python custom_one()`, post-processed with
+                [`#!bash KITE-tools --CustomOne`][kite-tools-customone].
 
     :   !!! declaration-function "<span id="calculation-custom_one_local">*function*`#!python custom_one_local(stream_, energy_, position_, sublattice_, num_disorder_=1)`</span>"
 
@@ -1025,6 +1038,7 @@ The KITE package for pre-processing is split up in various subclasses and contai
 
 [kitex]: kitex.md
 [kitetools]: kite-tools.md
+[kite-tools-customone]: kite-tools.md#kite-tools-customone
 [kitetools-output]: kite-tools.md#output
 [HDF5]: https://www.hdfgroup.org
 [tutorial-hdf5]: ../documentation/editing_hdf_files.md

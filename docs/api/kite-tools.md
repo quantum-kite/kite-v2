@@ -17,8 +17,9 @@ where archive.h5 is the HDF file that stores the output of KITE. If KITE-tools d
   * DC conductivity (CondDC)
   * Optical conductivity (CondOpt)
   * Second-order optical conductivity (CondOpt2)
+  * Custom rank-one spectral density (CustomOne) -- the energy-resolved density $\mathrm{Tr}[A\,\delta(E-H)]$ of a user-defined `#!python kite.custom.Vertex` operator $A$ from [`#!python calculation.custom_one()`][calculation-custom_one]
 
-The SingleShot DC conductivity does not require the post-processing through KITE-tools.
+The SingleShot DC conductivity does not require the post-processing through KITE-tools. `#!python custom_two()` also does not use KITE-tools -- its Kubo-Bastin energy integral is done directly in Python (see [Custom Vertex Operators][custom-vertex-example]).
 
 
 ### Advanced usage
@@ -78,6 +79,9 @@ Each function to compute is specified after the double hyphens — and the param
 | `#!bash --CondOpt2` | `#!bash -S`  | Broadening parameter of the Green’s function                                                        |
 | `#!bash --CondOpt2` | `#!bash -O`  | min max num Range of frequencies                                                                    |
 | `#!bash --CondOpt2` | `#!bash -X`  | Exclusive. Only calculate this quantity                                                             |
+| `#!bash --CustomOne` | `#!bash -N` | Name of the output file                                                                            |
+| `#!bash --CustomOne` | `#!bash -E` | min max num Number of energy points                                                                |
+| `#!bash --CustomOne` | `#!bash -X` | Exclusive. Only calculate this quantity                                                             |
 
 All the values specified in this way are assumed to be in the same units as the ones used in the configuration file. All quantities are double-precision numbers except for the ones representing integers, such as the number of points. This list may be found in KITE-tools, run `KITE-tools --help`:
 
@@ -94,12 +98,32 @@ In the table below, we specify the name of the files that are created by KITE-to
 | DC Conductivity                   | `#!bash condDC.dat`          | Fermi energy      | Cond ($Re$)      | Cond ($Im$)      |
 | Second-order optical conductivity | `#!bash nonlinear_cond.dat`  | Frequency         | NL Cond ($Re$)   | NL Cond ($Im$)   |
 | Single-shot DC Conductivity       | `#!bash [HDF5-filename].dat` | Fermi energy      | Cond ($Re$)      | Cond ($Im$)      |
+| Custom rank-one spectral density   | `#!bash custom_one.dat`      | energy            | $\mathrm{Tr}[A\,\delta(E-H)]$ ($Re$) |      |
 
 * All linear conductivities are in units of $e^2/h$
 * Both Planck’s constant and electron charge are set to 1.
 * LDOS outputs one file for each requested energy. The energy is in the E in the file name.
 
 For more details on the type of calculations performed during post-processing, check [Resources][resources] where we discuss our method.
+
+<span id="kite-tools-customone"></span>
+
+!!! info "`#!bash --CustomOne`: why the result can be real even if the vertex "looks" imaginary"
+
+    `#!python calculation.custom_one()` builds its vertex $A$ out of building blocks including KITE's
+    raw `#!python "vx"`/`#!python "vy"` velocity token, which is $[\hat H,\hat r]$ -- **missing** the
+    $i/\hbar$ factor of the textbook Hermitian velocity operator (this is a deliberate KITE convention:
+    it keeps the underlying arithmetic simpler, and the compensating factor of $i$ is resolved once,
+    here in post-processing, rather than by every caller separately). Whether $\mathrm{Tr}[T_n(\hat H)A]$
+    comes out real or purely imaginary depends on the **parity** of how many `#!python "v"`-type tokens
+    $A$ is built from — even, and it's real; odd, and it's genuinely imaginary, not an error. KITE
+    auto-detects this count directly from the vertex definition (`#!python calculation.custom_one()`
+    counts `#!python "v"` tokens itself and stores it as `#!python NumVelocities` in the output file), and
+    `#!bash --CustomOne` uses it to rotate an odd-parity result back onto the real axis before applying
+    the usual Jackson-kernel reconstruction -- you do not need to insert any compensating `#!python i`
+    into the vertex yourself. See [Custom Vertex Operators][custom-vertex-example] for the general
+    mechanism, and `#!python examples/haldane_orbital_magnetization.py` for a worked example with an odd
+    (single) velocity operator.
 
 !!! info "Processing the single-shot DC conductivity"
 
@@ -150,6 +174,14 @@ Calculates the DC conductivity using 30 equidistant Fermi energies in the range 
 ### Example 5
 
 ``` bash
+./KITE-tools h5_file.h5 --CustomOne -E -3 3 400
+```
+
+Reconstructs the `#!python custom_one()` spectral density $\mathrm{Tr}[A\,\delta(E-H)]$ over 400 energy points in the range `#!python [-3, 3]`.
+
+### Example 6
+
+``` bash
 ./KITE-tools h5_file.h5 --CondOpt2 -R -1 -P 1 -O 0 2 200
 ```
 
@@ -161,4 +193,6 @@ with 200 points, writing each Gamma-contribution to its own file (`#!bash -P 1`)
 
 [resources]: ../background/index.md
 [ground_rules]: ../documentation/optimization.md
+[calculation-custom_one]: kite.md#calculation-custom_one
+[custom-vertex-example]: ../documentation/examples/custom_vertex_operators.md
  
