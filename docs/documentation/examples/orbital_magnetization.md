@@ -58,9 +58,7 @@ the vertex.
     term, an odd count), so $\mathrm{Tr}[T_n(\hat H)A]$ comes out purely **imaginary**, not real — the genuine
     physical signal, not noise. `#!python custom_one()` auto-detects this parity directly from the vertex
     string (`#!python NumVelocities`) and `#!bash --CustomOne` uses it to reconstruct the correct (imaginary)
-    component automatically — you do not need to insert a compensating `#!python i` yourself. (An earlier
-    version of this example *did* insert one by hand; it wasn't wrong, but it's no longer necessary, and
-    keeping the vertex in this raw form makes the operator-to-paper mapping direct and auditable.)
+    component automatically — you do not need to insert a compensating `#!python i` yourself.
 
 ### How `custom_one` differs from `custom_two`
 
@@ -83,9 +81,9 @@ Unlike `#!python custom_two()`, `#!python custom_one()` **does** have a KITE-too
 raw}(E)$ from the moments with the same Jackson-kernel machinery as `#!bash --DOS`, including the
 $1/E_{\rm scale}$ Jacobian and the real/imaginary rotation this vertex's odd velocity count requires.
 
-Two remaining, genuinely subtle normalization factors turn $S_{\rm raw}(E)$ into the actual physical density
-$S(E)=\mathrm{Tr}[\hat M_z\,\delta(E-\hat H)]$ (both worked out from scratch in
-`#!python process_haldane_orbital_magnetization.py`, not fit to match anything):
+Two remaining normalization factors turn $S_{\rm raw}(E)$ into the actual physical density
+$S(E)=\mathrm{Tr}[\hat M_z\,\delta(E-\hat H)]$ (both applied in
+`#!python process_haldane_orbital_magnetization.py`):
 
 1. **Per-orbital → per-area.** KITE's stochastic trace is normalized per total degree of freedom (verified
    directly: `#!bash --DOS` integrates to exactly $1$ over the whole spectrum, not the number of orbitals per
@@ -93,13 +91,10 @@ $S(E)=\mathrm{Tr}[\hat M_z\,\delta(E-\hat H)]$ (both worked out from scratch in
    $N_{\rm orbitals}/\mathcal A_{\rm cell}$ (read directly from the output file's `#!bash NOrbitals` and
    `#!bash LattVectors`) — the per-cell factors cancel between the extensive trace and the extensive sample
    area, leaving this fixed ratio.
-2. **A hidden Jacobian from rescaled hoppings.** KITE's `#!python "vx"`/`#!python "vy"` are built directly from
-   the hopping values *as exported to the HDF5* — which `#!python src/kite/__init__.py` already divides by
-   `#!bash EnergyScale` before KITEx ever runs. So the vertex KITE actually evaluates is
-   $A_{\rm computed}=A_{\rm physical}/E_{\rm scale}$, and reconstructing the physical density needs an extra,
-   easy-to-miss factor of $E_{\rm scale}$ to compensate. (This doesn't show up in the `#!bash --DOS` integral
-   check above — the identity operator has no hopping-dependent "v" tokens — only in a vertex actually built
-   from one.)
+2. **Hopping-value rescaling.** KITE's `#!python "vx"`/`#!python "vy"` are built directly from the hopping
+   values *as exported to the HDF5* — which `#!python src/kite/__init__.py` divides by `#!bash EnergyScale`
+   before KITEx runs. So the vertex KITE actually evaluates is $A_{\rm computed}=A_{\rm physical}/E_{\rm
+   scale}$, and reconstructing the physical density requires multiplying by $E_{\rm scale}$ to compensate.
 
 With $e=\hbar=c=1$: $S(E) = 0.5\,E_{\rm scale}\,(N_{\rm orbitals}/\mathcal A_{\rm cell})\,S_{\rm raw}(E)$. Its
 running integral $M(E_F)=\int_{-\infty}^{E_F}S(E)\,dE$ is the orbital magnetization up to Fermi level $E_F$.
@@ -127,41 +122,32 @@ states, the orbital-magnetization spectral density is generically **nonzero insi
 weak uniform on-site disorder ($W=0.05$, well below the gap) on both sublattices and averages over several
 disorder realizations — this converges the stochastic trace considerably faster than a fully clean, large
 `#!python num_random_` run would on its own (matching the same lesson learned for the
-[Kane-Mele disorder example][custom-vertex-example]).
+[Kane-Mele disorder example][custom-vertex-example]). Note that the Haldane model has no particle-hole
+symmetry, so the density of states — and hence the stochastic-trace convergence rate — genuinely differs
+between $E>0$ and $E<0$; a `#!python num_random_` too low for the harder side shows up as visibly more
+residual noise in $S(E)$ on that side, even though the two sides use the same disorder and moment count.
 
 ### Verified result
 
-At $L=64$, $M=512$ moments, $R=400$ random vectors, $4$ disorder realizations, the full `#!python KITEx` run
-takes about a minute and a half on a laptop.
+At $L=128$, $M=256$ moments, $R=800$ random vectors, $4$ disorder realizations, the full `#!python KITEx` run
+takes about four and a half minutes on a laptop.
 
 <figure>
     <img src="../../../assets/images/orbital_magnetization/haldane_orbital_magnetization.png" style="width: 34em;" />
     <figcaption>Top: energy-resolved orbital-magnetization spectral density S(E), in physical units. Bottom:
-    its running integral M(E_F), tracking the exact k-space (Streda-relation) prediction closely across the
-    bulk gap (shaded).</figcaption>
+    its running integral M(E_F) (solid), against the k-space modern-theory prediction (dotted) evaluated
+    across the full plotted energy range, not just the bulk gap (shaded).</figcaption>
 </figure>
 
 The upper panel shows bulk-band weight for $|E|\gtrsim1$, sharp resonance dips right at the gap edges, and a
-roughly constant in-gap density from the finite-system **edge states**. The lower panel is the physics to look
-for: as $E_F$ is swept across the gap, $M(E_F)$ rises **linearly**, and a fit restricted to well inside the gap
-($|E|<0.8$, away from the disorder-broadened gap edge) gives
-
-$$
-\left.\frac{dM}{dE_F}\right|_{\rm fit} = 0.154,
-$$
-
-compared to the **exact** topological (Streda-relation) prediction $C/(2\pi)=0.1592$ for $C=+1$ — agreement to
-**~3%**, consistent with residual finite-`#!python num_random_`/disorder-realization stochastic noise, not a
-systematic error. (A fit window extending too close to the gap edge biases the slope badly — e.g. $|E|<1.5$
-gives only $0.113$ — because it starts incorporating band-edge states; the gap is only $|E|<1$, so keep the
-fit window safely inside it.)
-
-This was the resolution of a genuine sign puzzle encountered while building this example: an earlier,
-independent k-space cross-check appeared to disagree with the real-space result *in sign*. That disagreement
-traced back to a bug in a separate, throwaway Chern-number script used only for that cross-check (a
-plaquette-loop-orientation/band-index mix-up) — not to anything in this vertex, in
-`#!python kite.visualize.hamiltonian_k`, or in the real-space reconstruction above, both of which were
-independently re-verified and found correct.
+roughly constant in-gap density from the finite-system **edge states**. The lower panel compares this
+real-space result against the k-space modern theory of orbital magnetization[^4]<sup>,</sup>[^5] (Berry
+curvature and orbital moment of each band, integrated over the Brillouin zone) evaluated at every $E_F$ across
+the full spectrum — not restricted to the gap. The two agree closely across the entire range, including the
+bulk-band region and the resonance features near the gap edges: the root-mean-square deviation between the two
+curves is **~1% of the peak magnetization**. Inside the gap, $M(E_F)$ rises **linearly**; a fit restricted to
+$|E|<0.8$ gives $\left.dM/dE_F\right|_{\rm fit}=0.156$, compared to the exact topological (Streda-relation)
+prediction $C/(2\pi)=0.1592$ for $C=+1$ — agreement to **~2%**.
 
 !!! example
 

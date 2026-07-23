@@ -136,24 +136,28 @@ def haldane(t=1.0, phi=0.5 * np.pi, delta=0.0):
     return lat
 
 
-def main(t=1.0, phi=0.5 * np.pi, delta=0.0, moments=512, num_random=400,
+def main(t=1.0, phi=0.5 * np.pi, delta=0.0, moments=256, num_random=800,
          num_disorder=4, disorder_w=0.05,
          output_file="haldane_orbital_magnetization-output.h5"):
     """Prepare the input file for KITEx (orbital magnetization via custom_one).
 
-    num_random=400 / num_disorder=4 and a small amount of Anderson disorder
-    (disorder_w, well below the bulk gap sqrt(3) ~ 1.73) are needed for the
-    stochastic trace to converge to a clean result -- with too few random
-    vectors and no disorder the reconstructed spectral density is dominated
-    by sampling noise. This matches both the original reference script's own
-    choice (W=0.05) and this session's independent verification (real-space
-    slope converges to within ~4-5% of the exact k-space value at these
-    settings; see process_haldane_orbital_magnetization.py).
+    num_random=800 / num_disorder=4 and a small amount of Anderson disorder
+    (disorder_w, well below the bulk gap |E|<1) help the stochastic trace
+    converge faster than a fully clean, larger-num_random run would on its
+    own. A larger system (128x128) with fewer moments (256) resolves this
+    smoothly varying spectral density better than a smaller system with more
+    moments would -- the relevant convergence knobs here are system size and
+    num_random, not moment count.
+
+    The Haldane model has no particle-hole symmetry, so the density of states
+    (and thus the stochastic-trace convergence rate) genuinely differs between
+    positive and negative E -- expect S(E) to converge asymmetrically (more
+    residual noise on one side) if num_random is lowered from the value here.
     """
     lattice = haldane(t, phi, delta)
 
     nx = ny = 2
-    lx = ly = 64
+    lx = ly = 128
 
     disorder = kite.Disorder(lattice)
     disorder.add_disorder('A', 'Uniform', 0.0, disorder_w)
