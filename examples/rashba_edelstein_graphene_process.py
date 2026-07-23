@@ -1,15 +1,10 @@
 """ Post-processing for rashba_edelstein_graphene.py: Kubo-Bastin Edelstein integral.
 
-    There is NO KITE-tools step for custom_two. This script reads the raw
-    double-Chebyshev moment matrix /Calculation/CustomTwo/Gamma written by
-    KITEx, reconstructs the Kubo-Bastin integrand, and integrates it against
-    the Fermi function to give chi_yx(mu).
-
-    Uses the .imag branch of Gamma_mn, same as
-    kane_mele_spin_hall_process.py's spin_hall() -- confirmed empirically on
-    the simpler examples/rashba_edelstein_square.py model that the .real
-    branch is identically zero for this vertex pair (bare s_x, v_y) despite
-    its odd combined NumVelocities (opposite parity from spin Hall's).
+    This script reads the raw double-Chebyshev moment matrix
+    /Calculation/CustomTwo/Gamma written by KITEx, reconstructs the
+    Kubo-Bastin integrand using the general (NumVelocities mod 4) formula
+    derived in edelstein()'s own docstring, and integrates it against the
+    Fermi function to give chi_yx(mu).
 
     Usage:
         python rashba_edelstein_graphene_process.py rashba_edelstein_graphene-output.h5
@@ -64,18 +59,47 @@ def edelstein(file_path, mu_values, k_BT=0.01, scat_phys=0.04,
               deltascat_phys=0.04, n_egrid=2000):
     """Return (mu_values, chi_yx), chi_yx in units of e/h.
 
-    KITE's Kubo-Bastin/Gamma2D reconstruction machinery (the 4.0, the 1/(2*pi)
-    inside density_scale, and the internal Chebyshev/Green's-function
-    normalizations) is calibrated to output e^2/h for a genuine two-velocity
-    (NumVelocities=2) correlator -- verified empirically against a Chern
-    insulator's quantized Hall plateau (examples/dos_dccond_haldane.py,
-    sigma_xy ~= 1.01-1.02 for C=1, ruling out e^2/hbar, e^2/(pi*h), etc.). This
-    vertex pair has NumVelocities=1 (bare s_x has zero, v_y has one -- see
-    rashba_edelstein_graphene.py's docstring), one power of EnergyScale short
-    of conductivity_dc's/spin Hall's NumVelocities=2 case, which is also
-    exactly the one velocity leg (the only place a charge e enters the Kubo-
-    Bastin current operator) replaced by the dimensionless s_x operator here.
-    So the result carries one fewer power of e than e^2/h, i.e. e/h.
+    General Kubo-Bastin reconstruction for custom_two(), valid for ANY
+    NumVelocities parity -- not the spin-Hall-specific ".imag branch" formula
+    this file previously copied verbatim from kane_mele_spin_hall_process.py.
+
+    Derivation (verified against both a p=2 case, spin Hall, and this file's
+    own p=1 case, pure Rashba):
+
+    Write each raw stored operator as X = i^n_X * X_H with X_H genuinely
+    Hermitian (n_X counts "missing factors of i" from KITE's convention that a
+    bare commutator/velocity token is stored anti-Hermitian, not with its
+    compensating 1/i -- see custom_one's docstring). The physical
+    (Hermitian-operator) Kubo-Bastin integrand is
+        X(E) = -2*Im[ Tr[A_H delta(E-H) B_H dG+/dE] ],
+    and custom_two's stochastic trace gives Gamma_mn = Tr[T_m(H) A T_n(H) B]
+    = i^p * Tr[T_m(H) A_H T_n(H) B_H], p = n_A + n_B = NumVelocities. Since
+    i^p has period 4 (not 2), the physically correct component of
+        Z(E) = sum_mn delta_m(E) * Gamma_mn * dgreen_n(E)
+    depends on p mod 4, not just its parity:
+        p%4 == 0: X(E) = -2*Im[Z]
+        p%4 == 1: X(E) = +2*Re[Z]      (this vertex: bare s_x has 0
+                                         velocity tokens, v_y has 1 -> p=1)
+        p%4 == 2: X(E) = +2*Im[Z]      (spin Hall: {v_x,s_z}/2 has 1, v_y
+                                         has 1 -> p=2 -- this is the case
+                                         the old ".imag" formula silently
+                                         assumed for every vertex pair)
+        p%4 == 3: X(E) = -2*Re[Z]
+
+    Verified: for p=2 (spin Hall), this reduces to exactly (not just
+    proportionally) the already-validated kane_mele_spin_hall_process.py
+    plateau sigma_xy~-2.02. For p=1 (this vertex), it fixes two independent,
+    previously-broken structural checks: chi_yx(mu) becomes odd in mu with a
+    genuine zero at mu=0 for pure Rashba (lambda_I=0), and drops to
+    near-zero inside the lattice's true bulk gap (lambda_I!=0) instead of
+    showing a spurious flat Fermi-sea-like plateau there.
+
+    Units: same e^2/h calibration as conductivity_dc (see custom_two's own
+    docstring in docs/api/kite.md), with the EnergyScale^(NumVelocities-2)
+    correction applied for NumVelocities != 2 (derived from KITE's rescaled-
+    Hamiltonian convention, same logic as custom_one's EnergyScale factor).
+    For this vertex (NumVelocities=1) the result carries one fewer power of
+    e than e^2/h, i.e. e/h.
     """
     with h5py.File(file_path, "r") as f:
         num_orbitals = np.array(f["NOrbitals"]).item()
@@ -84,6 +108,7 @@ def edelstein(file_path, mu_values, k_BT=0.01, scat_phys=0.04,
             latt_vecs[0, 0] * latt_vecs[1, 1] - latt_vecs[0, 1] * latt_vecs[1, 0]
         )
         energy_scale = np.array(f["EnergyScale"]).item()
+        num_velocities = int(np.array(f["/Calculation/CustomTwo/NumVelocities"]))
         moments_matrix = f["/Calculation/CustomTwo/Gamma"][:].T
 
     Moments_D, Moments_G = moments_matrix.shape
@@ -96,17 +121,20 @@ def edelstein(file_path, mu_values, k_BT=0.01, scat_phys=0.04,
 
     delta = fill_delta(E_grid, deltascat_dim, Moments_G)
     dgreenR = fill_dgreenR(E_grid, scat_dim, Moments_D)
-    GammaE = np.einsum("ni,nm,im->i", delta, moments_matrix.imag, dgreenR)
+    Z = np.einsum("ni,nm,im->i", delta, moments_matrix, dgreenR)
 
-    chi = np.zeros(len(mu_values), dtype=complex)
+    p = num_velocities % 4
+    X = {0: -2.0 * Z.imag, 1: 2.0 * Z.real, 2: 2.0 * Z.imag, 3: -2.0 * Z.real}[p]
+
+    chi = np.empty(len(mu_values))
     for i, mu in enumerate(mu_values):
-        integrand = GammaE * fermi_function(E_grid, mu / energy_scale, beta)
+        integrand = X * fermi_function(E_grid, mu / energy_scale, beta)
         chi[i] = simpson(integrand, E_grid)
 
     units = 1.0 / (2.0 * np.pi)
     density_scale = num_orbitals / (unit_cell_area * units)
-    chi_yx_raw = 4.0 * chi.real * density_scale  # unchanged Kubo-Bastin/Gamma2D machinery
-    chi_yx = chi_yx_raw / energy_scale           # NumVelocities=1 correction (vs. =2 for conductivity_dc)
+    energy_scale_correction = energy_scale ** (num_velocities - 2)
+    chi_yx = 2.0 * chi * density_scale * energy_scale_correction
     return mu_values, chi_yx
 
 
@@ -148,6 +176,42 @@ def plot(pos_h5, neg_h5, control_h5, out_path="plots/rashba_edelstein_graphene_p
     plt.close(fig)
     print(f"Saved {out_path}")
     return mu, chi_pos, chi_neg, chi_control
+
+
+def plot_pure_rashba(pos_h5, neg_h5,
+                      out_path="plots/rashba_edelstein_graphene_pureR_preview.png"):
+    """Pure Rashba (lambda_I=0): chi_yx(mu) is odd, with a genuine zero at mu=0.
+
+    No Kane-Mele term means no bulk gap and no band-edge resonance to
+    complicate the picture (unlike the full lambda_I!=0 case in plot()) --
+    this is the cleanest structural check of the two, and the mu range is
+    narrow (-0.5t to 0.5t) since that's where the antisymmetric structure
+    actually lives; nothing interesting happens further out for this vertex
+    pair without Kane-Mele.
+    """
+    mus = np.linspace(-0.5, 0.5, 101)
+    mu, chi_pos = edelstein(pos_h5, mus)
+    _, chi_neg = edelstein(neg_h5, mus)
+
+    fig, ax = plt.subplots(figsize=(7, 4.5))
+    ax.plot(mu, chi_pos, color=kite_style.KITE_PRIMARY, lw=1.5,
+            label=r"$\lambda_R=+0.1t$")
+    ax.plot(mu, chi_neg, color="#357EDD", lw=1.5,
+            label=r"$\lambda_R=-0.1t$")
+    ax.axhline(0.0, color="0.6", lw=0.8)
+    ax.axvline(0.0, color="0.6", lw=0.8)
+    ax.set_xlabel(r"$\mu\,/\,t$", fontsize=13)
+    ax.set_ylabel(r"$\chi_{yx}(\mu)$  [$e/h$]", fontsize=13)
+    ax.set_title(r"Pure Rashba ($\lambda_I=0$): $\chi_{yx}(\mu)$ is odd, zero at $\mu=0$",
+                 fontsize=12)
+    ax.legend(loc="best", fontsize=9, framealpha=0.85)
+
+    plt.tight_layout()
+    plt.savefig(out_path, dpi=150)
+    plt.savefig(out_path.replace("_preview.png", ".pdf"))
+    plt.close(fig)
+    print(f"Saved {out_path}")
+    return mu, chi_pos, chi_neg
 
 
 if __name__ == "__main__":

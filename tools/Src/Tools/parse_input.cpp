@@ -136,6 +136,19 @@ void shell_input::printHelp(){
     std::cout << "            -N              Name of the output file\n";
     std::cout << "            -X              Exclusive. Only calculate this quantity\n\n";
 
+    std::cout << "--CustomTwo -E              Number of energy points used in the integration\n";
+    std::cout << "            -T              Temperature\n";
+    std::cout << "            -S              Broadening parameter of the Green's function\n";
+    std::cout << "            -d              Broadening parameter of the Dirac delta\n";
+    std::cout << "            -F min max num  Fermi energies. min and max may be omitted.\n";
+    std::cout << "            -N              Name of the output file\n";
+    std::cout << "            -X              Exclusive. Only calculate this quantity\n";
+    std::cout << "                            Reconstructs the Kubo-Bastin response of a\n";
+    std::cout << "                            calculation.custom_two() vertex pair [A, B] as a\n";
+    std::cout << "                            function of Fermi energy, for ANY NumVelocities\n";
+    std::cout << "                            parity (general mod-4 rule, not just the two-\n";
+    std::cout << "                            velocity-operator case built-in conductivities use)\n\n";
+
     std::cout << "--CondDC   -E              Number of energy points used in the integration\n";
     std::cout << "           -T              Temperature\n";
     std::cout << "           -S              Broadening parameter of the Green's function\n";
@@ -197,7 +210,7 @@ shell_input::shell_input(int argc, char *argv[]){
 	// Processes the input that this program recieves from the command line	
 
     // First, find the position of each of the following functions:
-    valid_keys = std::vector<std::string>{"--DOS", "--CondOpt","--CondDC", "--CondOpt2", "--LDOS", "--ARPES", "--CustomOne"};
+    valid_keys = std::vector<std::string>{"--DOS", "--CondOpt","--CondDC", "--CondOpt2", "--LDOS", "--ARPES", "--CustomOne", "--CustomTwo"};
     len = valid_keys.size();   // length of valid_keys?
     keys_pos = std::vector<int>(len, -1);
     keys_len = std::vector<int>(len, -1);
@@ -239,6 +252,7 @@ shell_input::shell_input(int argc, char *argv[]){
     parse_CondOpt(argc, argv);
     parse_CondOpt2(argc, argv);
     parse_CustomOne(argc, argv);
+    parse_CustomTwo(argc, argv);
 
     // Process the exclusive flag. If there are no exclusive functions,
     // all will be calculated. If there's only one, that's the only one
@@ -251,6 +265,7 @@ shell_input::shell_input(int argc, char *argv[]){
     lDOS_is_required = false;
     ARPES_is_required = false;
     CustomOne_is_required = false;
+    CustomTwo_is_required = false;
 
     int num_exclusives = get_num_exclusives();
     if(num_exclusives > 1){
@@ -265,6 +280,7 @@ shell_input::shell_input(int argc, char *argv[]){
             if(lDOS_Exclusive) lDOS_is_required = true;
             if(ARPES_Exclusive) ARPES_is_required = true;
             if(CustomOne_Exclusive) CustomOne_is_required = true;
+            if(CustomTwo_Exclusive) CustomTwo_is_required = true;
 
         } else {
             CondDC_is_required = true;
@@ -274,6 +290,7 @@ shell_input::shell_input(int argc, char *argv[]){
             lDOS_is_required = true;
             ARPES_is_required = true;
             CustomOne_is_required = true;
+            CustomTwo_is_required = true;
             }
     }
 
@@ -287,6 +304,7 @@ int shell_input::get_num_exclusives(){
     if(DOS_Exclusive)         N_exclusives++;
     if(lDOS_Exclusive)        N_exclusives++;
     if(CustomOne_Exclusive)   N_exclusives++;
+    if(CustomTwo_Exclusive)   N_exclusives++;
 
     return N_exclusives;
 }
@@ -601,6 +619,68 @@ void shell_input::parse_CustomOne(int argc, char* argv[]){
           std::string name = argv[1 + pos];
           if(name == "-X")
             CustomOne_Exclusive = true;
+        }
+    }
+}
+
+void shell_input::parse_CustomTwo(int argc, char* argv[]){
+    // This function looks at the command-line input pertaining to the
+    // custom_two() Kubo-Bastin response reconstruction (--CustomTwo) and
+    // finds all the relevant parameters. Mirrors parse_CondDC's -F (Fermi
+    // energy range) handling, since custom_two's response is a function of
+    // Fermi energy just like the DC conductivity.
+
+    CustomTwo_Temp = -1;
+    CustomTwo_NumEnergies = -1;
+    CustomTwo_Scat = -8888;
+    CustomTwo_deltaScat = -8888;
+    CustomTwo_FermiMin = -8888;
+    CustomTwo_FermiMax = -8888;
+    CustomTwo_NumFermi = -1;
+    CustomTwo_Name = "";
+    CustomTwo_Exclusive = false;
+
+    int pos = keys_pos.at(7); // position of "--CustomTwo" in valid_keys
+    if(pos != -1){
+        for(int k = 1; k < keys_len.at(7); k++){
+            std::string name = argv[k + pos];
+            std::string n1 = argv[k + pos + 1];
+
+            if(name == "-N")
+                CustomTwo_Name = n1;
+            if(name == "-T")
+                CustomTwo_Temp = atof(n1.c_str());
+            if(name == "-S")
+                CustomTwo_Scat = atof(n1.c_str());
+            if(name == "-d")
+                CustomTwo_deltaScat = atof(n1.c_str());
+            if(name == "-E")
+                CustomTwo_NumEnergies = atoi(n1.c_str());
+            if(name == "-X" or n1 == "-X")
+                CustomTwo_Exclusive = true;
+
+            if(name == "-F"){
+                if(k == keys_len.at(7) - 1){
+                    CustomTwo_NumFermi = atoi(n1.c_str());
+                    continue;
+                } else {
+                    std::string n2 = argv[k + pos + 2];
+                    if(n2 == "-T" or n2 == "-E" or n2 == "-F" or n2 == "-S" or
+                       n2 == "-d" or n2 == "-N" or n2 == "-X"){
+                        CustomTwo_NumFermi = atoi(n1.c_str());
+                    } else {
+                        std::string n3 = argv[k + pos + 3];
+                        CustomTwo_FermiMin = atof(n1.c_str());
+                        CustomTwo_FermiMax = atof(n2.c_str());
+                        CustomTwo_NumFermi = atoi(n3.c_str());
+                    }
+                }
+            }
+        }
+        if(keys_len.at(7) == 1){
+          std::string name = argv[1 + pos];
+          if(name == "-X")
+            CustomTwo_Exclusive = true;
         }
     }
 }

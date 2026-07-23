@@ -169,13 +169,29 @@ def rashba_graphene(t=1.0, t2=0.15, lambda_R=0.1):
     return lat
 
 
-def main(t=1.0, t2=0.15, lambda_R=0.1, moments=256,
+def main(t=1.0, t2=0.0, lambda_R=0.1, moments=256, disorder_w=0.05,
          output_file="rashba_edelstein_graphene-output.h5"):
-    """Prepare the input file for KITEx (Rashba-Edelstein via custom_two)."""
+    """Prepare the input file for KITEx (Rashba-Edelstein via custom_two).
+
+    t2=0 (no Kane-Mele) by default: the pure-Rashba case is both simpler and
+    cleaner to interpret (symmetric, particle-hole-odd chi_yx(mu), no bulk
+    gap/van-Hove-singularity structure to disentangle from the REE signal
+    itself). A small amount of Anderson disorder (disorder_w, on all four
+    sublattices) helps convergence and smooths out the sample-to-sample
+    oscillations visible in a fully clean, small-num_random_ reconstruction --
+    the same lesson as haldane_orbital_magnetization.py's and
+    kane_mele_spin_hall.py's own disorder choices.
+    """
     lattice = rashba_graphene(t, t2, lambda_R)
 
+    disorder = kite.Disorder(lattice)
+    disorder.add_disorder('Aup', 'Uniform', 0.0, disorder_w)
+    disorder.add_disorder('Bup', 'Uniform', 0.0, disorder_w)
+    disorder.add_disorder('Adn', 'Uniform', 0.0, disorder_w)
+    disorder.add_disorder('Bdn', 'Uniform', 0.0, disorder_w)
+
     nx = ny = 2
-    lx = ly = 64
+    lx = ly = 128
 
     configuration = kite.Configuration(
         divisions=[nx, ny],
@@ -204,16 +220,17 @@ def main(t=1.0, t2=0.15, lambda_R=0.1, moments=256,
     calculation.custom_two(
         stream_=[A, B],
         num_random_=50,
-        num_disorder_=1,
+        num_disorder_=4,
         num_points_=1000,
         temperature_=0.01,
     )
 
-    kite.config_system(lattice, configuration, calculation, filename=output_file)
+    kite.config_system(lattice, configuration, calculation, filename=output_file,
+                       disorder=disorder)
 
     # Run:   ../build/KITEx rashba_edelstein_graphene-output.h5
-    # There is NO KITE-tools step for custom_two -- the Kubo-Bastin energy
-    # integral is done in Python; see rashba_edelstein_graphene_process.py.
+    # Post-process either with rashba_edelstein_graphene_process.py (Python)
+    # or with KITE-tools --CustomTwo (see docs/api/kite-tools.md).
     return output_file
 
 

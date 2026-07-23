@@ -5,7 +5,9 @@ $\tfrac12\{\hat v_x,\hat s_z\}$. This page uses the same `#!python custom_two()`
 machinery with a **different** vertex — the bare spin density $\hat s_x$, with no velocity
 symmetrization — to compute the Rashba-Edelstein effect (REE): the spin-density response
 $\chi_{yx}=\partial\langle\hat s_x\rangle/\partial E_y$ to an in-plane electric field, present
-only when inversion symmetry is broken.
+only when inversion symmetry is broken. (For how the raw $\Gamma_{mn}$ moment matrix is turned
+into this response, see the [general Kubo-Bastin reconstruction rule][custom-vertex-example] and
+[`#!bash KITE-tools --CustomTwo`][kite-tools-customtwo].)
 
 ### The two spin-orbit terms, and why only one gives REE
 
@@ -53,27 +55,6 @@ calculation.add_orbital_coupling('Bup', 'Bdn', 0.5, 'l0')
     `#!python "l0"` — calling it `#!python "l1"` (as if it were an independently-chosen name)
     segfaults, an out-of-bounds vector access, not merely a cosmetic misnaming.
 
-### Units: chi_yx is in e/h, not e^2/h
-
-KITE's Kubo-Bastin/Gamma2D reconstruction machinery — the numerical prefactors inside
-[`#!python conductivity_dc()`][calculation-conductivity_dc] and everything `#!python custom_two()`
-shares with it — is calibrated to output $e^2/h$ **only for a genuine two-velocity correlator**
-(`#!python NumVelocities=2`, e.g. `#!python conductivity_dc()` itself, or the spin-Hall vertex
-pair). Verified directly (not assumed): the Hall conductivity of a $C=1$ Haldane Chern insulator
-(`#!python examples/dos_dccond_haldane.py`'s own parameters, disorder included) reconstructs to
-$\sigma_{xy}\approx1.01$–$1.02$ at mid-gap — a topological plateau that can only be quantized at
-$C\cdot e^2/h$, ruling out $e^2/\hbar$, $e^2/(\pi h)$, and other common conventions.
-
-This page's vertex pair has `#!python NumVelocities=1` (bare $\hat s_x$ contributes zero, $\hat
-v_y$ contributes one) — one fewer velocity leg than a genuine conductivity, and that missing leg
-is exactly where the charge $e$ entered the Kubo-Bastin current operator. So $\chi_{yx}$ carries
-one fewer power of $e$ than $\sigma_{xy}$: **its unit is $e/h$, not $e^2/h$.** Mechanically, this
-means `#!python rashba_edelstein_graphene_process.py`'s `#!python edelstein()` needs one additional
-factor of `#!python 1/energy_scale` beyond what `#!python kane_mele_spin_hall_process.py`'s
-`#!python spin_hall()` applies (that function's `#!python NumVelocities=2` needs no such
-correction) — the general rule being an extra factor of `#!bash EnergyScale`$^{N_v-2}$ for a
-vertex pair with combined velocity-token count $N_v$.
-
 ### The Rashba hopping term: adapted, not re-derived
 
 Rather than re-deriving the honeycomb Rashba bond phases from scratch, this reuses the exact
@@ -94,41 +75,62 @@ exactly, despite the two files using different unit-cell orientations from each 
 reused, applied to `#!python kane_mele_spin_hall.py`'s own, already-verified bond geometry: the
 three NN bonds (`relative_index` `[0,0]`, `[1,-1]`, `[0,-1]`) point at $90°,-30°,-150°$.
 
+### Default parameters: pure Rashba, no Kane-Mele
+
+`#!python examples/rashba_edelstein_graphene.py`'s `#!python main()` defaults to
+$\lambda_I=0$ (`#!python t2=0`) — Kane-Mele SOC is switched off. This isn't just a simpler
+starting point: with $\lambda_I=0$ the model is particle-hole symmetric, so $\chi_{yx}(\mu)$ must
+be an **odd function of $\mu$** with a genuine zero at $\mu=0$ — a much sharper, cleaner
+structural target than anything involving the Kane-Mele gap. Turning $\lambda_I$ on reintroduces a
+bulk gap and van Hove singularities in the band structure (confirmed directly: `#!python
+kite.visualize.plot_bands`/`#!python compute_bands` on this lattice show a sharp DOS peak exactly
+where $\chi_{yx}$'s largest feature sits), which is real physics but makes the basic sign/symmetry
+check harder to read at a glance.
+
+The lattice is $128\times128$ unit cells (`#!python nx=ny=2` domain decomposition), with a small
+amount of Anderson disorder (`#!python disorder_w=0.05`, uniform, all four sublattices,
+`#!python num_disorder_=4` realizations) — this smooths out the sample-to-sample oscillations
+visible in a fully clean, small-`#!python num_random_` reconstruction, the same lesson already
+learned for `#!python haldane_orbital_magnetization.py` and
+`#!python kane_mele_spin_hall.py`. `#!python num_random_=50` and `#!python moments=256`
+are unchanged.
+
 ### Validation
 
 Three structural checks, cheap and independent of any absolute-normalization ambiguity:
 
-1. $\lambda_R\neq0,\ \lambda_I=0$: REE response should be nonzero.
-2. $\lambda_R=0,\ \lambda_I\neq0$: REE response should vanish — Kane-Mele alone is
-   inversion-symmetric and cannot polarize spin.
-3. Flipping the sign of $\lambda_R$ (at fixed $\lambda_I$) must flip the sign of $\chi_{yx}$: the
-   Rashba term's helicity reverses, so the induced spin density $\mathbf S_\text{REE}\propto
-   \hat z\times\mathbf E$ reverses too — the same sign-inversion signature shown in Fig. 2(a) of
+1. $\lambda_R\neq0$: REE response should be nonzero.
+2. $\lambda_I=0$ (particle-hole symmetric): $\chi_{yx}(\mu)$ must be **odd in $\mu$**, with a
+   genuine zero at $\mu=0$.
+3. Flipping the sign of $\lambda_R$ must flip the sign of $\chi_{yx}$ at every $\mu$: the Rashba
+   term's helicity reverses, so the induced spin density $\mathbf S_\text{REE}\propto\hat
+   z\times\mathbf E$ reverses too — the same sign-inversion signature shown in Fig. 2(a) of
    Medina Dueñas *et al.*[^1]
 
 <figure>
-    <img src="../../../assets/images/custom_vertex_operators/rashba_edelstein_graphene.png" style="width: 34em;" />
-    <figcaption>chi_yx(mu) for lambda_R=+0.1t and lambda_R=-0.1t (opposite-sign plateaus), against
-    a Kane-Mele-only control with lambda_R=0 that stays near zero throughout.</figcaption>
+    <img src="../../../assets/images/custom_vertex_operators/rashba_edelstein_graphene_pureR.png" style="width: 34em;" />
+    <figcaption>chi_yx(mu) near mu=0, lambda_R=+0.1t and lambda_R=-0.1t: an exact odd function,
+    crossing zero at mu=0, the two curves exact mirror images of each other.</figcaption>
 </figure>
 
-Check 2 is a **near-exact cancellation**, not a trivially-zero one: when $\lambda_R=0$ the
-up/down spin sectors are exactly decoupled (orthogonal subspaces), so $\Gamma_{mn}$ should vanish
-identically — but only in expectation over the stochastic trace, not per random-vector sample. At
-`#!python num_random_=1`, the residual sampling noise from this cancellation was comparable in
-size to the actual $\lambda_R\neq0$ signal (both were, at that statistics level, artifacts of a
-single random vector). Raising `#!python num_random_` to 50 shrinks the $\lambda_R=0$ control
-roughly 20-fold while leaving the $\lambda_R\neq0$ plateau essentially unchanged — confirming
-genuine averaging convergence, not a wrong vertex or lattice.
+<figure>
+    <img src="../../../assets/images/custom_vertex_operators/rashba_edelstein_graphene.png" style="width: 34em;" />
+    <figcaption>chi_yx(mu) over the full bandwidth: the same odd symmetry holds everywhere, with a
+    Kane-Mele-only control (lambda_R=0) staying near zero throughout.</figcaption>
+</figure>
+
+Both structural checks (2) and (3) are visibly satisfied in the first figure — the two curves are
+exact mirror images through the origin. The second figure extends this over the full bandwidth and
+adds check (1)'s control.
 
 !!! example
 
     Get more familiar with KITE: run [`#!python examples/rashba_edelstein_graphene.py`][ree-example]
-    and its post-processing yourself, and try sweeping $\lambda_R$ at fixed $\lambda_I$ to see the
-    plateau height scale with the Rashba strength.
+    and its post-processing yourself, and try turning Kane-Mele SOC back on (`#!python t2!=0`) to
+    see the bulk gap and van Hove features reappear in $\chi_{yx}(\mu)$.
 
 [^1]: J. Medina Dueñas, S. Giménez de Castro, J. H. García, and S. Roche, "Optimal spin-charge interconversion in graphene through spin-pseudospin entanglement control," [Commun. Phys. (2026)](https://www.nature.com/articles/s42005-026-02658-9) ([arXiv:2510.21240](https://arxiv.org/abs/2510.21240)).
 
 [custom-vertex-example]: custom_vertex_operators.md
 [ree-example]: https://github.com/quantum-kite/kite-v2/tree/master/examples/rashba_edelstein_graphene.py
-[calculation-conductivity_dc]: ../../api/kite.md#calculation-conductivity_dc
+[kite-tools-customtwo]: ../../api/kite-tools.md#kite-tools-customtwo

@@ -44,13 +44,32 @@ expanded in Chebyshev polynomials of $\hat H$; substituting these expansions tur
 contraction of the precomputed moment matrix with two energy-dependent coefficient vectors,
 
 $$
-\Gamma(E)=\sum_{m,n}\Delta_m(E)\,\Gamma_{mn}\,\big[dG/dE\big]_n(E),
+Z(E)=\sum_{m,n}\Delta_m(E)\,\Gamma_{mn}\,\big[dG/dE\big]_n(E),
 $$
 
 where $\Delta_m(E)$ reconstructs $\delta(E-\hat H)$ and $[dG/dE]_n(E)$ reconstructs $dG^{+}/dE$. The
-Fermi-weighted energy integral $\int dE\, f(E)\,\Gamma(E)$ then gives $\sigma_{AB}(\mu)$ as a function of Fermi
+Fermi-weighted energy integral $\int dE\, f(E)\,X(E)$ then gives $\sigma_{AB}(\mu)$ as a function of Fermi
 energy, by quadrature. Because $\Gamma_{mn}$ is computed once by KITEx, sweeping temperature, $\mu$, and the
 reconstruction broadening is a cheap post-processing step — no re-run of KITEx needed.
+
+**Which part of $Z(E)$ is physical: a general rule, not a spin-Hall-specific shortcut.** Each raw stored
+operator is $X=i^{n_X}\hat X_H$ with $\hat X_H$ Hermitian and $n_X$ counting KITE's "missing factor of $i$" per
+velocity token (the same convention as [`#!python custom_one()`][custom-one-doc]'s vertex). $\Gamma_{mn}$
+therefore picks up an overall $i^p$, with $p=n_A+n_B=$ `#!python NumVelocities` the *combined* count from both
+vertices. Since $i^p$ has **period 4, not 2**, which component of $Z(E)$ is physical depends on $p\bmod4$, not
+just its parity:
+
+| $p\bmod4$ | correct component |
+|---|---|
+| 0 | $X(E)=-2\,\mathrm{Im}[Z(E)]$ |
+| 1 | $X(E)=+2\,\mathrm{Re}[Z(E)]$ |
+| 2 | $X(E)=+2\,\mathrm{Im}[Z(E)]$ |
+| 3 | $X(E)=-2\,\mathrm{Re}[Z(E)]$ |
+
+The spin Hall walkthrough below has $p=2$ (row 2), which is why its own post-processing script uses
+$\mathrm{Im}[Z]$ — that is a consequence of this general rule for this particular vertex pair, not a
+special-cased formula. `#!bash KITE-tools --CustomTwo` applies this table automatically, reading
+`#!python NumVelocities` from the file; see [`#!bash --CustomTwo`][kite-tools-customtwo].
 
 ### Why this generalizes conductivity
 
@@ -168,6 +187,8 @@ wiggles there are stochastic, not physical structure.
 [calculation-custom_two]: ../../api/kite.md#calculation-custom_two
 [calculation-add_orbital_coupling]: ../../api/kite.md#calculation-add_orbital_coupling
 [calculation-add_orbital_index]: ../../api/kite.md#calculation-add_orbital_index
+[custom-one-doc]: ../../api/kite-tools.md#kite-tools-customone
+[kite-tools-customtwo]: ../../api/kite-tools.md#kite-tools-customtwo
 [haldane-example]: haldane.md
 [kane_mele_example]: https://github.com/quantum-kite/kite-v2/tree/master/examples/kane_mele_spin_hall.py
 [kane_mele_disorder_example]: https://github.com/quantum-kite/kite-v2/tree/master/examples/kane_mele_spin_hall_disorder.py

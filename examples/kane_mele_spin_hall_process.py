@@ -59,7 +59,17 @@ def fermi_function(E, mu, beta):
 
 def spin_hall(file_path, mu_values, k_BT=0.01, scat_phys=0.04,
               deltascat_phys=0.04, n_egrid=2000):
-    """Return (mu_values, sigma^{sz}_xy) using the diag=0 Hall branch."""
+    """Return (mu_values, sigma^{sz}_xy).
+
+    General Kubo-Bastin reconstruction for custom_two(), valid for any
+    NumVelocities parity -- see rashba_edelstein_graphene_process.py's
+    edelstein() docstring for the full derivation (the mod-4, not mod-2,
+    periodicity of i^NumVelocities). This vertex pair (A=(1/2){v_x,s_z},
+    B=v_y) has NumVelocities=2, so this reduces to the historical
+    ".imag branch" formula this function used to hardcode -- verified to
+    give bit-identical results (up to the overall normalization constant
+    now folded into the general formula below) for this vertex pair.
+    """
     with h5py.File(file_path, "r") as f:
         num_orbitals = np.array(f["NOrbitals"]).item()
         latt_vecs = f["LattVectors"][:]
@@ -67,6 +77,7 @@ def spin_hall(file_path, mu_values, k_BT=0.01, scat_phys=0.04,
             latt_vecs[0, 0] * latt_vecs[1, 1] - latt_vecs[0, 1] * latt_vecs[1, 0]
         )
         energy_scale = np.array(f["EnergyScale"]).item()
+        num_velocities = int(np.array(f["/Calculation/CustomTwo/NumVelocities"]))
         moments_matrix = f["/Calculation/CustomTwo/Gamma"][:].T
 
     Moments_D, Moments_G = moments_matrix.shape
@@ -81,16 +92,20 @@ def spin_hall(file_path, mu_values, k_BT=0.01, scat_phys=0.04,
 
     delta = fill_delta(E_grid, deltascat_dim, Moments_G)
     dgreenR = fill_dgreenR(E_grid, scat_dim, Moments_D)
-    GammaE = np.einsum("ni,nm,im->i", delta, moments_matrix.imag, dgreenR)
+    Z = np.einsum("ni,nm,im->i", delta, moments_matrix, dgreenR)
 
-    cond = np.zeros(len(mu_values), dtype=complex)
+    p = num_velocities % 4
+    X = {0: -2.0 * Z.imag, 1: 2.0 * Z.real, 2: 2.0 * Z.imag, 3: -2.0 * Z.real}[p]
+
+    cond = np.empty(len(mu_values))
     for i, mu in enumerate(mu_values):
-        integrand = GammaE * fermi_function(E_grid, mu / energy_scale, beta)
+        integrand = X * fermi_function(E_grid, mu / energy_scale, beta)
         cond[i] = simpson(integrand, E_grid)
 
     units = 1.0 / (2.0 * np.pi)
     density_scale = (num_orbitals * spin_degeneracy) / (unit_cell_area * units)
-    return mu_values, 4.0 * cond.real * density_scale
+    energy_scale_correction = energy_scale ** (num_velocities - 2)
+    return mu_values, 2.0 * cond * density_scale * energy_scale_correction
 
 
 if __name__ == "__main__":

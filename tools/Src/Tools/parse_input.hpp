@@ -59,6 +59,18 @@ class shell_input{
         bool CustomOne_Exclusive;
         bool CustomOne_is_required;
 
+        // Custom rank-two (custom_two()) Kubo-Bastin response
+        double CustomTwo_Temp;
+        int CustomTwo_NumEnergies;
+        double CustomTwo_Scat;
+        double CustomTwo_deltaScat;
+        double CustomTwo_FermiMin;
+        double CustomTwo_FermiMax;
+        int CustomTwo_NumFermi;
+        std::string CustomTwo_Name;
+        bool CustomTwo_Exclusive;
+        bool CustomTwo_is_required;
+
         // Local density of states
         std::string lDOS_Name;
         bool lDOS_Exclusive;
@@ -125,6 +137,7 @@ class shell_input{
         void parse_lDOS(int argc, char *argv[]);
         void parse_ARPES(int argc, char *argv[]);
         void parse_CustomOne(int argc, char *argv[]);
+        void parse_CustomTwo(int argc, char *argv[]);
         int get_num_exclusives();
 
 };

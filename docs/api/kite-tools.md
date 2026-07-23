@@ -18,8 +18,9 @@ where archive.h5 is the HDF file that stores the output of KITE. If KITE-tools d
   * Optical conductivity (CondOpt)
   * Second-order optical conductivity (CondOpt2)
   * Custom rank-one spectral density (CustomOne) -- the energy-resolved density $\mathrm{Tr}[A\,\delta(E-H)]$ of a user-defined `#!python kite.custom.Vertex` operator $A$ from [`#!python calculation.custom_one()`][calculation-custom_one]
+  * Custom rank-two Kubo-Bastin response (CustomTwo) -- the Fermi-energy-resolved response reconstructed from the double-Chebyshev moment matrix $\Gamma_{mn}=\mathrm{Tr}[T_m(\hat H)\,B\,T_n(\hat H)\,A]$ of a user-defined vertex pair $A,B$ from [`#!python calculation.custom_two()`][calculation-custom_two]
 
-The SingleShot DC conductivity does not require the post-processing through KITE-tools. `#!python custom_two()` also does not use KITE-tools -- its Kubo-Bastin energy integral is done directly in Python (see [Custom Vertex Operators][custom-vertex-example]).
+The SingleShot DC conductivity does not require the post-processing through KITE-tools.
 
 
 ### Advanced usage
@@ -82,6 +83,13 @@ Each function to compute is specified after the double hyphens — and the param
 | `#!bash --CustomOne` | `#!bash -N` | Name of the output file                                                                            |
 | `#!bash --CustomOne` | `#!bash -E` | min max num Number of energy points                                                                |
 | `#!bash --CustomOne` | `#!bash -X` | Exclusive. Only calculate this quantity                                                             |
+| `#!bash --CustomTwo` | `#!bash -N` | Name of the output file                                                                            |
+| `#!bash --CustomTwo` | `#!bash -E` | Number of energy points used in the integration                                                     |
+| `#!bash --CustomTwo` | `#!bash -T` | Temperature                                                                                          |
+| `#!bash --CustomTwo` | `#!bash -S` | Broadening parameter of the Green's function                                                        |
+| `#!bash --CustomTwo` | `#!bash -d` | Broadening parameter of the Dirac delta                                                             |
+| `#!bash --CustomTwo` | `#!bash -F` | min max num Range of Fermi energies. min and max may be omitted if only one is required              |
+| `#!bash --CustomTwo` | `#!bash -X` | Exclusive. Only calculate this quantity                                                             |
 
 All the values specified in this way are assumed to be in the same units as the ones used in the configuration file. All quantities are double-precision numbers except for the ones representing integers, such as the number of points. This list may be found in KITE-tools, run `KITE-tools --help`:
 
@@ -99,6 +107,7 @@ In the table below, we specify the name of the files that are created by KITE-to
 | Second-order optical conductivity | `#!bash nonlinear_cond.dat`  | Frequency         | NL Cond ($Re$)   | NL Cond ($Im$)   |
 | Single-shot DC Conductivity       | `#!bash [HDF5-filename].dat` | Fermi energy      | Cond ($Re$)      | Cond ($Im$)      |
 | Custom rank-one spectral density   | `#!bash custom_one.dat`      | energy            | $\mathrm{Tr}[A\,\delta(E-H)]$ ($Re$) |      |
+| Custom rank-two Kubo-Bastin response | `#!bash custom_two.dat`    | Fermi energy      | response ($Re$)  |                  |
 
 * All linear conductivities are in units of $e^2/h$
 * Both Planck’s constant and electron charge are set to 1.
@@ -124,6 +133,38 @@ For more details on the type of calculations performed during post-processing, c
     into the vertex yourself. See [Custom Vertex Operators][custom-vertex-example] for the general
     mechanism, and `#!python examples/haldane_orbital_magnetization.py` for a worked example with an odd
     (single) velocity operator.
+
+<span id="kite-tools-customtwo"></span>
+
+!!! info "`#!bash --CustomTwo`: a general reconstruction, not a spin-Hall-specific formula"
+
+    `#!python calculation.custom_two()` writes a raw double-Chebyshev moment matrix
+    $\Gamma_{mn}=\mathrm{Tr}[T_m(\hat H)\,B\,T_n(\hat H)\,A]$ for an arbitrary vertex pair
+    $A,B$. As with `#!bash --CustomOne`, each raw stored operator is $X=i^{n_X}\hat X_H$ with
+    $\hat X_H$ Hermitian and $n_X$ counting KITE's "missing factor of $i$" per velocity token, so
+    $\Gamma_{mn}$ picks up an overall $i^p$ with $p=$ `#!python NumVelocities` (the combined count
+    from both $A$ and $B$). Since $i^p$ has **period 4, not 2**, which component of the Chebyshev
+    contraction $Z(E)=\sum_{mn}\delta_m(E)\,\Gamma_{mn}\,\mathrm{dgreen}_n(E)$ is physical depends
+    on $p\bmod4$:
+
+    | $p\bmod4$ | correct component |
+    |---|---|
+    | 0 | $-2\,\mathrm{Im}[Z]$ |
+    | 1 | $+2\,\mathrm{Re}[Z]$ |
+    | 2 | $+2\,\mathrm{Im}[Z]$ |
+    | 3 | $-2\,\mathrm{Re}[Z]$ |
+
+    `#!bash --CustomTwo` reads `#!python NumVelocities` directly from the file and applies this
+    table automatically -- no manual branch selection needed. This is the same rule used by
+    [`#!python examples/rashba_edelstein_graphene_process.py`][ree-example]'s Python
+    post-processing (for a $p=1$ vertex pair) and by
+    [`#!python examples/kane_mele_spin_hall_process.py`][custom-vertex-example] (for the $p=2$
+    spin-Hall pair, where it reduces to the previously-published formula). See
+    [Rashba-Edelstein Effect][ree-example] for the full derivation and a worked example.
+
+    **Units**: for `#!python NumVelocities=2` (e.g. spin Hall), the result is in units of
+    $e^2/h$, same as `#!bash --CondDC`. For `#!python NumVelocities != 2`, an additional factor
+    of `#!bash EnergyScale`$^{N_v-2}$ is applied automatically.
 
 !!! info "Processing the single-shot DC conductivity"
 
@@ -189,10 +230,21 @@ Computes the **DC photocurrent / shift-current response** (the degenerate $\omeg
 second-order optical conductivity, selected via `#!bash -R -1`) over the frequency range `#!python [0, 2]`
 with 200 points, writing each Gamma-contribution to its own file (`#!bash -P 1`).
 
+### Example 7
+
+``` bash
+./KITE-tools h5_file.h5 --CustomTwo -F -2 2 200 -T 0.01
+```
+
+Reconstructs the `#!python custom_two()` response as a function of Fermi energy over 200
+equidistant points in `#!python [-2, 2]`, at temperature `#!bash 0.01`.
+
 @@include[kite_tools_readme.md](kite_tools_readme.md)
 
 [resources]: ../background/index.md
 [ground_rules]: ../documentation/optimization.md
 [calculation-custom_one]: kite.md#calculation-custom_one
+[calculation-custom_two]: kite.md#calculation-custom_two
 [custom-vertex-example]: ../documentation/examples/custom_vertex_operators.md
+[ree-example]: ../documentation/examples/rashba_edelstein.md
  
