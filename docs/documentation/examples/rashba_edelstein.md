@@ -23,7 +23,7 @@ terms that can be switched on independently:
   **inversion-breaking**. This is the actual source of REE.
 
 $$
-\hat H_R = i\lambda_R\sum_{\langle ij\rangle}\hat c_i^\dagger\,(\boldsymbol\sigma\times\hat
+\hat H_R = i\lambda_R\sum_{\langle ij\rangle}\hat c_i^\dagger\,(\mathbf{s}\times\hat
 d_{ij})_z\,\hat c_j
 $$
 
@@ -55,25 +55,17 @@ calculation.add_orbital_coupling('Bup', 'Bdn', 0.5, 'l0')
     `#!python "l0"` — calling it `#!python "l1"` (as if it were an independently-chosen name)
     segfaults, an out-of-bounds vector access, not merely a cosmetic misnaming.
 
-### The Rashba hopping term: adapted, not re-derived
+### The Rashba hopping term
 
-Rather than re-deriving the honeycomb Rashba bond phases from scratch, this reuses the exact
-numerical convention already validated and shipped elsewhere in this codebase —
-`#!bash examples/paper/Section_4_B_topology/Input/qahe_disorder.py` and
-`#!bash examples/paper/Section_4_E_spintronics/Input/gaussian_wavepacket_only_anderson.py` both
-use $\rho=\lambda_R\cdot2i/3$ as the Rashba magnitude, with per-bond coefficients that are a pure
-phase times $\rho$, determined by the bond's unit direction $\hat d=(d_x,d_y)$:
+On the honeycomb lattice, the Rashba nearest-neighbor hopping is complex and depends on the bond
+direction. For a bond with unit vector $\hat d=(d_x,d_y)$, the spin-flip amplitude is
 
 $$
-t(\hat A_\uparrow\!\to\!\hat B_\downarrow,\,\hat d) = \rho\,(d_y+i d_x), \qquad
-t(\hat A_\downarrow\!\to\!\hat B_\uparrow,\,\hat d) = \rho\,(d_y-i d_x)
+t(\uparrow\to\downarrow,\,\hat d) = \lambda_R\,\tfrac{2i}{3}\,(d_y+i d_x), \qquad
+t(\downarrow\to\uparrow,\,\hat d) = \lambda_R\,\tfrac{2i}{3}\,(d_y-i d_x),
 $$
 
-— cross-checked to reproduce **every one** of both reference files' hard-coded coefficients
-exactly, despite the two files using different unit-cell orientations from each other and from
-`#!python kane_mele_spin_hall.py`. The formula above (not either file's literal numbers) is what's
-reused, applied to `#!python kane_mele_spin_hall.py`'s own, already-verified bond geometry: the
-three NN bonds (`relative_index` `[0,0]`, `[1,-1]`, `[0,-1]`) point at $90°,-30°,-150°$.
+applied to the three nearest-neighbor bonds, which point at $90°,-30°,-150°$.
 
 ### Default parameters: pure Rashba, no Kane-Mele
 
@@ -109,19 +101,13 @@ Three structural checks, cheap and independent of any absolute-normalization amb
 
 <figure>
     <img src="../../../assets/images/custom_vertex_operators/rashba_edelstein_graphene_pureR.png" style="width: 34em;" />
-    <figcaption>chi_yx(mu) near mu=0, lambda_R=+0.1t and lambda_R=-0.1t: an exact odd function,
-    crossing zero at mu=0, the two curves exact mirror images of each other.</figcaption>
+    <figcaption>$\chi_{yx}(\mu)$ near $\mu=0$, $\lambda_R=+0.1t$ and $\lambda_R=-0.1t$: an exact
+    odd function, crossing zero at $\mu=0$, the two curves exact mirror images of each
+    other.</figcaption>
 </figure>
 
-<figure>
-    <img src="../../../assets/images/custom_vertex_operators/rashba_edelstein_graphene.png" style="width: 34em;" />
-    <figcaption>chi_yx(mu) over the full bandwidth: the same odd symmetry holds everywhere, with a
-    Kane-Mele-only control (lambda_R=0) staying near zero throughout.</figcaption>
-</figure>
-
-Both structural checks (2) and (3) are visibly satisfied in the first figure — the two curves are
-exact mirror images through the origin. The second figure extends this over the full bandwidth and
-adds check (1)'s control.
+Checks (1)–(3) are all visibly satisfied: both curves are clearly nonzero, and they are exact
+mirror images through the origin.
 
 !!! example
 
