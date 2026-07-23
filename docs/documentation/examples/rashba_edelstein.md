@@ -96,17 +96,20 @@ three NN bonds (`relative_index` `[0,0]`, `[1,-1]`, `[0,-1]`) point at $90°,-30
 
 ### Validation
 
-Two structural checks, cheap and independent of any absolute-normalization ambiguity:
+Three structural checks, cheap and independent of any absolute-normalization ambiguity:
 
 1. $\lambda_R\neq0,\ \lambda_I=0$: REE response should be nonzero.
 2. $\lambda_R=0,\ \lambda_I\neq0$: REE response should vanish — Kane-Mele alone is
    inversion-symmetric and cannot polarize spin.
+3. Flipping the sign of $\lambda_R$ (at fixed $\lambda_I$) must flip the sign of $\chi_{yx}$: the
+   Rashba term's helicity reverses, so the induced spin density $\mathbf S_\text{REE}\propto
+   \hat z\times\mathbf E$ reverses too — the same sign-inversion signature shown in Fig. 2(a) of
+   Medina Dueñas *et al.*[^1]
 
 <figure>
     <img src="../../../assets/images/custom_vertex_operators/rashba_edelstein_graphene.png" style="width: 34em;" />
-    <figcaption>chi_yx(mu) with Rashba SOC on (solid) vs. a Kane-Mele-only control with
-    lambda_R=0 (dashed) — the control stays near zero throughout, while turning on Rashba SOC
-    produces a clear plateau.</figcaption>
+    <figcaption>chi_yx(mu) for lambda_R=+0.1t and lambda_R=-0.1t (opposite-sign plateaus), against
+    a Kane-Mele-only control with lambda_R=0 that stays near zero throughout.</figcaption>
 </figure>
 
 Check 2 is a **near-exact cancellation**, not a trivially-zero one: when $\lambda_R=0$ the
@@ -123,6 +126,8 @@ genuine averaging convergence, not a wrong vertex or lattice.
     Get more familiar with KITE: run [`#!python examples/rashba_edelstein_graphene.py`][ree-example]
     and its post-processing yourself, and try sweeping $\lambda_R$ at fixed $\lambda_I$ to see the
     plateau height scale with the Rashba strength.
+
+[^1]: J. Medina Dueñas, S. Giménez de Castro, J. H. García, and S. Roche, "Optimal spin-charge interconversion in graphene through spin-pseudospin entanglement control," [Commun. Phys. (2026)](https://www.nature.com/articles/s42005-026-02658-9) ([arXiv:2510.21240](https://arxiv.org/abs/2510.21240)).
 
 [custom-vertex-example]: custom_vertex_operators.md
 [ree-example]: https://github.com/quantum-kite/kite-v2/tree/master/examples/rashba_edelstein_graphene.py

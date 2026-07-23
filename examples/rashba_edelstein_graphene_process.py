@@ -110,22 +110,31 @@ def edelstein(file_path, mu_values, k_BT=0.01, scat_phys=0.04,
     return mu_values, chi_yx
 
 
-def plot(rashba_h5, control_h5, out_path="plots/rashba_edelstein_graphene_preview.png"):
-    """Compare the lambda_R!=0 REE response against a lambda_R=0 (Kane-Mele-only) control.
+def plot(pos_h5, neg_h5, control_h5, out_path="plots/rashba_edelstein_graphene_preview.png"):
+    """Compare +lambda_R, -lambda_R, and a lambda_R=0 (Kane-Mele-only) control.
+
+    Flipping the sign of lambda_R must flip the sign of chi_yx (S_REE ~
+    zhat x E, and reversing the Rashba term reverses the helicity of the
+    spin-momentum locking) -- the same sign-inversion check shown in Fig. 2(a)
+    of Medina Duenas et al., Commun. Phys. (2026) [arXiv:2510.21240], just
+    with two lambda_R values instead of their full color-graded sweep.
 
     The control isn't expected to be exactly zero at finite num_random_ (see
     rashba_edelstein_graphene.py's docstring), but should be much smaller than
     -- and structurally distinct from -- the actual signal.
     """
     mus = np.linspace(-2.0, 2.0, 201)
-    mu, chi = edelstein(rashba_h5, mus)
+    mu, chi_pos = edelstein(pos_h5, mus)
+    _, chi_neg = edelstein(neg_h5, mus)
     _, chi_control = edelstein(control_h5, mus)
 
     fig, ax = plt.subplots(figsize=(7, 4.5))
-    ax.plot(mu, chi, color=kite_style.KITE_PRIMARY, lw=1.5,
-            label=r"$\lambda_R\neq0,\ \lambda_I\neq0$ (Rashba-Edelstein)")
+    ax.plot(mu, chi_pos, color=kite_style.KITE_PRIMARY, lw=1.5,
+            label=r"$\lambda_R=+0.1t$")
+    ax.plot(mu, chi_neg, color="#357EDD", lw=1.5,
+            label=r"$\lambda_R=-0.1t$")
     ax.plot(mu, chi_control, color=kite_style.KITE_ACCENT, lw=1.5, ls="--",
-            label=r"$\lambda_R=0,\ \lambda_I\neq0$ (Kane-Mele only, control)")
+            label=r"$\lambda_R=0$ (Kane-Mele only, control)")
     ax.axhline(0.0, color="0.6", lw=0.8)
     ax.set_xlabel(r"$\mu\,/\,t$", fontsize=13)
     ax.set_ylabel(r"$\chi_{yx}(\mu)$  [$e/h$]", fontsize=13)
@@ -138,7 +147,7 @@ def plot(rashba_h5, control_h5, out_path="plots/rashba_edelstein_graphene_previe
     plt.savefig(out_path.replace("_preview.png", ".pdf"))
     plt.close(fig)
     print(f"Saved {out_path}")
-    return mu, chi, chi_control
+    return mu, chi_pos, chi_neg, chi_control
 
 
 if __name__ == "__main__":
