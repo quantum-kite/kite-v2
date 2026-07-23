@@ -329,6 +329,20 @@ void Simulation<T, D>::store_custom_one(
   Global.general_gamma = Eigen::Array<T, -1, 1>::Zero(gamma_.rows());
 #pragma omp barrier
 #pragma omp critical
+  // Extracts Re(gamma_(n)) per Chebyshev moment n -- legitimate when the vertex's
+  // Hermiticity guarantees Tr[T_n(H)*A] is purely real, since it cancels the
+  // spurious imaginary stochastic-sampling noise that would otherwise remain.
+  // gamma_ is a genuine column vector (Eigen::Matrix<T,-1,1>): use .conjugate()
+  // here, NOT .adjoint() -- .adjoint() also TRANSPOSES (row vector), so
+  // "gamma_.matrix() + gamma_.matrix().adjoint()" silently mixes an Nx1 and a 1xN
+  // object. This shape mismatch is NOT caught at compile time (both operands have
+  // a Dynamic-sized dimension, so EIGEN_STATIC_ASSERT_SAME_MATRIX_SIZE passes) and
+  // NOT caught at runtime in KITE's actual Release build (-O3 -DNDEBUG disables
+  // Eigen's eigen_assert). The result: every moment n>=1 was silently corrupted
+  // (reading past the vector's real extent) for any custom_one() call with more
+  // than 1 moment, until this was changed from .adjoint() to .conjugate(). Verified
+  // empirically: before the fix only n=0 came out purely real (trivially, since
+  // 1x1 has no shape ambiguity); after the fix, all moments do.
   Global.general_gamma.matrix() +=
     0.5 * (gamma_.matrix() + gamma_.matrix().conjugate());
 #pragma omp barrier

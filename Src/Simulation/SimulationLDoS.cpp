@@ -87,6 +87,16 @@ void Simulation<T, D>::ldos(
       delete file;
     }
 #pragma omp barrier
+    // energy_ arrives here in real (unscaled) units -- unlike ldos()/custom_two()/
+    // singleshot(), which pre-apply this same affine transform in Python before
+    // export (src/kite/__init__.py), ldos_map()/spectral_map() write the raw target
+    // energy and rely on this line to rescale it. Both energy_shift and energy_scale
+    // are required: dropping energy_shift (i.e. target = energy_/energy_scale) is a
+    // real bug that shipped for a while -- it silently targets real energy
+    // (energy_ + energy_shift) instead of energy_, invisible whenever spectrum_range
+    // happens to be symmetric about zero (energy_shift == 0), which is why it went
+    // unnoticed until someone used an asymmetric spectrum_range. See commit that
+    // added this line for the empirical before/after verification.
     const value_type target = (energy_ - energy_shift) / energy_scale;
     const value_type sigma = sigma_ / energy_scale;
     const value_type size = r.Sizet - r.SizetVacancies;
