@@ -136,13 +136,28 @@ def haldane(t=1.0, phi=0.5 * np.pi, delta=0.0):
     return lat
 
 
-def main(t=1.0, phi=0.5 * np.pi, delta=0.0, moments=512, num_random=40,
+def main(t=1.0, phi=0.5 * np.pi, delta=0.0, moments=512, num_random=400,
+         num_disorder=4, disorder_w=0.05,
          output_file="haldane_orbital_magnetization-output.h5"):
-    """Prepare the input file for KITEx (orbital magnetization via custom_one)."""
+    """Prepare the input file for KITEx (orbital magnetization via custom_one).
+
+    num_random=400 / num_disorder=4 and a small amount of Anderson disorder
+    (disorder_w, well below the bulk gap sqrt(3) ~ 1.73) are needed for the
+    stochastic trace to converge to a clean result -- with too few random
+    vectors and no disorder the reconstructed spectral density is dominated
+    by sampling noise. This matches both the original reference script's own
+    choice (W=0.05) and this session's independent verification (real-space
+    slope converges to within ~4-5% of the exact k-space value at these
+    settings; see process_haldane_orbital_magnetization.py).
+    """
     lattice = haldane(t, phi, delta)
 
     nx = ny = 2
     lx = ly = 64
+
+    disorder = kite.Disorder(lattice)
+    disorder.add_disorder('A', 'Uniform', 0.0, disorder_w)
+    disorder.add_disorder('B', 'Uniform', 0.0, disorder_w)
 
     # OPEN boundaries: the position operator in the vertex requires them.
     configuration = kite.Configuration(
@@ -165,16 +180,19 @@ def main(t=1.0, phi=0.5 * np.pi, delta=0.0, moments=512, num_random=40,
     calculation.custom_one(
         stream_=A,
         num_random_=num_random,
-        num_disorder_=1,
+        num_disorder_=num_disorder,
     )
 
-    kite.config_system(lattice, configuration, calculation, filename=output_file)
+    kite.config_system(lattice, configuration, calculation, filename=output_file,
+                       disorder=disorder)
 
     # Run:   ../build/KITEx haldane_orbital_magnetization-output.h5
-    # There is NO KITE-tools step for custom_one -- the Chebyshev moment vector
-    # /Calculation/CustomOne/Gamma is reconstructed into an energy-resolved
-    # orbital-magnetization spectral density in Python; see
-    # process_haldane_orbital_magnetization.py.
+    #        ../build/KITE-tools haldane_orbital_magnetization-output.h5 --CustomOne -E -4 4 800
+    # KITE-tools' --CustomOne mode reconstructs the raw energy-resolved trace
+    # Tr[A*delta(E-H)] (Jackson kernel, same machinery as --DOS); see
+    # process_haldane_orbital_magnetization.py for the remaining physical
+    # normalization (units + the paper's prefactor) and the Fermi-energy
+    # integration that turns this into the actual magnetization M_z(E_F).
     return output_file
 
 
