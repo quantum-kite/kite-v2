@@ -9,6 +9,25 @@ only when inversion symmetry is broken. (For how the raw $\Gamma_{mn}$ moment ma
 into this response, see the [general Kubo-Bastin reconstruction rule][custom-vertex-example] and
 [`#!bash KITE-tools --CustomTwo`][kite-tools-customtwo].)
 
+### What is the Rashba-Edelstein effect?
+
+The Edelstein effect (also called the inverse spin galvanic effect) is the generation of a net,
+spatially uniform spin polarization by an applied electric field, in any system where spin-orbit
+coupling breaks inversion symmetry. Unlike the spin Hall effect, which generates a transverse spin
+*current* while the net spin density stays zero, the Edelstein effect produces spin density
+directly in the bulk, with no spin current required.
+
+Semiclassically, to linear order in the field: inversion-breaking spin-orbit coupling (Rashba,
+here) locks each electron's spin direction to its momentum. In equilibrium, time-reversal symmetry
+pairs $+\mathbf k$ and $-\mathbf k$ states with opposite locked spins, so the populations cancel
+and there is no net polarization. An electric field shifts the whole Fermi surface in $k$-space;
+because spin is locked to momentum, this shift leaves an uncompensated spin population near the
+shifted edge, producing a net, field-aligned in-plane spin density $\mathbf S\propto\hat
+z\times\mathbf E$ (for a 2D Rashba system with $\hat z$ the out-of-plane normal). This is the
+microscopic spin-generation step behind **spin-orbit torque** (when the accumulated spin acts on
+an adjacent ferromagnet) and **spin-charge interconversion** more broadly — the subject of the
+Medina Dueñas *et al.* paper[^1] this example follows.
+
 ### The two spin-orbit terms, and why only one gives REE
 
 The lattice is the same spin-doubled honeycomb model as
