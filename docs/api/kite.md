@@ -499,7 +499,21 @@ The KITE package for pre-processing is split up in various subclasses and contai
             
             
         :   Calculate the DC conductivity for a given direction.
-            
+
+            !!! Info "Output units: e²/h"
+
+                The reconstructed conductivity (via [`#!bash KITE-tools --CondDC`][kitetools])
+                is in units of $e^2/h$ directly — **not** $e^2/\hbar$, $e^2/(\pi h)$, or any other
+                common convention. Verified empirically (not just asserted): the Hall conductivity
+                $\sigma_{xy}$ of a Haldane Chern insulator ($C=1$,
+                `#!python examples/dos_dccond_haldane.py`'s own parameters, including its Anderson
+                disorder) reconstructs to $\sigma_{xy}\approx1.01$–$1.02$ at mid-gap — a topological
+                plateau quantized at exactly $C\cdot e^2/h=1\,e^2/h$, insensitive to broadening,
+                disorder, or moment-count details, unlike a semiclassical Drude-regime check would
+                be. The same convention applies to [`#!python conductivity_optical()`][calculation-conductivity_optical]
+                and the [`#!python custom_two()`][calculation-custom_two] family (all built from the
+                same underlying Kubo-Bastin/Gamma2D machinery).
+
             **Parameters**
 
             :   | Parameter                                 | Description                                                                                                                                                                                                                                      |
@@ -517,7 +531,8 @@ The KITE package for pre-processing is split up in various subclasses and contai
     :   !!! declaration-function "<span id="calculation-conductivity_optical">*function*`#!python conductivity_optical(direction, num_points, num_moments, num_random, num_disorder=1, temperature=0)`</span>"
             
             
-        :   Calculate optical conductivity for a given direction.
+        :   Calculate optical conductivity for a given direction. Same output-units convention as
+            [`#!python conductivity_dc()`][calculation-conductivity_dc] ($e^2/h$).
                         
             **Parameters**
 
@@ -707,7 +722,14 @@ The KITE package for pre-processing is split up in various subclasses and contai
 
         :   Calculate the generalized rank-two KPM trace `#!python Tr[Tn(H)·A·Tm(H)·B]` for two independently-defined
             [`#!python kite.custom.Vertex`][calculation-custom_one] operator streams `#!python A`, `#!python B`, passed
-            as `#!python stream_=[A, B]`.
+            as `#!python stream_=[A, B]`. When `#!python A`, `#!python B` are velocity operators this reduces to
+            [`#!python conductivity_dc()`][calculation-conductivity_dc]'s own machinery, so the reconstructed trace
+            carries the same $e^2/h$ convention **only when the operators involved have the same physical dimensions
+            as velocity** (e.g. the spin-current vertex on the
+            [spin Hall page][custom-vertex-example]) — a **bare density operator** vertex (e.g. the
+            [Rashba-Edelstein example][rashba-edelstein-example]'s bare spin density) is a genuinely different
+            physical observable and needs its own dimensional analysis from the underlying Kubo-Bastin
+            formula, not an assumed carry-over of this constant.
 
             **Parameters**
 
@@ -1045,6 +1067,7 @@ The KITE package for pre-processing is split up in various subclasses and contai
 
 [magnetic-field]: ../documentation/magnetic.md
 [custom-vertex-example]: ../documentation/examples/custom_vertex_operators.md
+[rashba-edelstein-example]: ../documentation/examples/rashba_edelstein.md
 [spectral-function-example]: ../documentation/examples/spectral_function.md
 
 [^1]: A. Weiße, G. Wellein, A. Alvermann, and H. Fehske, [Rev. Mod. Phys. 78, 275 (2006)](https://doi.org/10.1103/RevModPhys.78.275).

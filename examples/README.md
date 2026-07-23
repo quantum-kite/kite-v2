@@ -82,6 +82,7 @@ These are pure-KITE scripts (using `kite.lattice.Lattice`, `src/kite/lattice.py`
 | --- | --- |
 | `kane_mele_spin_hall.py` | The Kane-Mele model's quantized spin Hall conductivity, computed via `custom.Vertex` + `calculation.custom_two` (spin current vertex `A = (1/2){v_x, s_z}`, `s_z` built from `add_orbital_index`/`add_orbital_coupling`). Shows a genuinely flat plateau at σ ≈ −2.02 across the bulk gap. Post-process with `kane_mele_spin_hall_process.py`. See the [in-depth write-up][custom-vertex-example]. |
 | `kane_mele_spin_hall_disorder.py` | Extension of `kane_mele_spin_hall.py`: sweeps onsite Anderson disorder strength and shows the spin Hall plateau eroding once disorder approaches/exceeds the bulk gap scale. See the [in-depth write-up][custom-vertex-example]. |
+| `rashba_edelstein_graphene.py` | The Rashba-Edelstein effect on the same spin-doubled honeycomb lattice, computed via `custom.Vertex` + `calculation.custom_two` with a **bare spin-density** vertex `A = s_x` (no velocity symmetrization) and `B = v_y`. Turning on Rashba SOC (inversion-breaking) gives a clear plateau; a Kane-Mele-only control (inversion-symmetric) stays near zero. Post-process with `rashba_edelstein_graphene_process.py`. See the [in-depth write-up][rashba-edelstein-example]. |
 
 **Custom one-operator (Vertex) spectral functions**
 
@@ -163,6 +164,7 @@ python3
 [markov-maps-example]: ../examples/markov_local_maps.md
 [custom-vertex-example]: ../examples/custom_vertex_operators.md
 [orbital-mag-example]: ../examples/orbital_magnetization.md
+[rashba-edelstein-example]: ../examples/rashba_edelstein.md
 [altermagnet-example]: ../examples/altermagnet_arpes.md
 [graphene-example]: ../examples/graphene.md
 [haldane-example]: ../examples/haldane.md

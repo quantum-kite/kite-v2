@@ -41,6 +41,7 @@ nav:
       - Custom Vertex Operators (Spin Hall Effect): 'documentation/examples/custom_vertex_operators.md'
       - Altermagnetism (Spin-Split ARPES): 'documentation/examples/altermagnet_arpes.md'
       - Orbital Magnetization (Rank-One Vertex): 'documentation/examples/orbital_magnetization.md'
+      - Rashba-Edelstein Effect: 'documentation/examples/rashba_edelstein.md'
     - KITE scripts v.1.1:
       - About Examples-dir: 'documentation/more_examples/additional_examples.md'
     - Advanced Examples:
