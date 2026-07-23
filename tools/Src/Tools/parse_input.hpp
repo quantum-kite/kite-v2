@@ -51,6 +51,14 @@ class shell_input{
         bool DOS_Exclusive;
         bool DOS_is_required;
 
+        // Custom rank-one (custom_one()) spectral density
+        int CustomOne_NumEnergies;
+        double CustomOne_Emin;
+        double CustomOne_Emax;
+        std::string CustomOne_Name;
+        bool CustomOne_Exclusive;
+        bool CustomOne_is_required;
+
         // Local density of states
         std::string lDOS_Name;
         bool lDOS_Exclusive;
@@ -116,6 +124,7 @@ class shell_input{
         void parse_DOS(int argc, char *argv[]);
         void parse_lDOS(int argc, char *argv[]);
         void parse_ARPES(int argc, char *argv[]);
+        void parse_CustomOne(int argc, char *argv[]);
         int get_num_exclusives();
 
 };

@@ -468,6 +468,36 @@ class Modification:
         return self._flux
 
 
+def _count_velocity_operators(operator_strings):
+    """Count "v"-type tokens (vx/vy/vz) in a custom.Vertex's dot-separated operator
+    strings, e.g. "rx.vy" -> 1, "vx.vy.rx" -> 2, "l0" -> 0.
+
+    KITE's raw velocity building block is [H, r] (no factor of i, see custom_one's
+    docstring) -- every "v" token contributes one missing factor of i relative to the
+    textbook Hermitian velocity operator. The PARITY of the total count across a
+    vertex determines whether the physically meaningful trace Tr[T_n(H)*A] is real
+    (even count) or purely imaginary (odd count); this is exactly the same quantity
+    Tools/Gamma2D.cpp computes (as `num_velocities`) for the built-in
+    conductivity_dc/conductivity_optical family, just auto-detected here from the
+    vertex definition instead of the caller passing an explicit direction list.
+
+    Requires every term of the vertex to have the SAME count -- a vertex mixing terms
+    with different velocity-operator counts would not have a single well-defined
+    parity/Hermiticity character, and is rejected rather than silently guessed at.
+    """
+    counts = []
+    for opstring in operator_strings:
+        tokens = opstring.split('.') if opstring else []
+        counts.append(sum(1 for tok in tokens if tok.lower().startswith('v')))
+    if len(set(counts)) > 1:
+        raise ValueError(
+            "custom.Vertex mixes terms with different numbers of velocity ('v') "
+            f"operators ({sorted(set(counts))}) -- the vertex must have a single, "
+            "well-defined Hermiticity parity across all of its terms."
+        )
+    return counts[0] if counts else 0
+
+
 class Calculation:
 
     @property
@@ -921,6 +951,19 @@ class Calculation:
 
     def custom_one(self, stream_, num_random_, num_disorder_):
         """Calculate the rank one (Tr[Tn Ja]) custom operator trace
+
+        KITE's raw "vx"/"vy" building block is [H, r] (no factor of i) -- missing the
+        i/hbar prefactor of the textbook Hermitian velocity operator. Whether the
+        resulting vertex A is Hermitian or anti-Hermitian therefore depends on the
+        PARITY of how many "v" tokens it's built from, and this determines whether
+        Tr[T_n(H)*A] comes out real or purely imaginary -- both physically meaningful,
+        just requiring the C++ Hermitization step (which cannot tell real from
+        imaginary noise on its own) to know which one to keep. This is auto-detected
+        here by counting "v" tokens directly in the vertex string, exactly as
+        Tools/Gamma2D.cpp already does for the built-in conductivity_dc/
+        conductivity_optical family (`factor = 1 - (num_velocities % 2) * 2`) -- no
+        manual bookkeeping or compensating "i" in the vertex coefficients is needed.
+
         Parameters
         ----------
         stream_: [list]
@@ -943,7 +986,8 @@ class Calculation:
                 raise ValueError("The first element must be a numeric type")
             coefs.append(operator_sequence[0]) # numerical factor
             operators.append(operator_sequence[1]) # operator streams
-        self._custom_one.append({'num_moments': stream_.moment, 'num_random' : num_random_, 'num_disorder' : num_disorder_, 'operators' : operators, 'coefs' : coefs})
+        num_velocities = _count_velocity_operators(operators)
+        self._custom_one.append({'num_moments': stream_.moment, 'num_random' : num_random_, 'num_disorder' : num_disorder_, 'operators' : operators, 'coefs' : coefs, 'num_velocities': num_velocities})
 
     def custom_one_local(self, stream_, energy_, position_, sublattice_, num_disorder_=1):
         """Calculate the local density of states as a function of energy
@@ -976,6 +1020,14 @@ class Calculation:
 
     def custom_two(self, stream_, num_random_, num_disorder_, num_points_, temperature_):
         """Calculate the rank two (Tr[Tn Ja Tm Jb]) custom operator trace
+
+        See custom_one's docstring for why the number of "v"-type (velocity) tokens
+        in a vertex matters: KITE's raw "v" is missing a factor of i, so the total
+        count across BOTH vertices A and B (auto-detected here, summed) determines
+        the Hermiticity parity of the resulting Gamma_mn matrix, exactly as
+        Tools/Gamma2D.cpp already computes for the built-in conductivity_dc/
+        conductivity_optical family.
+
         Parameters
         ----------
         stream_: [list]
@@ -997,6 +1049,7 @@ class Calculation:
 
         coefs       = []
         operators   = []
+        num_velocities = 0
         for i, vertex in enumerate(stream_):
             if not vertex.stream:
                 raise ValueError("The vertex cannot be empty.")
@@ -1009,8 +1062,9 @@ class Calculation:
                     raise ValueError("The first element must be a numeric type")
                 coefs[i].append(operator_sequence[0]) # numerical factor
                 operators[i].append(operator_sequence[1]) # operator streams
+            num_velocities += _count_velocity_operators(operators[i])
 
-        self._custom_two.append({'rank' : len(stream_), 'num_moments': [stream_[0].moment, stream_[1].moment], 'num_random' : num_random_, 'num_disorder' : num_disorder_, 'operators' : operators, 'coefs' : coefs, 'temperature': temperature_, 'num_points' : num_points_})
+        self._custom_two.append({'rank' : len(stream_), 'num_moments': [stream_[0].moment, stream_[1].moment], 'num_random' : num_random_, 'num_disorder' : num_disorder_, 'operators' : operators, 'coefs' : coefs, 'temperature': temperature_, 'num_points' : num_points_, 'num_velocities': num_velocities})
 
 
     def custom_two_local(self, stream_, positions_):
@@ -2153,6 +2207,7 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
         grpc_p.create_dataset('NumVectors', data = np.asarray(calculation._custom_one[0]['num_random']), dtype = np.int32)
         grpc_p.create_dataset('NumDisorder', data = np.asarray(calculation._custom_one[0]['num_disorder']), dtype = np.int32)
         grpc_p.create_dataset('NumMoments', data = np.asarray(calculation._custom_one[0]['num_moments']), dtype = np.int32)
+        grpc_p.create_dataset('NumVelocities', data = np.asarray(calculation._custom_one[0]['num_velocities']), dtype = np.int32)
 
         grpc_p.create_dataset('Coefficients', data = np.asarray(calculation._custom_one[0]['coefs']).astype(np.complex64))
         grpc_p.create_dataset('NumCoefficients', data = len(calculation._custom_one[0]['coefs']), dtype = np.int32)
@@ -2273,6 +2328,7 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
         grpc_p.create_dataset('NumDisorder', data = np.asarray(calculation._custom_two[0]['num_disorder']), dtype = np.int32)
         grpc_p.create_dataset('NumPoints', data = np.asarray(calculation._custom_two[0]['num_points']), dtype = np.int32)
         grpc_p.create_dataset('Temperature', data=np.asarray(calculation._custom_two[0]['temperature']) / config.energy_scale, dtype=np.float64)
+        grpc_p.create_dataset('NumVelocities', data = np.asarray(calculation._custom_two[0]['num_velocities']), dtype = np.int32)
         for i in range(calculation._custom_two[0]['rank']):
             grpc_vtx = grpc_p.create_group(f'Vertex{i:01d}')
             grpc_vtx.create_dataset('Coefficients', data = np.asarray(calculation._custom_two[0]['coefs'][i]).astype(np.complex64))

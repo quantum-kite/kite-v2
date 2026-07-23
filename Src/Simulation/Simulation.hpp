@@ -124,9 +124,10 @@ public:
     const int,
     const Eigen::Array<T, -1, 1> &,
     const std::vector<Eigen::Matrix<std::complex<double>, -1, -1>> &,
-    const std::vector<std::string> &
+    const std::vector<std::string> &,
+    const int
   );
-  void store_custom_one(const Eigen::Matrix<T, -1, 1> &, const unsigned);
+  void store_custom_one(const Eigen::Matrix<T, -1, 1> &, const unsigned, const int);
   void multiply_orb_mtx(
     const Eigen::Matrix<std::complex<double>, -1, -1> &,
     const KPM_Vector<T, D> *,
@@ -162,12 +163,14 @@ public:
     const std::vector<int> &,
     const std::vector<std::vector<std::string>> &,
     const std::vector<Eigen::Array<T, -1, 1>> &,
-    const std::vector<Eigen::Matrix<std::complex<double>, -1, -1>> &
+    const std::vector<Eigen::Matrix<std::complex<double>, -1, -1>> &,
+    const int
   );
   void store_custom_two(
     Eigen::Array<T, -1, -1> &,
     const unsigned,
-    const std::vector<int> &
+    const std::vector<int> &,
+    const int
   );
   // Custom Rank Two - SS
   void calc_custom_ss_two();

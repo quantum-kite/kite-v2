@@ -183,6 +183,7 @@ void Simulation<T, D>::calc_custom_one()
     int number_moments;
     int number_samples;
     int number_vectors;
+    int number_velocities;
     int number_coefficients;
     Eigen::Array<T, -1, 1> coefs;
     std::vector<std::string> stream;
@@ -215,6 +216,8 @@ void Simulation<T, D>::calc_custom_one()
       }
       tmp = base_grp + "NumMoments";
       get_hdf5<int>(&number_moments, file, tmp);
+      tmp = base_grp + "NumVelocities";
+      get_hdf5<int>(&number_velocities, file, tmp);
       tmp = base_grp + "NumCoefficients";
       get_hdf5<int>(&number_coefficients, file, tmp);
 
@@ -229,7 +232,7 @@ void Simulation<T, D>::calc_custom_one()
 #pragma omp barrier
     custom_one(
       number_moments, number_samples, number_vectors, coefs,
-      operator_collection, stream
+      operator_collection, stream, number_velocities
     );
   }
 }
@@ -241,7 +244,8 @@ void Simulation<T, D>::custom_one(
   const int number_random_vectors_,
   const Eigen::Array<T, -1, 1> &coeffs_,
   const std::vector<Eigen::Matrix<std::complex<double>, -1, -1>> &operators_,
-  const std::vector<std::string> &stream_
+  const std::vector<std::string> &stream_,
+  const int number_velocities_
 )
 {
   Eigen::Matrix<T, -1, 1> gamma =
@@ -275,7 +279,7 @@ void Simulation<T, D>::custom_one(
       ++average;
     }
   }
-  store_custom_one(gamma, average);
+  store_custom_one(gamma, average, number_velocities_);
 }
 
 // template <typename T, unsigned D>
@@ -322,16 +326,27 @@ void Simulation<T, D>::custom_one(
 template <typename T, unsigned D>
 void Simulation<T, D>::store_custom_one(
   const Eigen::Matrix<T, -1, 1> &gamma_,
-  const unsigned avr_
+  const unsigned avr_,
+  const int number_velocities_
 )
 {
 #pragma omp master
   Global.general_gamma = Eigen::Array<T, -1, 1>::Zero(gamma_.rows());
 #pragma omp barrier
+  // KITE's raw "v" (velocity) building block is [H, r] -- missing the i/hbar factor
+  // of the textbook Hermitian velocity operator (see custom_one's Python docstring,
+  // src/kite/__init__.py). Whether the vertex A is Hermitian or anti-Hermitian
+  // therefore depends on the PARITY of how many "v" tokens it's built from:
+  // Tr[T_n(H)*A] comes out purely REAL for an even count, purely IMAGINARY for an
+  // odd count -- both are the genuine physical signal, just living in a different
+  // component. `factor` selects which one to keep, exactly mirroring
+  // Tools/Gamma2D.cpp's `factor = 1 - (num_velocities % 2) * 2` for the built-in
+  // conductivity_dc/conductivity_optical family: +1 extracts Re(gamma) (killing
+  // spurious imaginary noise), -1 extracts gamma-conjugate(gamma) = 2i*Im(gamma)
+  // (killing spurious real noise instead, preserving the genuine imaginary signal
+  // that an odd-velocity-count vertex produces).
+  const int factor = 1 - (number_velocities_ % 2) * 2;
 #pragma omp critical
-  // Extracts Re(gamma_(n)) per Chebyshev moment n -- legitimate when the vertex's
-  // Hermiticity guarantees Tr[T_n(H)*A] is purely real, since it cancels the
-  // spurious imaginary stochastic-sampling noise that would otherwise remain.
   // gamma_ is a genuine column vector (Eigen::Matrix<T,-1,1>): use .conjugate()
   // here, NOT .adjoint() -- .adjoint() also TRANSPOSES (row vector), so
   // "gamma_.matrix() + gamma_.matrix().adjoint()" silently mixes an Nx1 and a 1xN
@@ -344,7 +359,7 @@ void Simulation<T, D>::store_custom_one(
   // empirically: before the fix only n=0 came out purely real (trivially, since
   // 1x1 has no shape ambiguity); after the fix, all moments do.
   Global.general_gamma.matrix() +=
-    0.5 * (gamma_.matrix() + gamma_.matrix().conjugate());
+    0.5 * (gamma_.matrix() + factor * gamma_.matrix().conjugate());
 #pragma omp barrier
 #pragma omp master
   {

@@ -130,6 +130,12 @@ void shell_input::printHelp(){
     std::cout << "           -K              Kernel to use (jackson/green). green requires broadening parameter. Example: -K green 0.01\n";
     std::cout << "           -X              Exclusive. Only calculate this quantity\n\n";
 
+    std::cout << "--CustomOne -E min max num  Energy range and number of points for the\n";
+    std::cout << "                            reconstructed calculation.custom_one() spectral\n";
+    std::cout << "                            density, Tr[A * delta(E-H)] (jackson kernel only)\n";
+    std::cout << "            -N              Name of the output file\n";
+    std::cout << "            -X              Exclusive. Only calculate this quantity\n\n";
+
     std::cout << "--CondDC   -E              Number of energy points used in the integration\n";
     std::cout << "           -T              Temperature\n";
     std::cout << "           -S              Broadening parameter of the Green's function\n";
@@ -191,7 +197,7 @@ shell_input::shell_input(int argc, char *argv[]){
 	// Processes the input that this program recieves from the command line	
 
     // First, find the position of each of the following functions:
-    valid_keys = std::vector<std::string>{"--DOS", "--CondOpt","--CondDC", "--CondOpt2", "--LDOS", "--ARPES"};
+    valid_keys = std::vector<std::string>{"--DOS", "--CondOpt","--CondDC", "--CondOpt2", "--LDOS", "--ARPES", "--CustomOne"};
     len = valid_keys.size();   // length of valid_keys?
     keys_pos = std::vector<int>(len, -1);
     keys_len = std::vector<int>(len, -1);
@@ -232,8 +238,9 @@ shell_input::shell_input(int argc, char *argv[]){
     parse_ARPES(argc, argv);
     parse_CondOpt(argc, argv);
     parse_CondOpt2(argc, argv);
+    parse_CustomOne(argc, argv);
 
-    // Process the exclusive flag. If there are no exclusive functions, 
+    // Process the exclusive flag. If there are no exclusive functions,
     // all will be calculated. If there's only one, that's the only one
     // that needs to be calculated. Furthermore, we need to check
     // whether there is only one exclusive flag
@@ -243,6 +250,7 @@ shell_input::shell_input(int argc, char *argv[]){
     DOS_is_required = false;
     lDOS_is_required = false;
     ARPES_is_required = false;
+    CustomOne_is_required = false;
 
     int num_exclusives = get_num_exclusives();
     if(num_exclusives > 1){
@@ -256,6 +264,7 @@ shell_input::shell_input(int argc, char *argv[]){
             if(DOS_Exclusive) DOS_is_required = true;
             if(lDOS_Exclusive) lDOS_is_required = true;
             if(ARPES_Exclusive) ARPES_is_required = true;
+            if(CustomOne_Exclusive) CustomOne_is_required = true;
 
         } else {
             CondDC_is_required = true;
@@ -264,6 +273,7 @@ shell_input::shell_input(int argc, char *argv[]){
             DOS_is_required = true;
             lDOS_is_required = true;
             ARPES_is_required = true;
+            CustomOne_is_required = true;
             }
     }
 
@@ -276,6 +286,7 @@ int shell_input::get_num_exclusives(){
     if(CondOpt2_Exclusive)    N_exclusives++;
     if(DOS_Exclusive)         N_exclusives++;
     if(lDOS_Exclusive)        N_exclusives++;
+    if(CustomOne_Exclusive)   N_exclusives++;
 
     return N_exclusives;
 }
@@ -546,6 +557,53 @@ void shell_input::parse_DOS(int argc, char* argv[]){
     std::cout << DOS_Emin << " " << DOS_Emax << " " << DOS_NumEnergies <<"\n" << std::flush;
 }
 
+
+void shell_input::parse_CustomOne(int argc, char* argv[]){
+    // This function looks at the command-line input pertaining to the
+    // custom_one() spectral density reconstruction (--CustomOne) and finds all
+    // the relevant parameters. Mirrors parse_DOS, minus kernel choice (jackson
+    // only, for now -- customone<T,DIM>::calculate() hardcodes it).
+
+    CustomOne_NumEnergies = -1;
+    CustomOne_Emin = 8888.8;
+    CustomOne_Emax = -8888.8;
+    CustomOne_Name = "";
+    CustomOne_Exclusive = false;
+
+    int pos = keys_pos.at(6); // position of "--CustomOne" in valid_keys
+    if(pos != -1){
+        for(int k = 1; k < keys_len.at(6); k++){
+            std::string name = argv[k + pos];
+            std::string n1 = argv[k + pos + 1];
+            if(name == "-N")
+                CustomOne_Name = n1;
+
+            if(name == "-E"){
+                if(k == keys_len.at(6) - 1){
+                    CustomOne_NumEnergies = atoi(n1.c_str());
+                    continue;
+                }
+                std::string n2 = argv[k + pos + 2];
+                if(n2 == "-N" or n2 == "-X"){
+                    CustomOne_NumEnergies = atoi(n1.c_str());
+                    continue;
+                }
+                std::string n3 = argv[k + pos + 3];
+                CustomOne_Emin = atof(n1.c_str());
+                CustomOne_Emax = atof(n2.c_str());
+                CustomOne_NumEnergies = atoi(n3.c_str());
+            }
+
+            if(name == "-X" or n1 == "-X")
+                CustomOne_Exclusive = true;
+        }
+        if(keys_len.at(6) == 1){
+          std::string name = argv[1 + pos];
+          if(name == "-X")
+            CustomOne_Exclusive = true;
+        }
+    }
+}
 
 void shell_input::parse_lDOS(int argc, char* argv[]){
     // This function looks at the command-line input pertaining to LDoS

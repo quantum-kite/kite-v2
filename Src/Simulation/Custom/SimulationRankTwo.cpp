@@ -47,6 +47,7 @@ void Simulation<T, D>::calc_custom_two()
 #pragma omp barrier
     int number_samples;
     int number_vectors;
+    int number_velocities;
     std::vector<int> number_moments(2);
     std::vector<Eigen::Array<T, -1, 1>> coefs(2);
     std::vector<std::vector<std::string>> stream(2);
@@ -62,6 +63,8 @@ void Simulation<T, D>::calc_custom_two()
       get_hdf5<int>(&number_samples, file, tmp);
       tmp = base_grp + "NumVectors";
       get_hdf5<int>(&number_vectors, file, tmp);
+      tmp = base_grp + "NumVelocities";
+      get_hdf5<int>(&number_velocities, file, tmp);
 
       std::string path;
       for (unsigned i = 0; i < 2; ++i) {
@@ -95,7 +98,7 @@ void Simulation<T, D>::calc_custom_two()
 #pragma omp barrier
     custom_two(
       number_samples, number_vectors, number_moments, stream, coefs,
-      orb_operators
+      orb_operators, number_velocities
     );
   }
 }
@@ -107,7 +110,8 @@ void Simulation<T, D>::custom_two(
   const std::vector<int> &number_moments_,
   const std::vector<std::vector<std::string>> &stream_,
   const std::vector<Eigen::Array<T, -1, 1>> &coeffs_,
-  const std::vector<Eigen::Matrix<std::complex<double>, -1, -1>> &operators_
+  const std::vector<Eigen::Matrix<std::complex<double>, -1, -1>> &operators_,
+  const int number_velocities_
 )
 {
   int size_gamma = 1;
@@ -172,7 +176,7 @@ void Simulation<T, D>::custom_two(
       vectors[1] = &kpm_trc_1;
     }
   }
-  store_custom_two(gamma, average, number_moments_);
+  store_custom_two(gamma, average, number_moments_, number_velocities_);
 }
 
 // Method for exact trace calculation
@@ -255,7 +259,8 @@ template <typename T, unsigned D>
 void Simulation<T, D>::store_custom_two(
   Eigen::Array<T, -1, -1> &gamma_,
   const unsigned avr_,
-  const std::vector<int> &number_moments_
+  const std::vector<int> &number_moments_,
+  const int number_velocities_
 )
 {
   debug_message("Entered store_gamma\n");
@@ -267,11 +272,19 @@ void Simulation<T, D>::store_custom_two(
     Global.general_gamma.setZero();
   }
 #pragma omp barrier
+  // See store_custom_one's comment (SimulationRankOne.cpp) and
+  // Tools/Gamma2D.cpp's identical `factor` for the built-in conductivity_dc/
+  // conductivity_optical family: KITE's raw "v" is missing a factor of i, so the
+  // PARITY of the total number of velocity operators across BOTH vertices A and B
+  // determines whether Gamma_mn is genuinely Hermitian (even count, factor=+1,
+  // extract Re) or anti-Hermitian (odd count, factor=-1, extract the imaginary part
+  // instead of discarding it as spurious noise).
+  const int factor = 1 - (number_velocities_ % 2) * 2;
 #pragma omp critical
   {
     if (number_moments_[0] == number_moments_[1])
       Global.general_gamma.matrix() +=
-        0.5 * (general_gamma.matrix() + general_gamma.matrix().adjoint());
+        0.5 * (general_gamma.matrix() + factor * general_gamma.matrix().adjoint());
     else
       Global.general_gamma.matrix() += general_gamma.matrix();
   }
