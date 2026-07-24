@@ -94,7 +94,7 @@ These are pure-KITE scripts (using `kite.lattice.Lattice`, `src/kite/lattice.py`
 
 | Script | What it demonstrates |
 | --- | --- |
-| `oam_quadrupole_precession.py` | Real-time coupled precession of orbital angular momentum `L` and orbital quadrupoles `Q_ab = {L_a,L_b}/2` on an sp3 (s,px,py,pz) square-lattice model with anisotropic p-p hopping, tracked via `calculation.gaussian_wave_packet(..., operators=[...])` — the same generalized wave-packet propagator used for spin precession in `examples/paper/Section_4_E_spintronics`, now tracking arbitrary on-site operators instead of a hardcoded spin. `⟨Q_xy(t)⟩` stays exactly zero throughout, a symmetry-protected selection rule (see the script's docstring), not a bug. Post-process with `oam_quadrupole_precession_process.py`. |
+| `oam_quadrupole_precession.py` | Real-time evolution of orbital angular momentum `L` and orbital quadrupoles `Q_ab = {L_a,L_b}/2` on an sp3 (s,px,py,pz) square-lattice model with anisotropic p-p hopping, tracked via `calculation.gaussian_wave_packet(..., operators=[...])` — the same generalized wave-packet propagator used for spin precession in `examples/paper/Section_4_E_spintronics`, now tracking arbitrary on-site operators instead of a hardcoded spin. Seeded with a pure `L_z=+1` state at `k=0`: `L_z` decays slowly from k-space dephasing (px/py are exactly degenerate only at k=0 itself), while `L_x`, `L_y`, and every off-diagonal `Q_ab` stay pinned at exactly zero — selection rules, not bugs (see the script's docstring). Post-process with `oam_quadrupole_precession_process.py`. |
 
 **Custom local potential**
 

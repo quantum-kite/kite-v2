@@ -36,40 +36,56 @@ by matrix multiplication. (This differs by an overall sign from the $L_z$-like o
 orbital Hall example — as with spin, the overall sign of an angular momentum operator is a
 convention, not a physical ambiguity.)
 
-### Why L and Q are coupled
+### Why L and Q are coupled, in general
 
 $Q_{ab}$'s Heisenberg torque, $\mathcal T_{Q_{ab}}=\tfrac{i}{\hbar}[H,Q_{ab}]$, is generally nonzero
 whenever the Hamiltonian's hopping is anisotropic between orbital characters. Here
 $V_{pp\sigma}\neq V_{pp\pi}$ breaks the continuous rotational symmetry that would otherwise decouple
-$L$ and $Q$ — so propagating a wave packet with nonzero $\langle L\rangle$ necessarily drives
-$\langle Q\rangle$, and vice versa.
+$L$ and $Q$. Whether that shows up as fast driven precession or something much subtler depends
+entirely on which part of the band structure the wave packet actually samples — there is no Fermi
+energy in this calculation (`#!python gaussian_wave_packet()` propagates one coherent single-particle
+state, not a thermal/Fermi-averaged quantity); the analogous choice is the seed **k-vector**.
 
-### Validation: an exact selection rule, not a bug
+### Validation: a clean k=0 seed, and why almost nothing moves
 
-With the initial state used here (a real $p_x,p_y$ combination plus a small $p_z$ admixture, no
-$p_x-ip_y$ component), $\langle Q_{xy}(t)\rangle$ is **exactly zero at every timestep** — not just
-at $t=0$. This is a genuine selection rule: the lattice's discrete $C_4$ rotation
-($p_x\to p_y,\,p_y\to-p_x,\,p_z\to p_z$, bonds swapped) commutes with $H$ even though
-$V_{pp\sigma}\neq V_{pp\pi}$ breaks the continuous symmetry. The initial state only populates the
-$C_4$-eigenvalue sectors connected to $m=+1$ and $m=0$ (never $m=-1$), and $Q_{xy}$ only couples
-sectors differing by $|\Delta m|=2$ — unpopulated here — so it stays zero for all time. $Q_{xz}$
-and $Q_{yz}$ (which couple $|\Delta m|=1$, populated here) are generically nonzero and, since
-$m=-1$ is absent, generically unequal to each other. This is a cheap, checkable prediction of the
-operator construction (reviewed by `cmt-physicist`), not an accidental cancellation — and a good
-sanity check to run yourself if you change the initial state.
+The wave packet here is seeded at $k=0$ with a **pure** $L_z=+1$ state, $(p_x+ip_y)/\sqrt2$ — no
+$s$ or $p_z$ admixture. This is deliberately the least ambiguous starting point, but at exactly
+$k=0$ this model's Hamiltonian is diagonal in the $(s,p_x,p_y,p_z)$ basis (the odd-parity $s$-$p$
+hopping cancels there, and $p$-$p$ hopping doesn't mix orbitals), with $p_x,p_y$ **exactly
+degenerate** — each orbital sees one $\sigma$-type and one $\pi$-type bond direction, just swapped.
+A combination of degenerate states is itself stationary, so a true $k=0$ plane wave in this state
+would show *no* dynamics at all.
+
+What's actually observed: $\langle L_z(t)\rangle$ decays slowly (~10% over the propagation window)
+while $\langle L_x\rangle,\langle L_y\rangle$ and every off-diagonal $\langle Q_{ab}\rangle$
+($Q_{xy}, Q_{xz}, Q_{yz}$) stay pinned at **exactly zero** throughout — both facts expected, not
+bugs (checked by `cmt-physicist`):
+
+- The off-diagonal operators all connect the populated $m=+1$ sector to the $m=0$ ($p_z$) or $m=-1$
+  sectors — both completely unpopulated here — so none of them can pick up any expectation value,
+  at any time.
+- The slow $L_z$ decay is a finite-size-in-$k$-space effect: a spatially localized wave packet is
+  necessarily a superposition of many $k$-vectors around $k=0$, not a single Bloch state, and away
+  from $k=0$ the $p_x/p_y$ degeneracy lifts. So the packet slowly dephases out of the pure
+  $L_z=+1$ eigenspace even though a true $k=0$ plane wave would conserve it exactly.
+
+Seeding the wave packet at a $k$-vector away from $\Gamma$ (where $p_x,p_y$ are genuinely split by
+the hopping anisotropy) would show faster, driven precession instead of this slow dephasing — a
+natural next experiment, not done on this page since the point here is the cleanest,
+minimal-assumption case.
 
 <figure>
     <img src="../../../assets/images/custom_vertex_operators/oam_quadrupole_precession.png" style="width: 34em;" />
-    <figcaption>Coupled real-time precession: L_z decays as amplitude transfers into L_x, L_y;
-    correspondingly Q_zz decays as Q_xx, Q_yy grow. Q_xy stays exactly zero throughout (the
-    selection rule above); Q_xz, Q_yz grow as mirror images of each other.</figcaption>
+    <figcaption>A pure L_z=+1 seed at k=0: L_z (and correspondingly Q_zz, Q_xx=Q_yy) decay slowly
+    from k-space dephasing, while L_x, L_y and every off-diagonal Q_ab stay pinned at exactly
+    zero -- selection rules, not bugs (see Validation above).</figcaption>
 </figure>
 
 !!! example
 
     Get more familiar with KITE: run [`#!python examples/oam_quadrupole_precession.py`][oam-example]
-    and its post-processing yourself, and try an initial state with a genuine $p_x-ip_y$ component
-    ($m=-1$ populated) to see $\langle Q_{xy}(t)\rangle$ become nonzero.
+    and its post-processing yourself, and try seeding the wave packet at a k-vector away from
+    $\Gamma$ to see faster, driven L-Q precession instead of slow dephasing.
 
 [calculation-add_orbital_coupling]: ../../api/kite.md#calculation-add_orbital_coupling
 [oam-example]: https://github.com/quantum-kite/kite-v2/tree/master/examples/oam_quadrupole_precession.py
