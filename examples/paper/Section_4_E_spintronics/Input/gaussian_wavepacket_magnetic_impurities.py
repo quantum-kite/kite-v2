@@ -251,10 +251,36 @@ if __name__ == '__main__':
     num_moments = int(1.5 * 2.0 * scale_a * deltaT / hbar)
 
     calculation = kite.Calculation(configuration)
+
+    # Register the Pauli spin operators (sigma_x, sigma_y, sigma_z, not the spin-1/2
+    # S=sigma/2 operators) as custom orbital-space matrices, the same registration
+    # mechanism used by custom_one/custom_two -- spin is tracked by
+    # gaussian_wave_packet through this general operator mechanism, not hardcoded.
+    calculation.add_orbital_index('Aup', 0)
+    calculation.add_orbital_index('Bup', 1)
+    calculation.add_orbital_index('Adown', 2)
+    calculation.add_orbital_index('Bdown', 3)
+
+    calculation.add_orbital_coupling('Adown', 'Aup', 1.0, 'l0')
+    calculation.add_orbital_coupling('Aup', 'Adown', 1.0, 'l0')
+    calculation.add_orbital_coupling('Bdown', 'Bup', 1.0, 'l0')
+    calculation.add_orbital_coupling('Bup', 'Bdown', 1.0, 'l0')
+
+    calculation.add_orbital_coupling('Adown', 'Aup', -1j, 'l1')
+    calculation.add_orbital_coupling('Aup', 'Adown', 1j, 'l1')
+    calculation.add_orbital_coupling('Bdown', 'Bup', -1j, 'l1')
+    calculation.add_orbital_coupling('Bup', 'Bdown', 1j, 'l1')
+
+    calculation.add_orbital_coupling('Aup', 'Aup', 1.0, 'l2')
+    calculation.add_orbital_coupling('Bup', 'Bup', 1.0, 'l2')
+    calculation.add_orbital_coupling('Adown', 'Adown', -1.0, 'l2')
+    calculation.add_orbital_coupling('Bdown', 'Bdown', -1.0, 'l2')
+
     calculation.gaussian_wave_packet(num_points=num_points, num_moments=num_moments, num_disorder=4,
                                      k_vector=k_vector_rel,
                                      spinor=spinor, width=sigma, timestep=scale_a * deltaT / hbar,
-                                     mean_value=[int(lx / 2), int(ly / 2)])
+                                     mean_value=[int(lx / 2), int(ly / 2)],
+                                     operators=['l0', 'l1', 'l2'])
 
     dirname = 'dis_{:.2f}_dis_res_{:.2f}_k_{:.2f}_sigma_{:.2f}_size_l_{:1d}'.format(disorder_strength_and * int(use_disorder == True), disorder_strength * int(use_disorder == True), k, sigma, lx)
 

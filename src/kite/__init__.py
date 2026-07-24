@@ -724,7 +724,7 @@ class Calculation:
         self._arpes.append({'k_vector': k_vector, 'weight': weight, 'num_moments': num_moments, 'num_disorder': num_disorder})
 
     def gaussian_wave_packet(self, num_points, num_moments, timestep, k_vector, spinor, width, mean_value,
-                             num_disorder=1, **kwargs):
+                             num_disorder=1, operators=None, **kwargs):
         """Calculate the time evolution function of a wave packet
 
         Parameters
@@ -745,17 +745,31 @@ class Calculation:
             Mean value of the gaussian envelope.
         num_disorder : int
             Number of different disorder realisations.
+        operators : list of str, optional
+            Labels of operators, previously registered via add_orbital_index/add_orbital_coupling
+            (the same mechanism used by custom_one/custom_two), whose expectation value should be
+            tracked at every timestep of the propagation -- e.g. ``operators=['l0', 'l1', 'l2']``
+            for a 3-component spin, orbital-angular-momentum, or quadrupole operator set. Each
+            label's expectation value is written to ``/Calculation/gaussian_wave_packet/<label>``
+            in the output file. As with custom_one/custom_two, labels are positional, not
+            arbitrary names -- see add_orbital_coupling's documentation.
 
             Optional parameters, forward probing point, defined with x, y coordinate were the wavepacket will be checked
             at different timesteps.
 
         """
         probing_point = kwargs.get('probing_point', 0)
+        operators = operators or []
+        for label in operators:
+            if label not in self._custom_operator_collection:
+                raise ValueError(
+                    "gaussian_wave_packet: operator label '{}' was never registered via "
+                    "add_orbital_coupling.".format(label))
 
         self._gaussian_wave_packet.append(
             {'num_points': num_points, 'num_moments': num_moments,
              'timestep': timestep, 'num_disorder': num_disorder, 'spinor': spinor, 'width': width, 'k_vector': k_vector,
-             'mean_value': mean_value, 'probing_point': probing_point})
+             'mean_value': mean_value, 'probing_point': probing_point, 'operators': operators})
 
     def localized_wave_packet(self,
                               time,
@@ -1973,6 +1987,14 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
         grpc_p.create_dataset('spinor', data=np.asmatrix(np.asarray(spinor)).astype(config.type))
         grpc_p.create_dataset('k_vector', data=np.asmatrix(np.asarray(k_vector)), dtype=np.float32)
         grpc_p.create_dataset('timestep', data=timestep, dtype=np.float32)
+
+        operator_labels = calculation.get_gaussian_wave_packet[0]['operators']
+        if operator_labels:
+            grpc_p.create_dataset('Operators', data=operator_labels, dtype=hp.string_dtype(encoding='utf-8'))
+            grpc_op = grpc.create_group('gaussian_wave_packet/CustomOperators')
+            for label in operator_labels:
+                operator = calculation._custom_operator_collection[label]
+                grpc_op.create_dataset(label, data=np.asarray(operator).astype(config.type))
 
     if calculation.get_localized_wave_packet:
         grpc_p = grpc.create_group('localized_wave_packet')

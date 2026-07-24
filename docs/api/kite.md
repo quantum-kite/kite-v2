@@ -444,7 +444,7 @@ The KITE package for pre-processing is split up in various subclasses and contai
                 | `#!python num_disorder`:*`#!python int`*                    | Number of different disorder realisations.                                                                    |
 
     
-    :   !!! declaration-function "<span id="calculation-gaussian_wave_packet">*function*`#!python gaussian_wave_packet(num_points, num_moments, timestep, k_vector, spinor, width, mean_value, num_disorder=1, probing_point=0)`</span>"
+    :   !!! declaration-function "<span id="calculation-gaussian_wave_packet">*function*`#!python gaussian_wave_packet(num_points, num_moments, timestep, k_vector, spinor, width, mean_value, num_disorder=1, operators=None, probing_point=0)`</span>"
             
             
         :   Calculate the time evolution function of a wave packet.
@@ -461,7 +461,19 @@ The KITE package for pre-processing is split up in various subclasses and contai
                 | `#!python width`:*`#!python float`*                                | Width of the gaussian.                                                                                          |
                 | `#!python mean_value`:*`#!python tuple(float, float)`*             | Mean value of the gaussian envelope.                                                                            |
                 | `#!python num_disorder`:*`#!python int`*                           | Number of different disorder realisations.                                                                      |
+                | `#!python operators`:*`#!python list[str]`*                       | Labels of operators registered via [`#!python add_orbital_coupling()`][calculation-add_orbital_coupling], whose expectation value is tracked at every timestep (e.g. `#!python ['l0', 'l1', 'l2']` for a 3-component spin, orbital-angular-momentum, or quadrupole operator set). |
                 | `#!python probing_point`:*`#!python int` or `#!python array_like`* | Forward probing point, defined with x, y coordinate were the wavepacket will be checked at different timesteps. |
+
+            **Tracked operators**
+
+            :   `#!python gaussian_wave_packet()` has no built-in notion of spin: any operator, including spin, is
+                tracked through the same [`#!python add_orbital_coupling()`][calculation-add_orbital_coupling]
+                mechanism used by [`#!python custom_one()`][calculation-custom_one]/[`#!python custom_two()`][calculation-custom_two].
+                Each requested label's expectation value $\langle\psi(t)|\hat O|\psi(t)\rangle$ is written to
+                `#!python /Calculation/gaussian_wave_packet/<label>` in the output file. Unlike `#!python custom_one()`'s
+                `#!python stream_` tokens, these labels are read back by an explicit ordered list, not the
+                single-digit `#!python "l0"`–`#!python "l9"` scheme described in the warning above — so this path
+                does not share that 10-operator limit.
 
     :   !!! declaration-function "<span id="calculation-localized_wave_packet">*function*`#!python localized_wave_packet(time, num_measures, initial_pos, num_moments=0, width=-1., energy_window=[0.,0.], initial_wavevector=None, probes=None, sample_start=-1, sample_L=-1)`</span>"
 

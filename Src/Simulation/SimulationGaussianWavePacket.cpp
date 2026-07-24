@@ -71,20 +71,23 @@ void Simulation<T,D>::Gaussian_Wave_Packet(){
       }
 #pragma omp barrier
   ComplexTraits<T> CT;
-  KPM_Vector<T,D> phi (2, *this), sum_ket(1u,*this);
+  KPM_Vector<T,D> phi (2, *this), sum_ket(1u,*this), op_ket(1u,*this);
   int NumDisorder, NumMoments, NumPoints;
-    
-  T II   = CT.assign_value(double(0), double(1));
-  T zero = CT.assign_value(double(0),  double(0));
-  T one  = CT.assign_value(double(1),  double(0));
-  std::vector<double> times;
-  
-  Eigen::Array<T,-1,-1> avg_x, avg_y, avg_z, avg_ident;
-  Eigen::Matrix<T, 2, 2> ident, spin_x, spin_y, spin_z;
 
-  Eigen::Map<Eigen::Matrix<T,-1,-1>> vket (sum_ket.v.data(), r.Sized/2, 2);
-  Eigen::Map<Eigen::Matrix<T,-1,-1>> vtmp (phi.v.data()    , r.Sized/2, 2);
-  Eigen::Map<Eigen::Matrix<T,-1,-1>> vtmp1(phi.v.data()    , r.Sized  , 1);
+  T II   = CT.assign_value(double(0), double(1));
+  std::vector<double> times;
+
+  // Observables to track during the propagation: any operator the user has
+  // registered via add_orbital_index/add_orbital_coupling (spin, orbital
+  // angular momentum, quadrupoles, ...), read in the order given by the
+  // "Operators" label list -- not by HDF5 group-iteration order.
+  std::vector<std::string> operator_labels;
+  std::vector<Eigen::Matrix<std::complex<double>,-1,-1>> operator_collection;
+  Eigen::Array<T,-1,-1> avg_ops, avg_ident;
+
+  op_ket.v.col(0).setZero();
+  op_ket.initiate_phases();
+
   float timestep;
   double width;
   Eigen::Array<T, -1, -1> avg_results;
@@ -95,18 +98,6 @@ void Simulation<T,D>::Gaussian_Wave_Packet(){
   Eigen::Matrix <double,-1, -1> k_vector;
   Eigen::Matrix <double ,1, D> vb;
   Eigen::Matrix <T,-1, -1>        spinor;
-
-  ident <<  one, zero,
-    zero, one;
-  
-  spin_x << zero, one,
-    one, zero;
-    
-  spin_y << zero, -II,
-    II, zero;
-    
-  spin_z << one, zero,
-    zero, -one;
 
   //Load bra and ket
 #pragma omp critical
@@ -130,25 +121,37 @@ void Simulation<T,D>::Gaussian_Wave_Packet(){
     get_hdf5     <double>(vb.data(),   file, (char *) "/Calculation/gaussian_wave_packet/mean_value");
     get_hdf5 <double>(k_vector.data(), file, (char *) "/Calculation/gaussian_wave_packet/k_vector");
 
+    // Optional: no registered operators means only Id/mean_value/Var are tracked.
+    try {
+      H5::H5File my_file = H5::H5File(name, H5F_ACC_RDONLY);
+      std::string tmp = "/Calculation/gaussian_wave_packet/Operators";
+      my_get_hdf5(operator_labels, my_file, tmp);
+      H5::Group grp = file->openGroup("/Calculation/gaussian_wave_packet/CustomOperators/");
+      for (const auto &label : operator_labels) {
+        if (auto err = this->getMembers(grp, label, &operator_collection)) {
+          std::cerr << "getMembers failed for " << label << "\n";
+        }
+      }
+    } catch (H5::Exception &e) {
+      debug_message("Wavepacket: no custom operators registered.\n");
+    }
+
     file->close();  delete file;
   }
 #pragma omp barrier
-  avg_x       = Eigen::Matrix<T,-1,-1>::Zero(NumPoints,1);
-  avg_y       = Eigen::Matrix<T,-1,-1>::Zero(NumPoints,1);
-  avg_z       = Eigen::Matrix<T,-1,-1>::Zero(NumPoints,1);
-  avg_ident   = Eigen::Matrix<T,-1,-1>::Zero(NumPoints,1);
+  const unsigned NumOperators = static_cast<unsigned>(operator_labels.size());
+  avg_ops     = Eigen::Array<T,-1,-1>::Zero(NumOperators, NumPoints);
+  avg_ident   = Eigen::Array<T,-1,-1>::Zero(NumPoints,1);
   avg_results = Eigen::Array<T, -1,-1>::Zero(2*D, NumPoints);
-    
+
 #pragma omp master
   {
-    Global.avg_x       = Eigen::Matrix<T,-1,1>::Zero(NumPoints,1);
-    Global.avg_y       = Eigen::Matrix<T,-1,1>::Zero(NumPoints,1);
-    Global.avg_z       = Eigen::Matrix<T,-1,1>::Zero(NumPoints,1);
-    Global.avg_ident   = Eigen::Matrix<T,-1,1>::Zero(NumPoints,1);
-    Global.avg_results = Eigen::Array<T,-1,-1>::Zero(2*D,NumPoints);
+    Global.avg_ops      = Eigen::Array<T,-1,-1>::Zero(NumOperators,NumPoints);
+    Global.avg_ident    = Eigen::Array<T,-1,-1>::Zero(NumPoints,1);
+    Global.avg_results  = Eigen::Array<T,-1,-1>::Zero(2*D,NumPoints);
   }
-    
-    
+
+
   NumMoments = (NumMoments/2)*2;
   Eigen::Matrix<T,-1,1> m(NumMoments);
   std::vector<double> besselj(NumMoments > 0 ? NumMoments : 0);
@@ -182,38 +185,26 @@ void Simulation<T,D>::Gaussian_Wave_Packet(){
                 }
             }
           sum_ket.empty_ghosts(0);
-          
-          // In the multiplication of a matrix the number of columns of the first should be equal to
-          // the number of rows of the second, because the spin is organized by columns we have:
-          
-          //	    vtmp = (vket * ident.transpose()) - vket;
-          //	    auto x3 = sum_ket2.v.adjoint() * vtmp1;
+
           auto x3 = sum_ket.get_point();
           avg_ident(t) += (x3 - avg_ident(t) ) /T(id + 1);
-          
-          vtmp = vket * spin_x.transpose();
-          auto x0 = sum_ket.v.adjoint() * vtmp1;
-          avg_x(t) += (x0(0,0) - avg_x(t) ) /T(id + 1);
-	    
-          vtmp = vket * spin_y.transpose();
-          auto x1 = sum_ket.v.adjoint() * vtmp1;
-          avg_y(t) += (x1(0,0) - avg_y(t) ) /T(id + 1);
-	    
-          vtmp = vket * spin_z.transpose();
-          auto x2 = sum_ket.v.adjoint() * vtmp1;
 
-          avg_z(t) += (x2(0,0) - avg_z(t) ) /T(id + 1);
+          for(unsigned op_idx = 0; op_idx < NumOperators; op_idx++)
+            {
+              multiply_orb_mtx(operator_collection[op_idx], &sum_ket, &op_ket);
+              auto xop = sum_ket.v.adjoint() * op_ket.v.col(0);
+              avg_ops(op_idx, t) += (xop(0,0) - avg_ops(op_idx, t) ) /T(id + 1);
+            }
+
           phi.measure_wave_packet(sum_ket.v.data(), sum_ket.v.data(), results.data());
-          avg_results.col(t) += (results - avg_results.col(t) ) /T(id + 1); 
+          avg_results.col(t) += (results - avg_results.col(t) ) /T(id + 1);
         }
-	
+
     }
 
 #pragma omp critical
-  {      
-    Global.avg_x += avg_x;
-    Global.avg_y += avg_y;
-    Global.avg_z += avg_z;
+  {
+    Global.avg_ops += avg_ops;
     Global.avg_ident += avg_ident;
     Global.avg_results += avg_results;
   }
@@ -225,32 +216,36 @@ void Simulation<T,D>::Gaussian_Wave_Packet(){
   {
     std::cout << name << std::endl;
     H5::H5File * file = new H5::H5File(name, H5F_ACC_RDWR);
-    write_hdf5(Global.avg_x, file, (char *) "/Calculation/gaussian_wave_packet/Sx");
-    write_hdf5(Global.avg_y, file, (char *) "/Calculation/gaussian_wave_packet/Sy");
-    write_hdf5(Global.avg_z, file, (char *) "/Calculation/gaussian_wave_packet/Sz");
+
+    for(unsigned op_idx = 0; op_idx < NumOperators; op_idx++)
+      {
+        Eigen::Array<T,-1,-1> op_series = Global.avg_ops.row(op_idx).transpose();
+        std::string path = "/Calculation/gaussian_wave_packet/" + operator_labels[op_idx];
+        write_hdf5(op_series, file, path);
+      }
     write_hdf5(Global.avg_ident, file, (char *) "/Calculation/gaussian_wave_packet/Id");
 
+    Eigen::Array<T,-1,-1> avg_pos(NumPoints,1);
+    for(unsigned i = 0; i < D; i++)
+      {
+        std::string orient = "xyz";
+        char name[200];
+        avg_pos.col(0) = Global.avg_results.row(2*i) ;
+        sprintf(name,"/Calculation/gaussian_wave_packet/mean_value%c", orient.at(i));
+        write_hdf5(avg_pos, file, name);
+      }
 
     for(unsigned i = 0; i < D; i++)
       {
         std::string orient = "xyz";
         char name[200];
-        avg_z.col(0) = Global.avg_results.row(2*i) ;
-        sprintf(name,"/Calculation/gaussian_wave_packet/mean_value%c", orient.at(i));
-        write_hdf5(avg_z, file, name);
-      }
-      
-    for(unsigned i = 0; i < D; i++)
-      {
-        std::string orient = "xyz";
-        char name[200];
-        avg_z.col(0) = Global.avg_results.row(2*i + 1) - Global.avg_results.row(2*i)*Global.avg_results.row(2*i);
+        avg_pos.col(0) = Global.avg_results.row(2*i + 1) - Global.avg_results.row(2*i)*Global.avg_results.row(2*i);
         sprintf(name,"/Calculation/gaussian_wave_packet/Var%c", orient.at(i));
-			  
-        write_hdf5(avg_z, file, name);
+
+        write_hdf5(avg_pos, file, name);
       }
-      
-    file->close();      
+
+    file->close();
     delete file;
   }
 #pragma omp barrier

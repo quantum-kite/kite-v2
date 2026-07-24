@@ -46,15 +46,19 @@ lambda_block = gridspec.GridSpecFromSubplotSpec(1, 2, subplot_spec=gs[:, :], wsp
 ax0 = mpl.subplot(lambda_block[0])
 ax1 = mpl.subplot(lambda_block[1])
 
+# Sx/Sz are now tracked as registered operators 'l0'/'l2' (see
+# gaussian_wavepacket_only_anderson.py / gaussian_wavepacket_magnetic_impurities.py),
+# not hardcoded dataset names -- 'Sx'/'Sz' below are still just the output-file suffixes.
+
 # read Sx_and
-sx_and, timesteps_sx_and = read_component('anderson_disorder/', 'Sx', 'Sx')
+sx_and, timesteps_sx_and = read_component('anderson_disorder/', 'Sx', 'l0')
 # read Sz_and
-sz_and, timesteps_sz_and = read_component('anderson_disorder/', 'Sz', 'Sz')
+sz_and, timesteps_sz_and = read_component('anderson_disorder/', 'Sz', 'l2')
 
 # read Sx and + resonant
-sx_and_res, timesteps_sx_and_res = read_component('resonant_scatterers/resonant_concentration/', 'Sx', 'Sx')
+sx_and_res, timesteps_sx_and_res = read_component('resonant_scatterers/resonant_concentration/', 'Sx', 'l0')
 # read Sz and + resonant
-sz_and_res, timesteps_sz_and_res = read_component('resonant_scatterers/resonant_concentration/', 'Sz', 'Sz')
+sz_and_res, timesteps_sz_and_res = read_component('resonant_scatterers/resonant_concentration/', 'Sz', 'l2')
 
 ax0.plot(timesteps_sx_and * 1e12, sx_and.real, c='C0', label='Sx Anderson', linestyle='--')
 ax0.plot(timesteps_sx_and_res * 1e12, sx_and_res.real, c='C2', label='Sx Resonant')
