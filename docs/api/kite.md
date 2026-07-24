@@ -468,10 +468,15 @@ The KITE package for pre-processing is split up in various subclasses and contai
 
             :   `#!python gaussian_wave_packet()` has no built-in notion of spin: any operator, including spin, is
                 tracked through the same [`#!python add_orbital_coupling()`][calculation-add_orbital_coupling]
-                mechanism used by [`#!python custom_one()`][calculation-custom_one]/[`#!python custom_two()`][calculation-custom_two].
-                Each requested label's expectation value $\langle\psi(t)|\hat O|\psi(t)\rangle$ is written to
-                `#!python /Calculation/gaussian_wave_packet/<label>` in the output file. Unlike `#!python custom_one()`'s
-                `#!python stream_` tokens, these labels are read back by an explicit ordered list, not the
+                mechanism used by [`#!python custom_one()`][calculation-custom_one]/[`#!python custom_two()`][calculation-custom_two]
+                — including its **on-site-only restriction** (see the warning under
+                [`#!python add_orbital_coupling()`][calculation-add_orbital_coupling]): a tracked operator must be
+                expressible as a single matrix acting on one site's orbitals, identical at every site. Spin, orbital
+                angular momentum, and orbital quadrupole operators satisfy this; an operator that couples different
+                sites cannot be tracked this way. Each requested label's expectation value
+                $\langle\psi(t)|\hat O|\psi(t)\rangle$ is written to `#!python /Calculation/gaussian_wave_packet/<label>`
+                in the output file. Unlike `#!python custom_one()`'s `#!python stream_` tokens, these labels are read
+                back by an explicit ordered list, not the
                 single-digit `#!python "l0"`–`#!python "l9"` scheme described in the warning above — so this path
                 does not share that 10-operator limit.
 
@@ -643,6 +648,18 @@ The KITE package for pre-processing is split up in various subclasses and contai
                 | `#!python last_`:*`#!python str`*      | Name of the orbital coupled *to*.                                                                                     |
                 | `#!python c_`:*`#!python complex`*     | Value of the matrix element.                                                                                          |
                 | `#!python label_`:*`#!python str`*     | Name of this custom orbital operator; must begin with `#!python "l"` (raises `#!python ValueError` otherwise).       |
+
+            !!! Warning "`#!python \"l\"`-type operators are on-site only"
+
+                $M_{\texttt{label\_}}$ is a single orbital-space matrix, applied identically and independently at
+                *every* lattice site — it can only mix orbitals belonging to the same site, never couple different
+                sites or unit cells. This is why it's a separate mechanism from the `#!python "v"` (velocity) token:
+                velocity is intrinsically an inter-site (hopping) operator, computed a completely different way
+                (`#!python h.build_velocity()`), not expressible as a per-site matrix. Spin, orbital angular
+                momentum, and orbital quadrupole operators are all valid `#!python "l"`-type operators because they
+                are genuinely on-site quantities (built entirely from a single site's orbital manifold, e.g. the
+                $p_x,p_y,p_z$ orbitals of one atom) — but this mechanism cannot represent an operator that is
+                diagonal in *orbital* index yet varies from site to site, nor one with any inter-site matrix element.
 
             !!! Info "The `kite.custom.Vertex` operator language"
                 <span id="calculation-vertex-grammar"></span>
