@@ -1,0 +1,2776 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="KITE: Real-space quantum transport simulator">
+      
+      
+        <meta name="author" content="KITE">
+      
+      
+      
+        <link rel="prev" href="../markov_local_maps/">
+      
+      
+        <link rel="next" href="../altermagnet_arpes/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/site/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Custom Vertex Operators (Spin Hall Effect) - Quantum KITE</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+  
+  
+    
+      
+      
+    
+  
+    
+      
+      
+    
+  
+  
+  <style>:root{--md-admonition-icon--declaration-function:url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20448%20512%22%3E%3C%21--%21%20Font%20Awesome%20Free%207.1.0%20by%20%40fontawesome%20-%20https%3A//fontawesome.com%20License%20-%20https%3A//fontawesome.com/license/free%20%28Icons%3A%20CC%20BY%204.0%2C%20Fonts%3A%20SIL%20OFL%201.1%2C%20Code%3A%20MIT%20License%29%20Copyright%202025%20Fonticons%2C%20Inc.--%3E%3Cpath%20d%3D%22M384%20512H96c-53%200-96-43-96-96V96C0%2043%2043%200%2096%200h304c26.5%200%2048%2021.5%2048%2048v288c0%2020.9-13.4%2038.7-32%2045.3V448c17.7%200%2032%2014.3%2032%2032s-14.3%2032-32%2032zM96%20384c-17.7%200-32%2014.3-32%2032s14.3%2032%2032%2032h256v-64zm32-232c0%2013.3%2010.7%2024%2024%2024h176c13.3%200%2024-10.7%2024-24s-10.7-24-24-24H152c-13.3%200-24%2010.7-24%2024m24%2072c-13.3%200-24%2010.7-24%2024s10.7%2024%2024%2024h176c13.3%200%2024-10.7%2024-24s-10.7-24-24-24z%22/%3E%3C/svg%3E');--md-admonition-icon--declaration-class:url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20448%20512%22%3E%3C%21--%21%20Font%20Awesome%20Free%207.1.0%20by%20%40fontawesome%20-%20https%3A//fontawesome.com%20License%20-%20https%3A//fontawesome.com/license/free%20%28Icons%3A%20CC%20BY%204.0%2C%20Fonts%3A%20SIL%20OFL%201.1%2C%20Code%3A%20MIT%20License%29%20Copyright%202025%20Fonticons%2C%20Inc.--%3E%3Cpath%20d%3D%22M384%20512H96c-53%200-96-43-96-96V96C0%2043%2043%200%2096%200h304c26.5%200%2048%2021.5%2048%2048v288c0%2020.9-13.4%2038.7-32%2045.3V448c17.7%200%2032%2014.3%2032%2032s-14.3%2032-32%2032zM96%20384c-17.7%200-32%2014.3-32%2032s14.3%2032%2032%2032h256v-64zm32-232c0%2013.3%2010.7%2024%2024%2024h176c13.3%200%2024-10.7%2024-24s-10.7-24-24-24H152c-13.3%200-24%2010.7-24%2024m24%2072c-13.3%200-24%2010.7-24%2024s10.7%2024%2024%2024h176c13.3%200%2024-10.7%2024-24s-10.7-24-24-24z%22/%3E%3C/svg%3E');}</style>
+
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/monokai.css">
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/colorful.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="kite" data-md-color-primary="indigo" data-md-color-accent="deep-orange">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#custom-vertex-operators-building-arbitrary-linear-response-functions" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Quantum KITE" class="md-header__button md-logo" aria-label="Quantum KITE" data-md-component="logo">
+      
+<img alt="logo" src="../../../assets/images/site/safari-pinned-tab.svg" style="height:3.3 rem;width:3.3rem;">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Quantum KITE
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Custom Vertex Operators (Spin Hall Effect)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="kite" data-md-color-primary="indigo" data-md-color-accent="deep-orange"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6m0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4M7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="deep-orange"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/quantum-kite/kite-v2" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../installation/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Installation
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../" class="md-tabs__link">
+          
+  
+  
+  Documentation
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../background/" class="md-tabs__link">
+          
+  
+  
+  Background
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../api/" class="md-tabs__link">
+          
+  
+  
+  API
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../faq/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  FAQ
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../about/" class="md-tabs__link">
+          
+  
+  
+  About
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Quantum KITE" class="md-nav__button md-logo" aria-label="Quantum KITE" data-md-component="logo">
+      
+<img alt="logo" src="../../../assets/images/site/safari-pinned-tab.svg" style="height:3.3 rem;width:3.3rem;">
+
+    </a>
+    Quantum KITE
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/quantum-kite/kite-v2" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Documentation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Documentation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorial
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../optimization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0. Ground Rules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1. Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tb_model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2. Lattice
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3. Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../calculation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4. Calculation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../postprocessing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5. Post-processing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../disorder/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6. Disorder
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../magnetic/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7. Magnetic Fields
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../editing_hdf_files/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8. Editing an HDF5 file
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../performance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9. Performance & Memory Tuning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../code_structure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    10. Code Structure & Compilation Options
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_13" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3_13" id="__nav_3_13_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    In Depth Examples
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_13_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3_13">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    In Depth Examples
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    About the examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../graphene/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Graphene
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../haldane/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Haldane
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phosphorene/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phosphorene
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../optical_conductivity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Optical Conductivity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../spectral_function/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Spectral Function (ARPES)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../markov_local_maps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Local & Spectral Maps (Markov Estimator)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Custom Vertex Operators (Spin Hall Effect)
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Custom Vertex Operators (Spin Hall Effect)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#custom-vertex-operators-building-arbitrary-linear-response-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Custom vertex operators: building arbitrary linear-response functions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Custom vertex operators: building arbitrary linear-response functions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-general-mechanism" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The general mechanism
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#from-moments-to-a-transport-coefficient-the-kubo-bastin-integral" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        From moments to a transport coefficient: the Kubo-Bastin integral
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-this-generalizes-conductivity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why this generalizes conductivity
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-kane-mele-spin-hall-walkthrough" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Kane-Mele spin Hall walkthrough
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-disorder-washout-extension" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The disorder-washout extension
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../altermagnet_arpes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Altermagnetism (Spin-Split ARPES)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../orbital_magnetization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orbital Magnetization (Rank-One Vertex)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../rashba_edelstein/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rashba-Edelstein Effect
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../time_evolution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Real-Time Wave-Packet Evolution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../oam_quadrupole_precession/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orbital Angular Momentum/Quadrupole Precession
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_14" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_14" id="__nav_3_14_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    KITE scripts v.1.1
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_14_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_14">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    KITE scripts v.1.1
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../more_examples/additional_examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    About Examples-dir
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_15" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_15" id="__nav_3_15_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Advanced Examples
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_15_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_15">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Advanced Examples
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../more_examples/large_systems/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Large Systems
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../more_examples/custom_local_potential/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Custom Local Potential
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../more_examples/paper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples from KITE's Paper
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Background
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Background
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../background/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview of KITE
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../background/spectral/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Spectral Methods
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../background/tight_binding/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tight-Binding Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    KITE (python)
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    KITE (python)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/kite/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Python package
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_3" id="__nav_5_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    KITEx
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    KITEx
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/kitex/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Main program
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_4" id="__nav_5_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    KITE-tools
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    KITE-tools
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/kite-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Toolbox
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/kite_tools_readme/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Addtitional scripts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    About
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    About
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    About KITE
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../about/publications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Publications
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../about/LICENSE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LICENSE.md
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../about/VERSION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    VERSION.md
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+  <h1>Custom Vertex Operators (Spin Hall Effect)</h1>
+
+<h3 id="custom-vertex-operators-building-arbitrary-linear-response-functions">Custom vertex operators: building arbitrary linear-response functions<a class="headerlink" href="#custom-vertex-operators-building-arbitrary-linear-response-functions" title="Permanent link">&para;</a></h3>
+<p>KITE's built-in transport methods (<a href="../../../api/kite/#calculation-conductivity_dc"><code class="highlight"><span class="n">conductivity_dc</span></code></a>,
+<a href="../../../api/kite/#calculation-conductivity_optical"><code class="highlight"><span class="n">conductivity_optical</span></code></a>) compute specific correlators of the
+velocity operator. But the underlying Kernel Polynomial machinery is far more general: any two-point response
+function built from a <strong>Kubo-Bastin double trace</strong> can be evaluated with the same double-Chebyshev expansion,
+provided you can express the two operators entering the correlator. <code class="highlight"><span class="n">kite</span><span class="o">.</span><span class="n">custom</span><span class="o">.</span><span class="n">Vertex</span></code> together
+with <a href="../../../api/kite/#calculation-custom_two"><code class="highlight"><span class="n">custom_two</span><span class="p">()</span></code></a> exposes exactly this — letting you assemble arbitrary
+operators and compute their Kubo-Bastin correlator directly.</p>
+<h4 id="the-general-mechanism">The general mechanism<a class="headerlink" href="#the-general-mechanism" title="Permanent link">&para;</a></h4>
+<p>A <code class="highlight"><span class="n">kite</span><span class="o">.</span><span class="n">custom</span><span class="o">.</span><span class="n">Vertex</span></code> is a <strong>weighted sum of products of elementary operators</strong>, specified as a list
+<code class="highlight"><span class="p">[[</span><span class="n">coeff</span><span class="p">,</span> <span class="s2">&quot;opstring&quot;</span><span class="p">],</span> <span class="o">...</span><span class="p">]</span></code>. Each <code>opstring</code> is a dot-separated product of building blocks — velocity
+components (<code class="highlight"><span class="s2">&quot;vx&quot;</span></code>, <code class="highlight"><span class="s2">&quot;vy&quot;</span></code>), position components (<code class="highlight"><span class="s2">&quot;rx&quot;</span></code>, <code class="highlight"><span class="s2">&quot;ry&quot;</span></code>), and
+user-defined orbital-space matrices (<code class="highlight"><span class="s2">&quot;l0&quot;</span></code>, ...) registered via
+<a href="../../../api/kite/#calculation-add_orbital_coupling"><code class="highlight"><span class="n">add_orbital_coupling</span><span class="p">()</span></code></a>. Operator strings apply <strong>right-to-left</strong>:
+<code class="highlight"><span class="s2">&quot;vx.l0&quot;</span></code> means <span class="arithmatex">\(\hat v_x\,\hat L\)</span>, with <span class="arithmatex">\(\hat L\)</span> acting first. For example the symmetrized spin
+current <span class="arithmatex">\(\tfrac12\{\hat v_x,\hat s_z\}\)</span> is written</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">A</span> <span class="o">=</span> <span class="n">custom</span><span class="o">.</span><span class="n">Vertex</span><span class="p">(</span><span class="n">num_moments</span><span class="p">,</span> <span class="p">[[</span><span class="mf">0.5</span><span class="p">,</span> <span class="s2">&quot;vx.l0&quot;</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="s2">&quot;l0.vx&quot;</span><span class="p">]])</span>
+</code></pre></div>
+<p>which is why both orderings appear. <code class="highlight"><span class="n">custom_two</span><span class="p">()</span></code> takes two independently defined vertices <span class="arithmatex">\(A\)</span> and
+<span class="arithmatex">\(B\)</span> and computes the <strong>double-Chebyshev moment matrix</strong></p>
+<div class="arithmatex">\[
+\boxed{\ \Gamma_{mn}\;=\;\mathrm{Tr}\!\big[\,T_m(\hat H)\,B\,T_n(\hat H)\,A\,\big]\ }
+\]</div>
+<p>evaluated stochastically over random vectors and disorder realizations: a random vector seeds one factor;
+<span class="arithmatex">\(A\)</span> is applied to it; <span class="arithmatex">\(T_n(\hat H)\)</span> is generated by the Chebyshev recursion and <span class="arithmatex">\(B\)</span> applied to produce the
+"right" family; <span class="arithmatex">\(T_m(\hat H)\)</span> acting on the plain random vector produces the "left" family; the inner product
+of the two families gives <span class="arithmatex">\(\Gamma_{mn}\)</span>. <strong><code class="highlight"><span class="n">num_moments</span></code> must be even</strong> (enforced by the code).</p>
+<h4 id="from-moments-to-a-transport-coefficient-the-kubo-bastin-integral">From moments to a transport coefficient: the Kubo-Bastin integral<a class="headerlink" href="#from-moments-to-a-transport-coefficient-the-kubo-bastin-integral" title="Permanent link">&para;</a></h4>
+<p><span class="arithmatex">\(\Gamma_{mn}\)</span> is a matrix of numbers, not yet a conductivity. The conversion is the numerical implementation of
+the <strong>Kubo-Bastin formula</strong><sup id="fnref:1"><a class="footnote-ref" href="#fn:1">1</a></sup>, done in Python (<code class="highlight"><span class="n">examples</span><span class="o">/</span><span class="n">cond_sum</span><span class="o">.</span><span class="n">py</span></code>, adapted for spin in
+<code class="highlight"><span class="n">examples</span><span class="o">/</span><span class="n">kane_mele_spin_hall_process</span><span class="o">.</span><span class="n">py</span></code>). In the KPM representation, both the spectral operator
+<span class="arithmatex">\(\delta(E-\hat H)\)</span> and the Green's-function derivative <span class="arithmatex">\(dG^{\pm}/dE\)</span> entering the Kubo-Bastin integral are
+expanded in Chebyshev polynomials of <span class="arithmatex">\(\hat H\)</span>; substituting these expansions turns the trace into a
+contraction of the precomputed moment matrix with two energy-dependent coefficient vectors,</p>
+<div class="arithmatex">\[
+Z(E)=\sum_{m,n}\Delta_m(E)\,\Gamma_{mn}\,\big[dG/dE\big]_n(E),
+\]</div>
+<p>where <span class="arithmatex">\(\Delta_m(E)\)</span> reconstructs <span class="arithmatex">\(\delta(E-\hat H)\)</span> and <span class="arithmatex">\([dG/dE]_n(E)\)</span> reconstructs <span class="arithmatex">\(dG^{+}/dE\)</span>. The
+Fermi-weighted energy integral <span class="arithmatex">\(\int dE\, f(E)\,X(E)\)</span> then gives <span class="arithmatex">\(\sigma_{AB}(\mu)\)</span> as a function of Fermi
+energy, by quadrature. Because <span class="arithmatex">\(\Gamma_{mn}\)</span> is computed once by KITEx, sweeping temperature, <span class="arithmatex">\(\mu\)</span>, and the
+reconstruction broadening is a cheap post-processing step — no re-run of KITEx needed.</p>
+<p><strong>Which part of <span class="arithmatex">\(Z(E)\)</span> is physical: a general rule, not a spin-Hall-specific shortcut.</strong> Each raw stored
+operator is <span class="arithmatex">\(X=i^{n_X}\hat X_H\)</span> with <span class="arithmatex">\(\hat X_H\)</span> Hermitian and <span class="arithmatex">\(n_X\)</span> counting KITE's "missing factor of <span class="arithmatex">\(i\)</span>" per
+velocity token (the same convention as <a href="../../../api/kite-tools/#kite-tools-customone"><code class="highlight"><span class="n">custom_one</span><span class="p">()</span></code></a>'s vertex). <span class="arithmatex">\(\Gamma_{mn}\)</span>
+therefore picks up an overall <span class="arithmatex">\(i^p\)</span>, with <span class="arithmatex">\(p=n_A+n_B=\)</span> <code class="highlight"><span class="n">NumVelocities</span></code> the <em>combined</em> count from both
+vertices. Since <span class="arithmatex">\(i^p\)</span> has <strong>period 4, not 2</strong>, which component of <span class="arithmatex">\(Z(E)\)</span> is physical depends on <span class="arithmatex">\(p\bmod4\)</span>, not
+just its parity:</p>
+<table>
+<thead>
+<tr>
+<th><span class="arithmatex">\(p\bmod4\)</span></th>
+<th>correct component</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td><span class="arithmatex">\(X(E)=-2\,\mathrm{Im}[Z(E)]\)</span></td>
+</tr>
+<tr>
+<td>1</td>
+<td><span class="arithmatex">\(X(E)=+2\,\mathrm{Re}[Z(E)]\)</span></td>
+</tr>
+<tr>
+<td>2</td>
+<td><span class="arithmatex">\(X(E)=+2\,\mathrm{Im}[Z(E)]\)</span></td>
+</tr>
+<tr>
+<td>3</td>
+<td><span class="arithmatex">\(X(E)=-2\,\mathrm{Re}[Z(E)]\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>The spin Hall walkthrough below has <span class="arithmatex">\(p=2\)</span> (row 2), which is why its own post-processing script uses
+<span class="arithmatex">\(\mathrm{Im}[Z]\)</span> — that is a consequence of this general rule for this particular vertex pair, not a
+special-cased formula. <code class="highlight">KITE-tools<span class="w"> </span>--CustomTwo</code> applies this table automatically, reading
+<code class="highlight"><span class="n">NumVelocities</span></code> from the file; see <a href="../../../api/kite-tools/#kite-tools-customtwo"><code class="highlight">--CustomTwo</code></a>.</p>
+<h4 id="why-this-generalizes-conductivity">Why this generalizes conductivity<a class="headerlink" href="#why-this-generalizes-conductivity" title="Permanent link">&para;</a></h4>
+<p>KITE's built-in <a href="../../../api/kite/#calculation-conductivity_dc"><code class="highlight"><span class="n">conductivity_dc</span></code></a> is the same trace with plain velocity
+vertices — confirmed directly in <code>Src/Tools/Gamma2D.cpp</code>, which builds <span class="arithmatex">\(\Gamma_{mn}\)</span> by applying
+<code class="highlight"><span class="n">kpm0</span><span class="p">.</span><span class="n">Velocity</span><span class="p">(...)</span></code> for one Cartesian direction and <code class="highlight"><span class="n">kpm1</span><span class="p">.</span><span class="n">Velocity</span><span class="p">(...)</span></code> for the other, i.e.
+<span class="arithmatex">\(A=\hat v_x\)</span>, <span class="arithmatex">\(B=\hat v_y\)</span> directly — <strong>no anticommutator</strong>. The bare velocity operator is already the correct,
+Hermitian charge-current operator in that direction, so no symmetrization is needed.</p>
+<p>The anticommutator <em>does</em> appear once you replace one of the velocities with a genuinely different
+quantum-number operator (spin, orbital moment): <span class="arithmatex">\(\tfrac12\{\hat v_x,\hat s_z\}\)</span> is the standard definition of a
+<strong>spin current</strong> — the object that represents "spin flowing in the <span class="arithmatex">\(x\)</span> direction," which is a nontrivial
+physical construction distinct from either operator alone, and needs the symmetrized (anticommutator) form to
+stay Hermitian in general. Swapping the vertex is still what generalizes the calculation — it's just that
+different physical currents are built differently from the elementary operators:</p>
+<table>
+<thead>
+<tr>
+<th>response</th>
+<th>vertex <span class="arithmatex">\(A\)</span></th>
+<th>vertex <span class="arithmatex">\(B\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>charge Hall conductivity (<code>conductivity_dc</code>)</td>
+<td><span class="arithmatex">\(\hat v_x\)</span></td>
+<td><span class="arithmatex">\(\hat v_y\)</span></td>
+</tr>
+<tr>
+<td><strong>spin Hall</strong> (this page, via <code>custom_two</code>)</td>
+<td><span class="arithmatex">\(\tfrac12\{\hat v_x,\hat s_z\}\)</span></td>
+<td><span class="arithmatex">\(\hat v_y\)</span></td>
+</tr>
+<tr>
+<td>orbital Hall</td>
+<td><span class="arithmatex">\(\tfrac12\{\hat v_x,\hat L_z\}\)</span></td>
+<td><span class="arithmatex">\(\hat v_y\)</span></td>
+</tr>
+<tr>
+<td>spin/orbital Edelstein</td>
+<td><span class="arithmatex">\(\hat s_z\)</span> / <span class="arithmatex">\(\hat L_z\)</span> (bare density)</td>
+<td><span class="arithmatex">\(\hat v_y\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>The Kubo-Bastin trace machinery never changes — only the operators you feed it.</p>
+<h4 id="the-kane-mele-spin-hall-walkthrough">The Kane-Mele spin Hall walkthrough<a class="headerlink" href="#the-kane-mele-spin-hall-walkthrough" title="Permanent link">&para;</a></h4>
+<p>The Kane-Mele model<sup id="fnref:2"><a class="footnote-ref" href="#fn:2">2</a></sup> is the honeycomb-lattice <span class="arithmatex">\(\mathbb Z_2\)</span> topological insulator: two <strong>time-reversed
+copies of the Haldane model</strong>, one per spin, with the intrinsic (next-nearest-neighbor, complex) spin-orbit
+hopping carrying <strong>opposite phase</strong> for the two spins. <code class="highlight"><span class="n">examples</span><span class="o">/</span><span class="n">kane_mele_spin_hall</span><span class="o">.</span><span class="n">py</span></code> builds the
+lattice with four sublattices — <code>Aup, Bup, Adn, Bdn</code> — where the up-spin block reproduces the
+<a href="../haldane/">documented Haldane example</a> exactly (NNN phase <span class="arithmatex">\(+i\)</span> on A–A) and the down-spin block is its
+complex conjugate (<span class="arithmatex">\(-i\)</span> on A–A). Nearest-neighbor charge hopping is <span class="arithmatex">\(-t\)</span> and spin-diagonal, with no spin-flip
+term. Parameters: <span class="arithmatex">\(t=1\)</span>, <span class="arithmatex">\(t_2=0.15\)</span>, on a <span class="arithmatex">\(64\times64\)</span> lattice with 256 moments.</p>
+<p>The opposite SOC sign per spin is what distinguishes Kane-Mele (a <span class="arithmatex">\(\mathbb Z_2\)</span> insulator with quantized <em>spin</em>
+Hall response and zero charge Hall response) from two stacked Haldane copies (a charge Chern insulator).
+Intrinsic SOC opens a bulk gap; each Dirac point acquires a mass <span class="arithmatex">\(3\sqrt3\,t_2\)</span>, so the full gap is</p>
+<div class="arithmatex">\[
+E_g = 6\sqrt3\,t_2 = 6\sqrt3\times0.15 \approx 1.56\,t,
+\]</div>
+<p>a plateau region <span class="arithmatex">\(|E|\lesssim 3\sqrt3\,t_2\approx 0.78\,t\)</span>.</p>
+<p><strong>Building <span class="arithmatex">\(s_z\)</span>.</strong> Because spin is encoded as the sublattice doubling (spin-up and spin-down live on
+<em>separate</em> sublattices with no hopping between them), the spin operator <span class="arithmatex">\(\hat s_z=\tfrac12\sigma_z\)</span> is
+<strong>diagonal</strong> in the orbital basis, registered as <span class="arithmatex">\(+\tfrac12\)</span> on the up sublattices and <span class="arithmatex">\(-\tfrac12\)</span> on the down
+sublattices:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">calculation</span><span class="o">.</span><span class="n">add_orbital_coupling</span><span class="p">(</span><span class="s1">&#39;Aup&#39;</span><span class="p">,</span> <span class="s1">&#39;Aup&#39;</span><span class="p">,</span>  <span class="mf">0.5</span><span class="p">,</span> <span class="s1">&#39;l0&#39;</span><span class="p">)</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">calculation</span><span class="o">.</span><span class="n">add_orbital_coupling</span><span class="p">(</span><span class="s1">&#39;Bup&#39;</span><span class="p">,</span> <span class="s1">&#39;Bup&#39;</span><span class="p">,</span>  <span class="mf">0.5</span><span class="p">,</span> <span class="s1">&#39;l0&#39;</span><span class="p">)</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">calculation</span><span class="o">.</span><span class="n">add_orbital_coupling</span><span class="p">(</span><span class="s1">&#39;Adn&#39;</span><span class="p">,</span> <span class="s1">&#39;Adn&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="s1">&#39;l0&#39;</span><span class="p">)</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="n">calculation</span><span class="o">.</span><span class="n">add_orbital_coupling</span><span class="p">(</span><span class="s1">&#39;Bdn&#39;</span><span class="p">,</span> <span class="s1">&#39;Bdn&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="s1">&#39;l0&#39;</span><span class="p">)</span>
+</code></pre></div>
+<p>Every sublattice must be registered with <a href="../../../api/kite/#calculation-add_orbital_index"><code class="highlight"><span class="n">add_orbital_index</span><span class="p">()</span></code></a> — the
+orbital operator is a full <span class="arithmatex">\(N_\text{orb}\times N_\text{orb}\)</span> matrix, and registering only a subset would
+silently truncate it. The two vertices are the symmetrized spin current <span class="arithmatex">\(A=\tfrac12\{\hat v_x,\hat s_z\}\)</span> and
+the charge velocity <span class="arithmatex">\(B=\hat v_y\)</span>.</p>
+<p><strong>Verified result.</strong> The Kubo-Bastin post-processing yields a genuinely <strong>flat plateau</strong> at</p>
+<div class="arithmatex">\[
+\sigma^{s_z}_{xy}\approx -2.02
+\]</div>
+<p>across the bulk gap (<span class="arithmatex">\(|E|\lesssim 0.74\,t\)</span>), consistent with the expected quantized <span class="arithmatex">\(\mathbb Z_2\)</span> spin Hall
+value — the plateau's <em>existence</em> and <em>flatness</em> are the physics being demonstrated at this lattice size, not
+a claim of an exact quantized integer. The overall sign of <span class="arithmatex">\(\sigma^{s_z}_{xy}\)</span> is fixed by the arbitrary choice
+of which spin is assigned <span class="arithmatex">\(+\tfrac12\)</span> in the <code>l0</code> matrix — flipping every <code>l0</code> entry flips the sign of the
+plateau; this is a genuine convention, not a physical ambiguity.</p>
+<h4 id="the-disorder-washout-extension">The disorder-washout extension<a class="headerlink" href="#the-disorder-washout-extension" title="Permanent link">&para;</a></h4>
+<p><code class="highlight"><span class="n">examples</span><span class="o">/</span><span class="n">kane_mele_spin_hall_disorder</span><span class="o">.</span><span class="n">py</span></code> adds on-site (Anderson) disorder of uniform width <span class="arithmatex">\(W\)</span> on
+all four sublattices and sweeps <span class="arithmatex">\(W\)</span>. Physically, the <span class="arithmatex">\(\mathbb Z_2\)</span> invariant — and hence the quantized plateau
+— is protected as long as (i) the bulk mobility gap survives and (ii) time-reversal symmetry is preserved on
+average. On-site potential disorder respects TRS, so for <span class="arithmatex">\(W\)</span> well below the gap the plateau should be
+essentially untouched; once <span class="arithmatex">\(W\)</span> approaches and exceeds <span class="arithmatex">\(E_g\approx1.56\,t\)</span>, disorder broadening closes the
+mobility gap and the plateau degrades.</p>
+<figure>
+    <img src="../../../assets/images/custom_vertex_operators/kane_mele_spin_hall.png" style="width: 34em;" />
+    <figcaption>Spin Hall plateau eroding with increasing on-site disorder strength W.</figcaption>
+</figure>
+
+<p><strong>Verified trend:</strong></p>
+<table>
+<thead>
+<tr>
+<th><span class="arithmatex">\(W/t\)</span></th>
+<th>behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><span class="arithmatex">\(0\)</span></td>
+<td>flat plateau <span class="arithmatex">\(\approx -2.0\)</span></td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(0.5\)</span></td>
+<td>still flat (well below the gap)</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(1.0\)</span></td>
+<td>visibly rounding (comparable to the gap)</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(2.0\)</span></td>
+<td>washed out to <span class="arithmatex">\(\approx -0.4\)</span> (well past the gap)</td>
+</tr>
+</tbody>
+</table>
+<p>Two implementation points worth flagging. First, the manual <code class="highlight"><span class="n">spectrum_range</span></code> must bound the <em>actual</em>
+spectrum including the disorder spread — a fixed clean-model range would let eigenvalues spill outside the
+rescaled <span class="arithmatex">\([-1,1]\)</span> Chebyshev domain and make <span class="arithmatex">\(T_m(\hat H)\)</span> diverge exponentially. Second, this is a fast
+qualitative demo (<code class="highlight"><span class="n">num_disorder_</span></code> = 1–3), so the large-<span class="arithmatex">\(W\)</span> curves are legitimately noisy — small
+wiggles there are stochastic, not physical structure.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<p>Get more familiar with KITE: run <a href="https://github.com/quantum-kite/kite-v2/tree/master/examples/kane_mele_spin_hall.py"><code class="highlight"><span class="n">examples</span><span class="o">/</span><span class="n">kane_mele_spin_hall</span><span class="o">.</span><span class="n">py</span></code></a> and its
+<a href="https://github.com/quantum-kite/kite-v2/tree/master/examples/kane_mele_spin_hall_disorder.py">disorder extension</a> yourself, and try building a different vertex — spin
+density instead of spin current gives the Edelstein response.</p>
+</div>
+<div class="footnote">
+<hr />
+<ol>
+<li id="fn:1">
+<p>J. H. García, L. Covaci, and T. G. Rappoport, <a href="https://doi.org/10.1103/PhysRevLett.114.116602">Phys. Rev. Lett. <strong>114</strong>, 116602 (2015)</a>.&#160;<a class="footnote-backref" href="#fnref:1" title="Jump back to footnote 1 in the text">&#8617;</a></p>
+</li>
+<li id="fn:2">
+<p>C. L. Kane and E. J. Mele, <a href="https://doi.org/10.1103/PhysRevLett.95.226801">Phys. Rev. Lett. <strong>95</strong>, 226801 (2005)</a>.&#160;<a class="footnote-backref" href="#fnref:2" title="Jump back to footnote 2 in the text">&#8617;</a></p>
+</li>
+</ol>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <!--
+  Copyright (c) 2025 KITE <support@quantum-kite.com>
+
+  KITE is a free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as
+  published by the Free Software Foundation - version 3
+-->
+
+
+<!-- Footer -->
+<footer class="md-footer">
+
+    <!-- Link to previous and/or next page -->
+    
+    <nav class="md-footer__inner md-grid" aria-label="footer.title">
+
+        <!-- Link to previous page -->
+        
+        
+        <a href="../markov_local_maps/" class="md-footer__link md-footer__link--prev"
+            aria-label="Previous: Local &amp; Spectral Maps (Markov Estimator)" rel="prev">
+            <div class="md-footer__button md-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+                <div class="md-ellipsis">
+                    <span class="md-footer__direction">
+                        Previous
+                    </span>
+                    Local & Spectral Maps (Markov Estimator)
+                </div>
+            </div>
+        </a>
+        
+
+        <!-- Link to next page -->
+        
+        
+        <a href="../altermagnet_arpes/" class="md-footer__link md-footer__link--next"
+            aria-label="Next: Altermagnetism (Spin-Split ARPES)" rel="next">
+            <div class="md-footer__title">
+                <div class="md-ellipsis">
+                    <span class="md-footer__direction">
+                        Next
+                    </span>
+                    Altermagnetism (Spin-Split ARPES)
+                </div>
+            </div>
+            <div class="md-footer__button md-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+        </a>
+        
+    </nav>
+    
+
+    <!-- Further information -->
+    <div class="md-footer-meta md-typeset">
+        <div class="md-footer-meta__inner md-grid">
+            <!--
+  Copyright (c) 2025 KITE <support@quantum-kite.com>
+
+  KITE is a free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as
+  published by the Free Software Foundation - version 3
+-->
+
+<!-- Copyright and theme information -->
+
+<div class="md-copyright">
+  
+  <div class="md-copyright__highlight">
+    KITE is a free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation - version 3. Copyright © 2023 KITE
+  </div>
+  
+  
+
+  Website powered by
+  <a href="https://www.mkdocs.org" target="_blank" rel="noopener">MkDocs</a>,
+  <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">Material for MkDocs</a> and
+  <a href="http://www.styleshout.com/" target="_blank" rel="noopener">styleshout</a>.
+  
+</div>
+
+            <!-- Social links -->
+            
+        </div>
+    </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.top", "navigation.sections", "navigation.expand", "navigation.tracking", "toc.integrate", "toc.follow"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../../../assets/javascripts/mathjax-config.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+        <script src="https://unpkg.com/mermaid@7.1.2/dist/mermaid.min.js"></script>
+      
+    
+  </body>
+</html>

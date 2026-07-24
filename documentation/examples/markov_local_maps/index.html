@@ -1,0 +1,2747 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="KITE: Real-space quantum transport simulator">
+      
+      
+        <meta name="author" content="KITE">
+      
+      
+      
+        <link rel="prev" href="../spectral_function/">
+      
+      
+        <link rel="next" href="../custom_vertex_operators/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/site/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Local & Spectral Maps (Markov Estimator) - Quantum KITE</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+  
+  
+    
+      
+      
+    
+  
+    
+      
+      
+    
+  
+  
+  <style>:root{--md-admonition-icon--declaration-function:url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20448%20512%22%3E%3C%21--%21%20Font%20Awesome%20Free%207.1.0%20by%20%40fontawesome%20-%20https%3A//fontawesome.com%20License%20-%20https%3A//fontawesome.com/license/free%20%28Icons%3A%20CC%20BY%204.0%2C%20Fonts%3A%20SIL%20OFL%201.1%2C%20Code%3A%20MIT%20License%29%20Copyright%202025%20Fonticons%2C%20Inc.--%3E%3Cpath%20d%3D%22M384%20512H96c-53%200-96-43-96-96V96C0%2043%2043%200%2096%200h304c26.5%200%2048%2021.5%2048%2048v288c0%2020.9-13.4%2038.7-32%2045.3V448c17.7%200%2032%2014.3%2032%2032s-14.3%2032-32%2032zM96%20384c-17.7%200-32%2014.3-32%2032s14.3%2032%2032%2032h256v-64zm32-232c0%2013.3%2010.7%2024%2024%2024h176c13.3%200%2024-10.7%2024-24s-10.7-24-24-24H152c-13.3%200-24%2010.7-24%2024m24%2072c-13.3%200-24%2010.7-24%2024s10.7%2024%2024%2024h176c13.3%200%2024-10.7%2024-24s-10.7-24-24-24z%22/%3E%3C/svg%3E');--md-admonition-icon--declaration-class:url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20448%20512%22%3E%3C%21--%21%20Font%20Awesome%20Free%207.1.0%20by%20%40fontawesome%20-%20https%3A//fontawesome.com%20License%20-%20https%3A//fontawesome.com/license/free%20%28Icons%3A%20CC%20BY%204.0%2C%20Fonts%3A%20SIL%20OFL%201.1%2C%20Code%3A%20MIT%20License%29%20Copyright%202025%20Fonticons%2C%20Inc.--%3E%3Cpath%20d%3D%22M384%20512H96c-53%200-96-43-96-96V96C0%2043%2043%200%2096%200h304c26.5%200%2048%2021.5%2048%2048v288c0%2020.9-13.4%2038.7-32%2045.3V448c17.7%200%2032%2014.3%2032%2032s-14.3%2032-32%2032zM96%20384c-17.7%200-32%2014.3-32%2032s14.3%2032%2032%2032h256v-64zm32-232c0%2013.3%2010.7%2024%2024%2024h176c13.3%200%2024-10.7%2024-24s-10.7-24-24-24H152c-13.3%200-24%2010.7-24%2024m24%2072c-13.3%200-24%2010.7-24%2024s10.7%2024%2024%2024h176c13.3%200%2024-10.7%2024-24s-10.7-24-24-24z%22/%3E%3C/svg%3E');}</style>
+
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/monokai.css">
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/colorful.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="kite" data-md-color-primary="indigo" data-md-color-accent="deep-orange">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#real-space-and-momentum-space-maps-a-linear-scaling-stochastic-estimator" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Quantum KITE" class="md-header__button md-logo" aria-label="Quantum KITE" data-md-component="logo">
+      
+<img alt="logo" src="../../../assets/images/site/safari-pinned-tab.svg" style="height:3.3 rem;width:3.3rem;">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Quantum KITE
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Local & Spectral Maps (Markov Estimator)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="kite" data-md-color-primary="indigo" data-md-color-accent="deep-orange"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6m0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4M7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="deep-orange"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/quantum-kite/kite-v2" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../installation/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Installation
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../" class="md-tabs__link">
+          
+  
+  
+  Documentation
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../background/" class="md-tabs__link">
+          
+  
+  
+  Background
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../api/" class="md-tabs__link">
+          
+  
+  
+  API
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../faq/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  FAQ
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../about/" class="md-tabs__link">
+          
+  
+  
+  About
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Quantum KITE" class="md-nav__button md-logo" aria-label="Quantum KITE" data-md-component="logo">
+      
+<img alt="logo" src="../../../assets/images/site/safari-pinned-tab.svg" style="height:3.3 rem;width:3.3rem;">
+
+    </a>
+    Quantum KITE
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/quantum-kite/kite-v2" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Documentation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Documentation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorial
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../optimization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0. Ground Rules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1. Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tb_model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2. Lattice
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3. Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../calculation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4. Calculation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../postprocessing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5. Post-processing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../disorder/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6. Disorder
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../magnetic/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7. Magnetic Fields
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../editing_hdf_files/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8. Editing an HDF5 file
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../performance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9. Performance & Memory Tuning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../code_structure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    10. Code Structure & Compilation Options
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_13" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3_13" id="__nav_3_13_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    In Depth Examples
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_13_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3_13">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    In Depth Examples
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    About the examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../graphene/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Graphene
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../haldane/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Haldane
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phosphorene/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phosphorene
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../optical_conductivity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Optical Conductivity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../spectral_function/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Spectral Function (ARPES)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Local & Spectral Maps (Markov Estimator)
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Local & Spectral Maps (Markov Estimator)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#real-space-and-momentum-space-maps-a-linear-scaling-stochastic-estimator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Real-space and momentum-space maps: a linear-scaling stochastic estimator
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Real-space and momentum-space maps: a linear-scaling stochastic estimator">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-the-naive-approach-is-expensive-and-how-a-random-vector-estimator-fixes-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why the naive approach is expensive, and how a random-vector estimator fixes it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-the-estimator-actually-returns-fh2-not-fh" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What the estimator actually returns: \(f(H)^2\), not \(f(H)\)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-markov-inequality-contribution-bounding-per-site-error-without-self-averaging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Markov-inequality contribution: bounding per-site error without self-averaging
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ldos_map-flux-lattice-ldos-around-a-single-vacancy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ldos_map() — π-flux lattice, LDOS around a single vacancy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spectral_map-weyl-semimetal-constant-energy-contours" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        spectral_map() — Weyl semimetal, constant-energy contours
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#relationship-to-the-single-target-calculations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Relationship to the single-target calculations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../custom_vertex_operators/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Custom Vertex Operators (Spin Hall Effect)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../altermagnet_arpes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Altermagnetism (Spin-Split ARPES)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../orbital_magnetization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orbital Magnetization (Rank-One Vertex)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../rashba_edelstein/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rashba-Edelstein Effect
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../time_evolution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Real-Time Wave-Packet Evolution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../oam_quadrupole_precession/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orbital Angular Momentum/Quadrupole Precession
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_14" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_14" id="__nav_3_14_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    KITE scripts v.1.1
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_14_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_14">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    KITE scripts v.1.1
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../more_examples/additional_examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    About Examples-dir
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_15" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_15" id="__nav_3_15_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Advanced Examples
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_15_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_15">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Advanced Examples
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../more_examples/large_systems/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Large Systems
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../more_examples/custom_local_potential/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Custom Local Potential
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../more_examples/paper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples from KITE's Paper
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Background
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Background
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../background/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview of KITE
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../background/spectral/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Spectral Methods
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../background/tight_binding/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tight-Binding Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    KITE (python)
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    KITE (python)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/kite/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Python package
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_3" id="__nav_5_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    KITEx
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    KITEx
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/kitex/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Main program
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_4" id="__nav_5_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    KITE-tools
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    KITE-tools
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/kite-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Toolbox
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/kite_tools_readme/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Addtitional scripts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    About
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    About
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    About KITE
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../about/publications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Publications
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../about/LICENSE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LICENSE.md
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../about/VERSION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    VERSION.md
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+  <h1>Local & Spectral Maps (Markov Estimator)</h1>
+
+<h3 id="real-space-and-momentum-space-maps-a-linear-scaling-stochastic-estimator">Real-space and momentum-space maps: a linear-scaling stochastic estimator<a class="headerlink" href="#real-space-and-momentum-space-maps-a-linear-scaling-stochastic-estimator" title="Permanent link">&para;</a></h3>
+<p>Most KITE calculations reduce a physical observable to a <strong>trace</strong> over the whole sample, e.g. the density of
+states <span class="arithmatex">\(\rho(E)=\tfrac1D\,\mathrm{Tr}\,\delta(E-\hat H)\)</span>, and evaluate that trace stochastically with a handful
+of random vectors. But sometimes the object of interest is not a single number for the whole sample — it is a
+<strong>field</strong>: the local density of states <span class="arithmatex">\(\rho(\mathbf r,E)=\langle \mathbf r|\delta(E-\hat H)|\mathbf r\rangle\)</span>
+at <em>every</em> site, or the spectral function <span class="arithmatex">\(A(\mathbf k,E)=\langle \mathbf k|\delta(E-\hat H)|\mathbf k\rangle\)</span>
+at <em>every</em> momentum. <a href="../../../api/kite/#calculation-ldos_map"><code class="highlight"><span class="n">ldos_map</span><span class="p">()</span></code></a> and <a href="../../../api/kite/#calculation-spectral_map"><code class="highlight"><span class="n">spectral_map</span><span class="p">()</span></code></a>
+compute exactly these two fields, over all sites / all momenta <strong>simultaneously</strong>, in a single linear-scaling pass.</p>
+<h4 id="why-the-naive-approach-is-expensive-and-how-a-random-vector-estimator-fixes-it">Why the naive approach is expensive, and how a random-vector estimator fixes it<a class="headerlink" href="#why-the-naive-approach-is-expensive-and-how-a-random-vector-estimator-fixes-it" title="Permanent link">&para;</a></h4>
+<p>The already-documented single-target calculations — <a href="../../../api/kite/#calculation-ldos"><code class="highlight"><span class="n">ldos</span><span class="p">()</span></code></a> for one chosen site
+and <a href="../../../api/kite/#calculation-arpes"><code class="highlight"><span class="n">arpes</span><span class="p">()</span></code></a> for one chosen <span class="arithmatex">\(\mathbf k\)</span>-point — each run the full Chebyshev
+recursion starting from <em>one</em> deterministic seed vector: a single site ket <span class="arithmatex">\(|\mathbf r_0\rangle\)</span>, or a single
+Bloch plane wave <span class="arithmatex">\(|\mathbf k_0\rangle\)</span>. Each such run costs <span class="arithmatex">\(O(N_\text{moments}\times D)\)</span> operations, where <span class="arithmatex">\(D\)</span>
+is the number of orbitals in the sample. To obtain the <em>full map</em> this way you would repeat the recursion once
+per site (or per <span class="arithmatex">\(\mathbf k\)</span>-point) — <span class="arithmatex">\(D\)</span> independent recursions, for a total cost <span class="arithmatex">\(O(N_\text{moments}\times D^2)\)</span>,
+quadratic in system size, and hopeless at the scales KITE targets.</p>
+<p>The map estimators avoid the outer loop entirely. They run the recursion from a <strong>single random-phase vector</strong></p>
+<div class="arithmatex">\[
+|\xi\rangle = \sum_{j} e^{\,i\theta_j}\,|j\rangle,\qquad \theta_j \ \text{i.i.d. uniform on } [0,2\pi),
+\]</div>
+<p>where <span class="arithmatex">\(j\)</span> runs over all orbitals of the sample (<code>Src/Tools/Random.cpp</code>'s <code>initA()</code> generates exactly this
+unit-modulus phase for the complex Hamiltonian instantiation; <code>Src/Vector/KPM_Vector2D.cpp::initiate_vector()</code>
+assigns one such entry per site). The key statistical identity is</p>
+<div class="arithmatex">\[
+\mathbb E\!\left[\,e^{\,i(\theta_{j}-\theta_{j'})}\right]=\delta_{jj'} .
+\]</div>
+<p>A single recursion carries information about <strong>all</strong> starting sites at once, and each map is filled from one
+<span class="arithmatex">\(O(N_\text{moments}\times D)\)</span> pass — linear scaling. The price is stochastic noise, controlled by the number
+of random vectors <code class="highlight"><span class="n">vectors_</span></code>.</p>
+<h4 id="what-the-estimator-actually-returns-fh2-not-fh">What the estimator actually returns: <span class="arithmatex">\(f(H)^2\)</span>, not <span class="arithmatex">\(f(H)\)</span><a class="headerlink" href="#what-the-estimator-actually-returns-fh2-not-fh" title="Permanent link">&para;</a></h4>
+<p>This is the one point that must be stated carefully, because it drives the normalization. Reading
+<code>Src/Simulation/SimulationLDoS.cpp::ldos()</code>, the per-site map is built as a Chebyshev reconstruction
+<span class="arithmatex">\(f(\hat H)=\sum_n c_n T_n(\hat H)\)</span> applied to <span class="arithmatex">\(|\xi\rangle\)</span>, then</p>
+<div class="arithmatex">\[
+\text{map}_r = \text{factor}\cdot\big|\langle r|f(\hat H)|\xi\rangle\big|^2 .
+\]</div>
+<p>Since <span class="arithmatex">\(|\xi_r|=1\)</span>, taking the expectation over the random phases gives</p>
+<div class="arithmatex">\[
+\mathbb E\big[\,|\langle r|f(\hat H)|\xi\rangle|^2\big]
+=\sum_{r',r''} f(\hat H)_{r r'}\,f(\hat H)^{*}_{r r''}\,\mathbb E\!\left[e^{i(\theta_{r'}-\theta_{r''})}\right]
+=\sum_{r'} |f(\hat H)_{r r'}|^2
+=\big[f(\hat H)^2\big]_{rr},
+\]</div>
+<p>using hermiticity of <span class="arithmatex">\(f(\hat H)\)</span> in the last step. <strong>The estimator returns the diagonal of <span class="arithmatex">\(f(\hat H)^2\)</span>, not of
+<span class="arithmatex">\(f(\hat H)\)</span>.</strong> This is intrinsic to a positive-definite (squared-amplitude) estimator, and it is precisely what
+lets the Markov bound apply below — but it means the reconstruction must be chosen so that <span class="arithmatex">\(f(\hat H)^2\)</span>, not
+<span class="arithmatex">\(f(\hat H)\)</span>, approximates a delta function.</p>
+<p>KITE handles this with a deliberate rescaling. If <span class="arithmatex">\(\delta_s(x)=e^{-x^2/2s^2}/(s\sqrt{2\pi})\)</span> is a normalized
+Gaussian, then <span class="arithmatex">\([\delta_s(x)]^2=\tfrac{1}{2s\sqrt\pi}\,\delta_{s/\sqrt2}(x)\)</span> — a normalized Gaussian of width
+<span class="arithmatex">\(s/\sqrt2\)</span> carrying total weight <span class="arithmatex">\(1/(2s\sqrt\pi)\)</span>. So to obtain an LDOS broadened by the <em>requested</em> width
+<span class="arithmatex">\(\sigma\)</span>, KITE builds <span class="arithmatex">\(f=\delta_s\)</span> with <span class="arithmatex">\(s=\sqrt2\,\sigma\)</span> and multiplies by <span class="arithmatex">\(2s\sqrt\pi=\sqrt{8\pi}\,\sigma\)</span> to
+renormalize <span class="arithmatex">\(f^2\)</span> back to unit weight — exactly the <code>factor = √(8π)·σ/energy_scale</code> prefactor used in the code
+(the extra <span class="arithmatex">\(1/\text{energy\_scale}\)</span> converts the delta from the rescaled Chebyshev energy back to physical
+units). In summary,</p>
+<div class="arithmatex">\[
+\boxed{\ \mathbb E[\text{map}_r]=\langle r|\,\delta_\sigma(E-\hat H)\,|r\rangle=\rho_\sigma(r,E)\ }
+\]</div>
+<p>exactly the local density of states, broadened by <code class="highlight"><span class="n">sigma_</span></code>.</p>
+<h4 id="the-markov-inequality-contribution-bounding-per-site-error-without-self-averaging">The Markov-inequality contribution: bounding per-site error without self-averaging<a class="headerlink" href="#the-markov-inequality-contribution-bounding-per-site-error-without-self-averaging" title="Permanent link">&para;</a></h4>
+<p>For a <strong>global</strong> quantity such as the total DOS, the stochastic-trace relative error scales as
+<span class="arithmatex">\(1/\sqrt{N_R D}\)</span>: the trace averages over all <span class="arithmatex">\(D\)</span> sites <em>and</em> over <span class="arithmatex">\(N_R\)</span> random vectors, so a larger sample is
+itself a larger sample average — the estimator <strong>self-averages</strong>, and the error shrinks as the system grows
+even at fixed <span class="arithmatex">\(N_R\)</span>.</p>
+<p>A <strong>local</strong> observable has no such luxury. <span class="arithmatex">\(\rho(r,E)\)</span> at one site is estimated only from the <span class="arithmatex">\(N_R\)</span>
+random-vector realizations at that site; enlarging the sample adds <em>more sites to estimate</em>, not more samples
+of the site you care about. In a disordered or inhomogeneous system the true site-to-site variation of
+<span class="arithmatex">\(\rho(r,E)\)</span> does not diminish with system size — it is physical. So the naive intuition "bigger system
+<span class="arithmatex">\(\Rightarrow\)</span> smaller error" fails for a map: <strong>local observables lack self-averaging.</strong></p>
+<p>This is the problem addressed by Veiga, Pinheiro, Santos Pires &amp; Viana Parente Lopes<sup id="fnref:1"><a class="footnote-ref" href="#fn:1">1</a></sup>. Their observation
+is that the map estimator above is <strong>positive-definite</strong> — each sample <span class="arithmatex">\(\hat X_r\ge 0\)</span> — and a nonnegative
+random variable obeys <strong>Markov's inequality</strong>,</p>
+<div class="arithmatex">\[
+\mathbb P\big(\hat X_r \ge a\big)\ \le\ \frac{\mathbb E[\hat X_r]}{a},
+\]</div>
+<p>which yields a <em>per-site</em>, distribution-free confidence bound on the sampling error that holds regardless of
+self-averaging — the right tool precisely because the usual <span class="arithmatex">\(1/\sqrt{N_R D}\)</span> argument is unavailable. (KITE also
+reports the empirical per-site stochastic standard error directly: the second row of the output dataset is a
+running Welford variance over the <code class="highlight"><span class="n">vectors_</span></code> realizations.) This page reconstructs the general logic
+of why a Markov bound applies here; the paper's precise quantitative bound is not reproduced — consult the
+reference directly for the exact constant.</p>
+<p>The practical consequence: increasing <code class="highlight"><span class="n">vectors_</span></code> reduces the per-site noise as <span class="arithmatex">\(1/\sqrt{\text{vectors\_}}\)</span>
+(standard Monte-Carlo), with the Markov argument guaranteeing the <em>relative</em> error at each site is controlled —
+which is why the examples below can shrink from research scale (<span class="arithmatex">\(2048^2\)</span> lattice, 64 vectors) down to laptop
+scale (<span class="arithmatex">\(256^2\)</span>, 32 vectors) and still resolve the physics, just noisier.</p>
+<h4 id="ldos_map-flux-lattice-ldos-around-a-single-vacancy"><code>ldos_map()</code> — π-flux lattice, LDOS around a single vacancy<a class="headerlink" href="#ldos_map-flux-lattice-ldos-around-a-single-vacancy" title="Permanent link">&para;</a></h4>
+<p><code class="highlight"><span class="n">examples</span><span class="o">/</span><span class="n">piflux_ldos_map</span><span class="o">.</span><span class="n">py</span></code> builds a two-sublattice square lattice (<span class="arithmatex">\(\mathbf a_1=[2,0]\)</span>,
+<span class="arithmatex">\(\mathbf a_2=[0,1]\)</span>; A at <span class="arithmatex">\([0,0]\)</span>, B at <span class="arithmatex">\([1,0]\)</span>) with a <strong>staggered-sign</strong> hopping pattern: uniform <span class="arithmatex">\(-t\)</span> on the
+horizontal A–B bonds, but <span class="arithmatex">\(+t\)</span> on the B–B and <span class="arithmatex">\(-t\)</span> on the A–A vertical bonds. Going around one plaquette the
+signs multiply to <span class="arithmatex">\(-1\)</span> — each plaquette is threaded by exactly <span class="arithmatex">\(\pi\)</span> flux, which folds the square-lattice
+spectrum onto a <strong>Dirac cone at <span class="arithmatex">\(E=0\)</span></strong>, a bipartite-lattice stand-in for graphene-like low-energy physics.</p>
+<p>A <strong>single vacancy</strong> is placed on the A sublattice at the sample center via <code class="highlight"><span class="n">kite</span><span class="o">.</span><span class="n">StructuralDisorder</span></code>.
+A vacancy at the Dirac point is a physically meaningful test: a missing site acts as a <strong>resonant
+(zero-energy) scatterer</strong> in a Dirac system, producing a characteristic LDOS perturbation — suppression at the
+defect and slowly decaying, oscillatory (Friedel-like) structure around it — rather than a featureless uniform
+map:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">calculation</span><span class="o">.</span><span class="n">ldos_map</span><span class="p">(</span><span class="n">energy_</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">sigma_</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">,</span> <span class="n">vectors_</span><span class="o">=</span><span class="mi">32</span><span class="p">)</span>
+</code></pre></div>
+<figure>
+    <img src="../../../assets/images/markov_local_maps/piflux_ldos_map.png" style="width: 32em;" />
+    <figcaption>Real-space LDOS at E=0 around a single vacancy in the pi-flux lattice (log color scale).</figcaption>
+</figure>
+
+<p>The verified result: the LDOS is <em>exactly zero</em> at the vacancy site itself (there is no A orbital there to
+carry weight); the brightest response sits one lattice site off-center, essentially ringing the vacancy; and
+the perturbation decays outward with visible oscillatory structure. That oscillation spans roughly two orders
+of magnitude between background and peak, so a <strong>linear</strong> color scale collapses everything but the single
+brightest pixel — the figure above uses a <strong>log</strong> color scale, which is what makes the decaying ring structure
+visible. There is no KITE-tools step for <code class="highlight"><span class="n">ldos_map</span></code>; the <code class="highlight"><span class="o">/</span><span class="n">Calculation</span><span class="o">/</span><span class="n">ldos_map</span><span class="o">/</span><span class="n">Map</span></code> dataset
+(shape <code>(2, Sizet)</code>, row 0 the mean, row 1 the stochastic standard error) is read directly with <code class="highlight"><span class="n">h5py</span></code>.</p>
+<h4 id="spectral_map-weyl-semimetal-constant-energy-contours"><code>spectral_map()</code> — Weyl semimetal, constant-energy contours<a class="headerlink" href="#spectral_map-weyl-semimetal-constant-energy-contours" title="Permanent link">&para;</a></h4>
+<p><code class="highlight"><span class="n">examples</span><span class="o">/</span><span class="n">weyl_spectral_map</span><span class="o">.</span><span class="n">py</span></code> builds a two-sublattice cubic lattice with a mass term (<span class="arithmatex">\(\pm mt\)</span>
+on-site) and complex nearest-neighbor hoppings realizing a pair of <strong>Weyl nodes</strong> — point-like band touchings
+with linear dispersion in all three momentum directions. <code class="highlight"><span class="n">spectral_map</span></code> computes <span class="arithmatex">\(A(\mathbf k,E)\)</span> on
+the reciprocal grid dual to the supercell, at a <strong>fixed</strong> energy <span class="arithmatex">\(E=0.7\)</span> deliberately away from the node
+energy, so the constant-energy surface is a pair of small spheres around the two nodes rather than two points.
+A <span class="arithmatex">\((k_y,k_z)\)</span> slice at <span class="arithmatex">\(k_x=0\)</span> therefore cuts each Weyl sphere in a <strong>closed ring</strong>:</p>
+<figure>
+    <img src="../../../assets/images/markov_local_maps/weyl_spectral_map.png" style="width: 32em;" />
+    <figcaption>Momentum-space spectral function of a Weyl semimetal at E=0.7: two ring contours, the iso-energy
+    cut through the two Weyl cones.</figcaption>
+</figure>
+
+<p>The verified result is exactly that: two clean closed-ring contours in the <span class="arithmatex">\((k_y,k_z)\)</span> plane — the iso-energy
+cut through two separated Weyl cones.</p>
+<p><strong>The open-boundary caveat (real physics, not an artifact — mentioned here, not illustrated).</strong> The momentum
+resolution is produced by wrapping the Chebyshev recursion between an inverse and a forward FFT — the k-space
+sibling of the real-space identity above, with the same <span class="arithmatex">\(f^2\!\to\!\delta\)</span> renormalization. Crucially, this FFT
+runs over <strong>all declared lattice axes</strong>. A momentum label is only physically meaningful along a direction with
+translational symmetry; along an <strong>open (hard-wall) boundary</strong> momentum is not conserved, so Fourier-transforming
+that axis smears the spectral weight into a flat, featureless distribution instead of sharp peaks. The example
+sets <code class="highlight"><span class="n">boundaries</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;open&quot;</span><span class="p">,</span><span class="s2">&quot;random&quot;</span><span class="p">,</span><span class="s2">&quot;random&quot;</span><span class="p">]</span></code> on purpose — <span class="arithmatex">\(x\)</span> open, <span class="arithmatex">\(y,z\)</span> periodic (twist-averaged) —
+so <span class="arithmatex">\(k_x\)</span> itself is not a meaningful label; that is exactly why the figure above only shows the <span class="arithmatex">\((k_y,k_z)\)</span> slice
+and never plots anything against <span class="arithmatex">\(k_x\)</span>. At this lattice size the periodic-axis resolution isn't clean enough to
+make a convincing side-by-side comparison of sharp-vs-smeared peaks, so no such plot is shown here — the point is
+made as a caveat in words: <code class="highlight"><span class="n">spectral_map</span><span class="p">()</span></code> gives meaningful <span class="arithmatex">\(\mathbf k\)</span>-resolution only along
+periodic/twist-averaged directions.</p>
+<h4 id="relationship-to-the-single-target-calculations">Relationship to the single-target calculations<a class="headerlink" href="#relationship-to-the-single-target-calculations" title="Permanent link">&para;</a></h4>
+<p><code class="highlight"><span class="n">ldos_map</span></code>/<code class="highlight"><span class="n">spectral_map</span></code> are the "all-at-once" stochastic siblings of the deterministic
+single-target routines:</p>
+<table>
+<thead>
+<tr>
+<th>single target (deterministic seed)</th>
+<th>full field (random-phase seed)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../../api/kite/#calculation-ldos"><code class="highlight"><span class="n">ldos</span><span class="p">()</span></code></a> — one site $</td>
+<td>\mathbf r_0\rangle$</td>
+</tr>
+<tr>
+<td><a href="../../../api/kite/#calculation-arpes"><code class="highlight"><span class="n">arpes</span><span class="p">()</span></code></a> — one Bloch state $</td>
+<td>\mathbf k_0\rangle$</td>
+</tr>
+</tbody>
+</table>
+<p>Both map routines are compiled only for the <strong>complex</strong> Hamiltonian instantiation, so
+<code class="highlight"><span class="n">is_complex</span><span class="o">=</span><span class="kc">True</span></code> is mandatory even for a real-hopping lattice — otherwise the branch is compiled away
+and the calculation silently produces no output dataset at all. Both trade the exactness of a single-point
+evaluation for linear scaling and per-site stochastic error, with the number of random vectors as the accuracy
+knob and the Markov bound as the guarantee that the per-site error is controlled despite the absence of
+self-averaging.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<p>Get more familiar with KITE: run <a href="https://github.com/quantum-kite/kite-v2/tree/master/examples/piflux_ldos_map.py"><code class="highlight"><span class="n">examples</span><span class="o">/</span><span class="n">piflux_ldos_map</span><span class="o">.</span><span class="n">py</span></code></a> and
+<a href="https://github.com/quantum-kite/kite-v2/tree/master/examples/weyl_spectral_map.py"><code class="highlight"><span class="n">examples</span><span class="o">/</span><span class="n">weyl_spectral_map</span><span class="o">.</span><span class="n">py</span></code></a> yourself, and try varying <code class="highlight"><span class="n">vectors_</span></code> to
+see the sampling noise shrink.</p>
+</div>
+<div class="footnote">
+<hr />
+<ol>
+<li id="fn:1">
+<p>H. P. Veiga, D. R. Pinheiro, J. P. Santos Pires, and J. M. Viana Parente Lopes, "Markov Inequality as a Tool for
+Linear-Scaling Estimation of Local Observables," <a href="https://journals.aps.org/prresearch/abstract/10.1103/qb1w-44r1">Phys. Rev. Research, doi:10.1103/qb1w-44r1</a>,
+<a href="https://arxiv.org/abs/2510.21688">arXiv:2510.21688</a>.&#160;<a class="footnote-backref" href="#fnref:1" title="Jump back to footnote 1 in the text">&#8617;</a></p>
+</li>
+</ol>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <!--
+  Copyright (c) 2025 KITE <support@quantum-kite.com>
+
+  KITE is a free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as
+  published by the Free Software Foundation - version 3
+-->
+
+
+<!-- Footer -->
+<footer class="md-footer">
+
+    <!-- Link to previous and/or next page -->
+    
+    <nav class="md-footer__inner md-grid" aria-label="footer.title">
+
+        <!-- Link to previous page -->
+        
+        
+        <a href="../spectral_function/" class="md-footer__link md-footer__link--prev"
+            aria-label="Previous: Spectral Function (ARPES)" rel="prev">
+            <div class="md-footer__button md-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+                <div class="md-ellipsis">
+                    <span class="md-footer__direction">
+                        Previous
+                    </span>
+                    Spectral Function (ARPES)
+                </div>
+            </div>
+        </a>
+        
+
+        <!-- Link to next page -->
+        
+        
+        <a href="../custom_vertex_operators/" class="md-footer__link md-footer__link--next"
+            aria-label="Next: Custom Vertex Operators (Spin Hall Effect)" rel="next">
+            <div class="md-footer__title">
+                <div class="md-ellipsis">
+                    <span class="md-footer__direction">
+                        Next
+                    </span>
+                    Custom Vertex Operators (Spin Hall Effect)
+                </div>
+            </div>
+            <div class="md-footer__button md-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+        </a>
+        
+    </nav>
+    
+
+    <!-- Further information -->
+    <div class="md-footer-meta md-typeset">
+        <div class="md-footer-meta__inner md-grid">
+            <!--
+  Copyright (c) 2025 KITE <support@quantum-kite.com>
+
+  KITE is a free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as
+  published by the Free Software Foundation - version 3
+-->
+
+<!-- Copyright and theme information -->
+
+<div class="md-copyright">
+  
+  <div class="md-copyright__highlight">
+    KITE is a free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation - version 3. Copyright © 2023 KITE
+  </div>
+  
+  
+
+  Website powered by
+  <a href="https://www.mkdocs.org" target="_blank" rel="noopener">MkDocs</a>,
+  <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">Material for MkDocs</a> and
+  <a href="http://www.styleshout.com/" target="_blank" rel="noopener">styleshout</a>.
+  
+</div>
+
+            <!-- Social links -->
+            
+        </div>
+    </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.top", "navigation.sections", "navigation.expand", "navigation.tracking", "toc.integrate", "toc.follow"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../../../assets/javascripts/mathjax-config.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+        <script src="https://unpkg.com/mermaid@7.1.2/dist/mermaid.min.js"></script>
+      
+    
+  </body>
+</html>
