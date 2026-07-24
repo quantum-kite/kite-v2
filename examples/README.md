@@ -90,6 +90,12 @@ These are pure-KITE scripts (using `kite.lattice.Lattice`, `src/kite/lattice.py`
 | --- | --- |
 | `haldane_orbital_magnetization.py` | Orbital magnetization of the Haldane Chern insulator via `custom.Vertex` + `calculation.custom_one` (rank-one trace `Tr[Tn(H)·A]`, `A = x·H·y − y·H·x`). The reconstructed magnetization slope across the bulk gap matches the exact k-space (Streda-relation) prediction `C/(2π)` to ~3%. Post-process with `../build/KITE-tools ... --CustomOne` then `process_haldane_orbital_magnetization.py`. See the [in-depth write-up][orbital-mag-example]. |
 
+**Real-time wave-packet propagation**
+
+| Script | What it demonstrates |
+| --- | --- |
+| `oam_quadrupole_precession.py` | Real-time coupled precession of orbital angular momentum `L` and orbital quadrupoles `Q_ab = {L_a,L_b}/2` on an sp3 (s,px,py,pz) square-lattice model with anisotropic p-p hopping, tracked via `calculation.gaussian_wave_packet(..., operators=[...])` — the same generalized wave-packet propagator used for spin precession in `examples/paper/Section_4_E_spintronics`, now tracking arbitrary on-site operators instead of a hardcoded spin. `⟨Q_xy(t)⟩` stays exactly zero throughout, a symmetry-protected selection rule (see the script's docstring), not a bug. Post-process with `oam_quadrupole_precession_process.py`. |
+
 **Custom local potential**
 
 | Directory | What it demonstrates |

@@ -42,6 +42,7 @@ nav:
       - Altermagnetism (Spin-Split ARPES): 'documentation/examples/altermagnet_arpes.md'
       - Orbital Magnetization (Rank-One Vertex): 'documentation/examples/orbital_magnetization.md'
       - Rashba-Edelstein Effect: 'documentation/examples/rashba_edelstein.md'
+      - Orbital Angular Momentum/Quadrupole Precession: 'documentation/examples/oam_quadrupole_precession.md'
     - KITE scripts v.1.1:
       - About Examples-dir: 'documentation/more_examples/additional_examples.md'
     - Advanced Examples:
