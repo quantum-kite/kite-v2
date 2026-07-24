@@ -123,3 +123,6 @@ pp
 
 # Python cache files
 __pycache__
+
+# Personal/local-only scratch scripts -- never tracked, never pushed
+/local_scripts/

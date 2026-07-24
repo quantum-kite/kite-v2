@@ -94,6 +94,7 @@ These are pure-KITE scripts (using `kite.lattice.Lattice`, `src/kite/lattice.py`
 
 | Script | What it demonstrates |
 | --- | --- |
+| `spin_precession_simple.py` | The simplest possible introduction to `calculation.gaussian_wave_packet()`: textbook Larmor precession of a spin-1/2 in a uniform transverse field (a toy on-site coupling, not a simulated electromagnetic field — see the script's docstring), on a plain square lattice with no other physics. Matches the exact analytic solution to machine precision (~1e-13) over more than one full period, with zero dephasing (the coupling is k-independent). See the [in-depth write-up][time-evolution-example]. |
 | `oam_quadrupole_precession.py` | Real-time evolution of orbital angular momentum `L` and orbital quadrupoles `Q_ab = {L_a,L_b}/2` on an sp3 (s,px,py,pz) square-lattice model with anisotropic p-p hopping, tracked via `calculation.gaussian_wave_packet(..., operators=[...])` — the same generalized wave-packet propagator used for spin precession in `examples/paper/Section_4_E_spintronics`, now tracking arbitrary on-site operators instead of a hardcoded spin. Seeded with a pure `L_z=+1` state at `k=0`: `L_z` decays slowly from k-space dephasing (px/py are exactly degenerate only at k=0 itself), while `L_x`, `L_y`, and every off-diagonal `Q_ab` stay pinned at exactly zero — selection rules, not bugs (see the script's docstring). Post-process with `oam_quadrupole_precession_process.py`. |
 
 **Custom local potential**
@@ -171,6 +172,7 @@ python3
 [custom-vertex-example]: ../examples/custom_vertex_operators.md
 [orbital-mag-example]: ../examples/orbital_magnetization.md
 [rashba-edelstein-example]: ../examples/rashba_edelstein.md
+[time-evolution-example]: ../examples/time_evolution.md
 [altermagnet-example]: ../examples/altermagnet_arpes.md
 [graphene-example]: ../examples/graphene.md
 [haldane-example]: ../examples/haldane.md
