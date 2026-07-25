@@ -71,6 +71,9 @@ These are pure-KITE scripts (using `kite.lattice.Lattice`, `src/kite/lattice.py`
 | `piflux_ldos_map.py` | Real-space local-density-of-states map (`calculation.ldos_map`) around a single vacancy in a π-flux (Dirac) square lattice, at the Dirac-point energy. Post-process with `process_piflux_ldos.py`. See the [in-depth write-up][markov-maps-example]. |
 | `weyl_spectral_map.py` | Momentum-space spectral-function map (`calculation.spectral_map`) of a 3D Weyl semimetal, showing the Weyl-node iso-energy ring contours. Post-process with `process_weyl_spectral.py`. See the [in-depth write-up][markov-maps-example]. |
 | `ldos_spin_operator_validation.py` | Cross-validates `calculation.ldos()`/`ldos_map()`'s `operators=` parameter (the operator-weighted local spectral density Tr[O·Im G(r,r,E)], e.g. spin-resolved LDOS) on the `altermagnet_arpes.py` lattice: runs both the exact and stochastic methods for the same Sz operator and checks they agree, plus a single-orbital-projector regression check against the plain (non-operator) LDOS/map. Post-process with `ldos_spin_operator_validation_process.py`. |
+| `afm_zigzag_bands.py` | Standalone plain-numpy exact diagonalization (no KITEx) of a zigzag graphene ribbon with a fixed staggered Néel mass: bulk bands (Gamma-K-M-Gamma) and ribbon bands, showing the bulk gap and the flat edge bands at E=&plusmn;&Delta;. A quick, cheap check of the model before running the KPM examples below. |
+| `afm_zigzag_ribbon.py` | Real-space Sz map (`ldos_map(operators=[...])`, one operator per sublattice) of the same Néel-gapped zigzag ribbon, clean vs. ~5% vacancy concentration (both spin channels removed at the same site). Post-process with `afm_zigzag_ribbon_process.py`. See the [in-depth write-up][afm-ribbon-example]. |
+| `afm_zigzag_dos.py` | Spin-resolved *total* DOS (`custom_one()` with spin projectors, not Sz) of the same ribbon, clean vs. ~5% vacancy, spin up vs. down as four separate KITEx runs. Post-process with `afm_zigzag_dos_process.py`. See the [in-depth write-up][afm-ribbon-example]. |
 | `rashba_zeeman_spin_texture.py` | Real-space spin-density texture (Sx, Sy, Sz, via `ldos_map(operators=[...])`) around a single vacancy in a Rashba+Zeeman honeycomb lattice (the Qiao et al. PRB 82, 161414(R) (2010) QAHE model, reusing `rashba_edelstein_graphene.py`'s lattice). Shows a statistically-significant, tightly localized in-plane (Sx,Sy) texture from Rashba spin-momentum-locked scattering off the defect, against a broad uniform Sz background from the Zeeman term. Post-process with `rashba_zeeman_spin_texture_process.py` (arrow/quiver + color-map figure, significance-gated to avoid plotting stochastic noise as signal). |
 
 **Custom two-operator (Vertex) correlation functions**
@@ -92,7 +95,6 @@ These are pure-KITE scripts (using `kite.lattice.Lattice`, `src/kite/lattice.py`
 | Script | What it demonstrates |
 | --- | --- |
 | `spin_precession_simple.py` | The simplest possible introduction to `calculation.gaussian_wave_packet()`: textbook Larmor precession of a spin-1/2 in a uniform transverse field (a toy on-site coupling, not a simulated electromagnetic field — see the script's docstring), on a plain square lattice with no other physics. Matches the exact analytic solution to machine precision (~1e-13) over more than one full period, with zero dephasing (the coupling is k-independent). See the [in-depth write-up][time-evolution-example]. |
-| `oam_quadrupole_precession.py` | Real-time evolution of orbital angular momentum `L` and orbital quadrupoles `Q_ab = {L_a,L_b}/2` on an sp3 (s,px,py,pz) square-lattice model with anisotropic p-p hopping, tracked via `calculation.gaussian_wave_packet(..., operators=[...])` — the same generalized wave-packet propagator used for spin precession in `examples/paper/Section_4_E_spintronics`, now tracking arbitrary on-site operators instead of a hardcoded spin. Seeded with a pure `L_z=+1` state at `k=0`: `L_z` decays slowly from k-space dephasing (px/py are exactly degenerate only at k=0 itself), while `L_x`, `L_y`, and every off-diagonal `Q_ab` stay pinned at exactly zero — selection rules, not bugs (see the script's docstring). Post-process with `oam_quadrupole_precession_process.py`. |
 
 **Custom local potential**
 
@@ -181,3 +183,4 @@ python3
 [phosphorene-example]: ../examples/phosphorene.md
 [optical-conductivity-example]: ../examples/optical_conductivity.md
 [spectral-function-example]: ../examples/spectral_function.md
+[afm-ribbon-example]: ../examples/afm_zigzag_ribbon.md

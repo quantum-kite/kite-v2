@@ -68,10 +68,9 @@ auto-completion — only one direction of each bond is ever written out explicit
 Because the field term doesn't depend on $k$ and the kinetic part is identical for both
 orbitals, the full Bloch Hamiltonian factorizes exactly as $H(k)=\varepsilon(k)\hat I+B\hat\sigma_x$
 at *every* $k$ — so the precession above holds exactly, for a wave packet of any width or
-shape, with **no dephasing**. (Contrast this with the
-[orbital angular momentum/quadrupole example][oam-example], where the analogous coupling
-term is $k$-dependent, and a finite-width wave packet dephases from its own momentum spread —
-a genuinely different, more advanced regime.)
+shape, with **no dephasing**. This is a special case: whenever the tracked operator's coupling
+is $k$-dependent instead, a finite-width wave packet dephases from its own momentum spread —
+a genuinely different, more advanced regime.
 
 ### Tracking an operator during propagation
 
@@ -127,5 +126,4 @@ for both the propagator and the operator-registration mechanism.
 [calculation-gaussian_wave_packet]: ../../api/kite.md#calculation-gaussian_wave_packet
 [calculation-custom_one]: ../../api/kite.md#calculation-custom_one
 [calculation-add_orbital_coupling]: ../../api/kite.md#calculation-add_orbital_coupling
-[oam-example]: oam_quadrupole_precession.md
 [precession-example]: https://github.com/quantum-kite/kite-v2/tree/master/examples/spin_precession_simple.py
