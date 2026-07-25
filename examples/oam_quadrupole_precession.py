@@ -37,8 +37,8 @@
     the orbital Hall example; as with spin, the overall sign of an angular
     momentum operator is a convention, not a physical ambiguity.
 
-    Validation (reviewed by cmt-physicist)
-    ---------------------------------------
+    Validation
+    ----------
     The wave packet is seeded at k=0 with a PURE L_z=+1 state,
     (p_x + i*p_y)/sqrt(2) -- no s or p_z admixture. This is deliberately the
     cleanest, least ambiguous starting point, but it means almost nothing

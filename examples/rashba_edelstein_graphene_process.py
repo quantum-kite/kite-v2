@@ -92,14 +92,29 @@ def edelstein(file_path, mu_values, k_BT=0.01, scat_phys=0.04,
     previously-broken structural checks: chi_yx(mu) becomes odd in mu with a
     genuine zero at mu=0 for pure Rashba (lambda_I=0), and drops to
     near-zero inside the lattice's true bulk gap (lambda_I!=0) instead of
-    showing a spurious flat Fermi-sea-like plateau there.
+    showing a spurious flat Fermi-sea-like plateau there. p=0 and p=3 are not
+    independently validated against a separate physical vertex (that would
+    need a genuinely different vertex construction with 0 or 3 velocity
+    tokens), but tests/custom_two_mod4_regression.py verifies the full 4-entry
+    table is internally self-consistent: since Z(E) is linear in Gamma_mn,
+    multiplying the already-validated p=2 data by i^s and reading off the
+    table entry for p=(2+s)%4 must reproduce the identical physical result
+    for all four residues, which it does to machine precision.
 
     Units: same e^2/h calibration as conductivity_dc (see custom_two's own
     docstring in docs/api/kite.md), with the EnergyScale^(NumVelocities-2)
     correction applied for NumVelocities != 2 (derived from KITE's rescaled-
-    Hamiltonian convention, same logic as custom_one's EnergyScale factor).
-    For this vertex (NumVelocities=1) the result carries one fewer power of
-    e than e^2/h, i.e. e/h.
+    Hamiltonian convention, same logic as custom_one's EnergyScale factor) --
+    this correction is generic in NumVelocities, not just this vertex's p=1:
+    an observable built from A,B with a combined NumVelocities=p carries p-2
+    fewer powers of the rescaling energy_scale than the p=2 (e^2/h-like)
+    case, i.e. p powers of e (one per velocity operator, following KITE's raw
+    "v"=[H,r] convention) divided by h and multiplied by
+    energy_scale^(p-2) to restore physical energy units; whether that
+    combination is literally e^2/h, e/h, or something else depends on how
+    many of A,B are themselves velocity operators versus dimensionless
+    operators like spin, not on p alone. For this vertex (NumVelocities=1)
+    the result carries one fewer power of e than e^2/h, i.e. e/h.
     """
     with h5py.File(file_path, "r") as f:
         num_orbitals = np.array(f["NOrbitals"]).item()

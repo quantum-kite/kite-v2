@@ -59,11 +59,6 @@ These are pure-KITE scripts (using `kite.lattice.Lattice`, `src/kite/lattice.py`
 | `dccond_phosphorene.py` | Single-shot DC conductivity (`xx`/`yy`) of bilayer phosphorene. See the [in-depth Phosphorene write-up][phosphorene-example]. |
 | `weyl_lt.py` | The same Weyl-semimetal optical-conductivity calculation as `optcond_t_symmetric_cubic_weyl_sm.py`, built using KITE's own `kite.lattice.Lattice` API rather than pybinding — compare directly against `pybinding/weyl_pb.py`. |
 
-!!! warning "Known issue"
-    `dccond_phosphorene.py` currently has a pre-existing, unrelated bug: line 145 references an undefined
-    name `npoints` (the variable actually defined a few lines above is `num_points`), so running the script
-    as-is raises a `NameError`. This is independent of anything else described on this page.
-
 **Local density of states (LDOS) and spectral function (ARPES)**
 
 | Script | What it demonstrates |
@@ -75,6 +70,8 @@ These are pure-KITE scripts (using `kite.lattice.Lattice`, `src/kite/lattice.py`
 | `altermagnet_arpes.py` | Spin-resolved ARPES on a minimal 2D d-wave altermagnet (square lattice, Néel exchange + sublattice-swapped anisotropic NNN hopping): spin-up and spin-down Fermi pockets come out exactly 90°-rotated copies of each other, the defining altermagnet signature (zero net moment, non-relativistic spin splitting). Post-process with `process_altermagnet_arpes.py`. See the [in-depth write-up][altermagnet-example], including the full Bloch Hamiltonian. |
 | `piflux_ldos_map.py` | Real-space local-density-of-states map (`calculation.ldos_map`) around a single vacancy in a π-flux (Dirac) square lattice, at the Dirac-point energy. Post-process with `process_piflux_ldos.py`. See the [in-depth write-up][markov-maps-example]. |
 | `weyl_spectral_map.py` | Momentum-space spectral-function map (`calculation.spectral_map`) of a 3D Weyl semimetal, showing the Weyl-node iso-energy ring contours. Post-process with `process_weyl_spectral.py`. See the [in-depth write-up][markov-maps-example]. |
+| `ldos_spin_operator_validation.py` | Cross-validates `calculation.ldos()`/`ldos_map()`'s `operators=` parameter (the operator-weighted local spectral density Tr[O·Im G(r,r,E)], e.g. spin-resolved LDOS) on the `altermagnet_arpes.py` lattice: runs both the exact and stochastic methods for the same Sz operator and checks they agree, plus a single-orbital-projector regression check against the plain (non-operator) LDOS/map. Post-process with `ldos_spin_operator_validation_process.py`. |
+| `rashba_zeeman_spin_texture.py` | Real-space spin-density texture (Sx, Sy, Sz, via `ldos_map(operators=[...])`) around a single vacancy in a Rashba+Zeeman honeycomb lattice (the Qiao et al. PRB 82, 161414(R) (2010) QAHE model, reusing `rashba_edelstein_graphene.py`'s lattice). Shows a statistically-significant, tightly localized in-plane (Sx,Sy) texture from Rashba spin-momentum-locked scattering off the defect, against a broad uniform Sz background from the Zeeman term. Post-process with `rashba_zeeman_spin_texture_process.py` (arrow/quiver + color-map figure, significance-gated to avoid plotting stochastic noise as signal). |
 
 **Custom two-operator (Vertex) correlation functions**
 
@@ -144,16 +141,21 @@ folders directly for the full scripts.
 
 ## Running everything at once
 
-All the results can be generated automatically by running
+`run_all_examples.py` only exists under `examples/pybinding/` (there is no top-level runner for the
+`kite.lattice`-based scripts elsewhere in this folder) and only covers that subfolder's
+pybinding-dependent scripts. From `examples/pybinding/`, all of them can be generated automatically by
+running
 
 ``` bash
 python3 run_all_examples.py
 ```
 
-After running this command, all the examples will be executed. This can take several minutes.
-Besides the output files, like *name-dos.dat*, plots will be given for the *DOS*, *optical conductivity* and *DC conductivity*.
+After running this command, all the pybinding-dependent examples will be executed. This can take
+several minutes. Besides the output files, like *name-dos.dat*, plots will be given for the *DOS*,
+*optical conductivity* and *DC conductivity*.
 
-To clean up the folder after running all the examples, execute the following commands
+To clean up the folder after running all the examples, execute the following commands (still from
+`examples/pybinding/`)
 
 ``` bash
 python3

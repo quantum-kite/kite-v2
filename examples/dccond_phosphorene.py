@@ -142,7 +142,7 @@ def main(direction='xx', num_hoppings=4):
 
     # define energy grid
     num_points = 25
-    energy = [(1.0 / npoints * i) * 3.5  for i in range(npoints)] 
+    energy = [(1.0 / num_points * i) * 3.5  for i in range(num_points)]
 
     # specify calculation type
     calculation = kite.Calculation(configuration)

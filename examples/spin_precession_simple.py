@@ -32,8 +32,8 @@
     operators (custom_one, custom_two, and this generalized
     gaussian_wave_packet()) -- see docs/documentation/examples/time_evolution.md.
 
-    Toy model, reviewed by cmt-physicist
-    -------------------------------------
+    Toy model
+    ---------
     B is a bare on-site coupling constant with the mathematical structure of
     a transverse Zeeman term -- there is no vector potential, no Peierls
     substitution, no g-factor, and no coupling to a real electromagnetic
