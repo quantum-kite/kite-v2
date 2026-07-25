@@ -1,7 +1,7 @@
 ## Gaussian disorder
 KITE can also calculate the optical conductivity of a given tight-binding model for any desired chemical potential/temperature.
 To illustrate this capability, here we calculate the optical conductivity of disordered graphene that can be compared qualitatively with previous results[^1]. 
-_The full script can be found [here](https://github.com/quantum-kite/kite/blob/313a00e54a9f9aa33b22886eaf97ce62aaec3996/examples/dos_optcond_graphene.py)._
+_The full script can be found [here](https://github.com/quantum-kite/kite-v2/blob/313a00e54a9f9aa33b22886eaf97ce62aaec3996/examples/dos_optcond_graphene.py)._
 
 ### Lattice
 Instead of manually defining the lattice, we can use of one the pre-defined lattices from Pybinding:
@@ -70,7 +70,7 @@ For systems sizes of `N=1536 x 1536` unit cells and two different Gaussian width
   </figure>
 </div>
 
-The complete Python script for this calculation can be found [here](https://github.com/quantum-kite/kite/blob/65ad6aa84c6c735e4a23d2ffa9a8cb5ba36a70f9/examples/dos_optcond_gaussian_disorder.py).
+The complete Python script for this calculation can be found [here](https://github.com/quantum-kite/kite-v2/blob/65ad6aa84c6c735e4a23d2ffa9a8cb5ba36a70f9/examples/dos_optcond_gaussian_disorder.py).
 
 
 [^1]: Shengjun Yuan, Rafael Roldán, Hans De Raedt, Mikhail I. Katsnelson, [Phys. Rev. B **84**, 195418 (2011)](https://link.aps.org/doi/10.1103/PhysRevB.84.195418)

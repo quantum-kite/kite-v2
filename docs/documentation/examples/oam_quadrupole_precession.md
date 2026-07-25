@@ -58,8 +58,8 @@ would show *no* dynamics at all.
 
 What's actually observed: $\langle L_z(t)\rangle$ decays slowly (~10% over the propagation window)
 while $\langle L_x\rangle,\langle L_y\rangle$ and every off-diagonal $\langle Q_{ab}\rangle$
-($Q_{xy}, Q_{xz}, Q_{yz}$) stay pinned at **exactly zero** throughout — both facts expected, not
-bugs (checked by `cmt-physicist`):
+($Q_{xy}, Q_{xz}, Q_{yz}$) stay pinned at **exactly zero** throughout — both are expected, for the
+following reasons:
 
 - The off-diagonal operators all connect the populated $m=+1$ sector to the $m=0$ ($p_z$) or $m=-1$
   sectors — both completely unpopulated here — so none of them can pick up any expectation value,

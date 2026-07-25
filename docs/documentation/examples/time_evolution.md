@@ -1,12 +1,23 @@
 ## Real-time evolution of a wave packet
 
-Every other calculation on this site is a *static* linear-response quantity: a density of
-states, a conductivity, a spectral function — all computed once and for all from the
-Hamiltonian's spectrum. [`#!python calculation.gaussian_wave_packet()`][calculation-gaussian_wave_packet]
-is different: it builds a Gaussian-enveloped wave packet and propagates it **in real time**,
-using a Chebyshev expansion of $e^{-iHt}$, then reports the expectation value of whatever
+Most calculations on this site are static, energy-resolved spectral properties -- a density of
+states, a local density of states, a spectral function -- computed once and for all from the
+Hamiltonian's spectrum, not a response to any perturbation. Others (conductivity, spin Hall
+response) genuinely are linear-response coefficients. `#!python calculation.localized_wave_packet()`
+is also a real-time propagation, elsewhere on this site.
+[`#!python calculation.gaussian_wave_packet()`][calculation-gaussian_wave_packet] is the member of
+this family introduced here: it builds a Gaussian-enveloped wave packet and propagates it **in real
+time**, using a Chebyshev expansion of $e^{-iHt}$, then reports the expectation value of whatever
 operators you ask for at every timestep. This page is a from-scratch introduction to that
 feature, using the simplest possible physical system it can demonstrate.
+
+**Time units.** With $\hbar=1$ (KITE's convention throughout), a physical time has units of
+inverse energy. The `#!python timestep` argument is specified in the same rescaled units as the
+internal Hamiltonian $\hat H/\mathtt{energy\_scale}$ (`#!python energy_scale` is the
+`#!python Configuration` parameter that maps the model's physical energy units onto KITE's
+required $[-1,1]$ Chebyshev spectral range); to convert a rescaled timestep back to physical time,
+divide by `#!python energy_scale` expressed in the same energy units used to define the model's
+hoppings.
 
 ### The physics: spin precession in a field
 

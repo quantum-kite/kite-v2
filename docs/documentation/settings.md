@@ -76,7 +76,7 @@ Below, we explain each of the arguments in the [`#!python kite.Configuration`][c
       divisions=[nx, ny],
       length=[lx, ly],
       boundaries=[mode, mode],
-      angles = [twsx,twsy]
+      angles = [twsx,twsy],
       is_complex=False,
       precision=1 
     )

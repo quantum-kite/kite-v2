@@ -8,7 +8,7 @@ Here, we calculate the longitudinal conductivity (`singleshot_conductivity_dc`) 
 This is a fast numerical calculation that is set to easily run on a standard laptop, which qualitatively reproduces the expected anisotropic conductivity along xx and yy directions.
 
 Here, we highlight parts of the Python script.
-_The full script can be retrieved from [KITE's Github repository](https://github.com/quantum-kite/kite/blob/80a028026956c088f0c8fa4a019155b3b1bdcb78/examples/dccond_phosphorene.py)._
+_The full script can be retrieved from [KITE's Github repository](https://github.com/quantum-kite/kite-v2/blob/80a028026956c088f0c8fa4a019155b3b1bdcb78/examples/dccond_phosphorene.py)._
 
 ### Lattice
 
@@ -158,7 +158,7 @@ Alternatively, the single-shot post-processing python tool in the `#!python tool
 It is not possible to request the same type of calculation (target function) in a single call.
 In this case, we want to calculate the conductivity in xx and yy directions where the type of the calculation is the same, which means we need another HDF file for yy conductivity.
 
-Let's repeat the procedure for another direction (one may also use the streamlined approach of the example on the [KITE repository](https://github.com/quantum-kite/kite/blob/80a028026956c088f0c8fa4a019155b3b1bdcb78/examples/dccond_phosphorene.py)):
+Let's repeat the procedure for another direction (one may also use the streamlined approach of the example on the [KITE repository](https://github.com/quantum-kite/kite-v2/blob/80a028026956c088f0c8fa4a019155b3b1bdcb78/examples/dccond_phosphorene.py)):
 
 ``` python linenums="1"
     calculation.singleshot_conductivity_dc(epoints,

@@ -9,11 +9,12 @@ semi-metallic phases.
 
 ### Running all the examples
 
-To run all the examples at once, run the [`#!python run_all_examples.py`][python-script] script from
-the [`#!bash kite/examples/`][examples-folder]-folder with
+To run all of the pybinding-dependent examples at once, run the
+[`#!python run_all_examples.py`][python-script] script from the
+[`#!bash kite/examples/pybinding/`][examples-folder]-folder with
 
 ``` bash
-python -m run_all_examples.py
+python run_all_examples.py
 ```
 [examples-folder]: ../more_examples/additional_examples.md
-[python-script]: https://github.com/quantum-kite/kite/blob/master/examples/run_all_examples.py
+[python-script]: https://github.com/quantum-kite/kite-v2/blob/master/examples/pybinding/run_all_examples.py

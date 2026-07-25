@@ -1,9 +1,8 @@
 The physical properties of condensed matter systems are encoded in the eigenvalues and eigenfunctions
 of Hamiltonian matrices $\hat{H}$ with typically very large dimension $D$. 
-These systems are thus challenging to investigate using exact diagonalization (due to the exponential scaling of computer resources with the system size), 
-but a wide range of many-body methods and approximations are available that can help us to understand particular aspects of certain systems and even predict new phenomena.
-In particular, spectral methods have recently become popular  for enabling the reconstruction of key physical quantities and observables in an unbiased, numerically
-exact fashion at a fraction of the computational cost of exact diagonalization methods.
+These systems are thus challenging to investigate using exact diagonalization: for a sparse one-particle Hamiltonian of dimension $D$, dense diagonalization still costs $\mathcal{O}(D^2)$ in memory and $\mathcal{O}(D^3)$ in time, which becomes prohibitive for the large $D$ typical of realistic lattice models (exponential scaling is a feature of generic many-body Hilbert spaces, not of this one-particle problem).
+A wide range of many-body methods and approximations are available that can help us to understand particular aspects of certain systems and even predict new phenomena.
+In particular, spectral methods have recently become popular for enabling the reconstruction of key physical quantities and observables at a fraction of the computational cost of exact diagonalization methods, with a controlled, quantifiable error budget (finite expansion order $M$, kernel/Green's-function broadening, and, for the stochastic trace estimator introduced below, finite-$R$ sampling variance) rather than being numerically exact at any finite truncation.
 In the spectral approach, the quantity of interest (target function) is decomposed into a spectral series
 
 <span id="eq-1">
@@ -172,7 +171,7 @@ To speed up the evaluation of the $n$-body trace operation $\operatorname{Tr}\{T
 <span id="eq-9">
 
 $$
-    \rho_{\mathrm{STE}}(E)=\sum_{r=1}^{R}\langle r|\delta(E-\hat{H})| r\rangle,  \quad\quad (9)  \label{eq9}
+    \rho_{\mathrm{STE}}(E)=\frac{1}{DR}\sum_{r=1}^{R}\langle r|\delta(E-\hat{H})| r\rangle,  \quad\quad (9)  \label{eq9}
 $$
 
 </span>
@@ -196,8 +195,7 @@ The required number of random vectors, $R$, depends on sparsity of the Chebyshev
 For typical tight-binding problems, one has $Z \propto O(1)$. Thus, in the large system limit $(N \gg 1)$, a single random vector is often enough to achieve accuracy of 1% or better[^3].
 In fact, for sparse matrices, the STE relative error has the favorable scaling $1 / \sqrt{R N}$.
 On the other hand, the number of moments required to converge the expansion depends strongly on the desired resolution,
-$\eta$. As a rule of thumb, $M$ should not be smaller than a few times the linear dimension of the system $N^{1/d}$,
-where $d$ is the number of spatial dimensions, which then leads to:
+$\eta$, not on the system size directly: at fixed bandwidth and fixed physical resolution, $M$ is fixed and independent of $N$. The rule of thumb $M \gtrsim$ a few times $N^{1/d}$ ($d$ the number of spatial dimensions) applies specifically when the requested resolution is itself tied to the finite-size level spacing (e.g. resolving individual finite-size levels), which then leads to:
 
 <span id="eq-11">
 

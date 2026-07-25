@@ -62,7 +62,7 @@ nav:
       - Main program: 'api/kitex.md'
     - KITE-tools:
       - Toolbox: 'api/kite-tools.md'
-      - Addtitional scripts: 'api/kite_tools_readme.md'
+      - Additional scripts: 'api/kite_tools_readme.md'
   - FAQ: 'faq.md'
   - About:
     - About KITE: 'about/index.md'

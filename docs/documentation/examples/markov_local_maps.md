@@ -87,25 +87,29 @@ of the site you care about. In a disordered or inhomogeneous system the true sit
 $\rho(r,E)$ does not diminish with system size — it is physical. So the naive intuition "bigger system
 $\Rightarrow$ smaller error" fails for a map: **local observables lack self-averaging.**
 
-This is the problem addressed by Veiga, Pinheiro, Santos Pires &amp; Viana Parente Lopes[^1]. Their observation
-is that the map estimator above is **positive-definite** — each sample $\hat X_r\ge 0$ — and a nonnegative
-random variable obeys **Markov's inequality**,
+This is the problem addressed by Veiga, Pinheiro, Santos Pires &amp; Viana Parente Lopes[^1]. Their starting
+observation is that the map estimator above is **positive-definite** — each sample $\hat X_r\ge 0$ — and a
+nonnegative random variable obeys **Markov's inequality**,
 
 $$
-\mathbb P\big(\hat X_r \ge a\big)\ \le\ \frac{\mathbb E[\hat X_r]}{a},
+\mathbb P\big(\hat X_r \ge a\big)\ \le\ \frac{\mathbb E[\hat X_r]}{a}.
 $$
 
-which yields a *per-site*, distribution-free confidence bound on the sampling error that holds regardless of
-self-averaging — the right tool precisely because the usual $1/\sqrt{N_R D}$ argument is unavailable. (KITE also
-reports the empirical per-site stochastic standard error directly: the second row of the output dataset is a
-running Welford variance over the `#!python vectors_` realizations.) This page reconstructs the general logic
-of why a Markov bound applies here; the paper's precise quantitative bound is not reproduced — consult the
-reference directly for the exact constant.
+By itself, this elementary form only bounds the probability that a *single* sample exceeds a threshold $a$ in
+terms of the mean — it does not by itself bound $|\bar X_r-\mathbb E[\hat X_r]|$ or the relative error of an
+average over `#!python vectors_` realizations; that stronger, per-site, distribution-free statement is the
+paper's actual result, built on this positivity property plus additional structure specific to their estimator.
+This page reconstructs why positivity is the property that makes a Markov-type bound available at all (the
+reason self-averaging isn't needed); the precise concentration bound and its constant are not reproduced here —
+consult the reference directly for the quantitative statement. (KITE also reports the empirical per-site
+stochastic standard error directly: the second row of the output dataset is a running Welford variance over the
+`#!python vectors_` realizations.)
 
-The practical consequence: increasing `#!python vectors_` reduces the per-site noise as $1/\sqrt{\text{vectors\_}}$
-(standard Monte-Carlo), with the Markov argument guaranteeing the *relative* error at each site is controlled —
-which is why the examples below can shrink from research scale ($2048^2$ lattice, 64 vectors) down to laptop
-scale ($256^2$, 32 vectors) and still resolve the physics, just noisier.
+The practical consequence we rely on below is only the standard Monte-Carlo one: increasing `#!python vectors_`
+reduces the per-site noise as $1/\sqrt{\text{vectors\_}}$. This is why the examples below can shrink from
+research scale ($2048^2$ lattice, 64 vectors) down to laptop scale ($256^2$, 32 vectors) and still resolve the
+physics, just noisier — the stronger per-site confidence-bound claim is the cited paper's to make, not asserted
+here.
 
 ### `ldos_map()` — π-flux lattice, LDOS around a single vacancy
 
@@ -159,15 +163,18 @@ cut through two separated Weyl cones.
 **The open-boundary caveat (real physics, not an artifact — mentioned here, not illustrated).** The momentum
 resolution is produced by wrapping the Chebyshev recursion between an inverse and a forward FFT — the k-space
 sibling of the real-space identity above, with the same $f^2\!\to\!\delta$ renormalization. Crucially, this FFT
-runs over **all declared lattice axes**. A momentum label is only physically meaningful along a direction with
+runs over **all declared lattice axes**. A momentum label is only a good quantum number along a direction with
 translational symmetry; along an **open (hard-wall) boundary** momentum is not conserved, so Fourier-transforming
-that axis smears the spectral weight into a flat, featureless distribution instead of sharp peaks. The example
-sets `#!python boundaries=["open","random","random"]` on purpose — $x$ open, $y,z$ periodic (twist-averaged) —
-so $k_x$ itself is not a meaningful label; that is exactly why the figure above only shows the $(k_y,k_z)$ slice
-and never plots anything against $k_x$. At this lattice size the periodic-axis resolution isn't clean enough to
-make a convincing side-by-side comparison of sharp-vs-smeared peaks, so no such plot is shown here — the point is
-made as a caveat in words: `#!python spectral_map()` gives meaningful $\mathbf k$-resolution only along
-periodic/twist-averaged directions.
+that axis does not produce a Bloch-$k$ spectral function there — it is better described as Fourier-resolved
+spectral weight, which can still carry genuine finite-size structure (standing-wave/boundary-condition
+signatures) rather than necessarily being flat. The example sets
+`#!python boundaries=["open","random","random"]` on purpose — $x$ open, $y,z$ periodic (twist-averaged) — so
+$k_x$ itself is not a meaningful momentum label; that is exactly why the figure above only shows the
+$(k_y,k_z)$ slice and never plots anything against $k_x$. At this lattice size the periodic-axis resolution
+isn't clean enough to make a convincing side-by-side comparison, so no such plot is shown here — the point is
+made as a caveat in words: `#!python spectral_map()` gives a genuine Bloch-$\mathbf k$ spectral function only
+along periodic/twist-averaged directions; along an open direction the FFT output is Fourier-resolved spectral
+weight, not a momentum label in the Bloch sense.
 
 ### Relationship to the single-target calculations
 

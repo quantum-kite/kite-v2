@@ -34,23 +34,43 @@ Advanced examples are explained in [Examples][kite-examples]. After downloading 
 
 Before installing the core components, KITEx and KITE-tools, the following prerequisites need to be satisfied:
 
-* Eigen3
+* Eigen3 (a pruned copy is bundled in `third_party/eigen3`; no separate install required unless you pass
+  `-DUSE_SYSTEM_EIGEN=ON`)
 
-* Python (version 3.5 or newer)
+* Python 3.9 or newer
 
 * HDF5 (version 1.8.13 or newer)
 
-* Pybinding ([see](https://github.com/dean0x7d/pybinding) the requirements)
-
-* GCC compiler (version 4.8.1 or newer, for the wavepacket functionality gcc 8.0 is needed)
+* GCC compiler (C++17 support required; for the wavepacket functionality gcc 8.0 or newer is needed)
 
 * CMake
 
 * Make.
 
+The native `kite.lattice` Python API (used by the quickstart below and the majority of `examples/`) has no
+Pybinding dependency. Pybinding is only needed for the scripts under `examples/pybinding/` and is installable as
+an optional extra (`pip install quantum-kite[pybinding]`); see [pybinding](https://github.com/dean0x7d/pybinding)
+for its own requirements.
+
 ### Installation
 
 After meeting prerequisites and downloading the repository, you can compile KITE using the already available Cmake files. Please check the Cmake files first, and make any necessary edits to the libraries/packages' paths. For step by step instructions, please refer to the [Installation](https://quantum-kite.com/installation/) section.
+
+### Quickstart (native `kite.lattice`, no Pybinding)
+
+```bash
+git clone https://github.com/quantum-kite/kite-v2.git && cd kite-v2
+pip install -e .
+cmake -B build && cmake --build build --parallel
+python examples/dos_graphene.py             # writes graphene_lattice-output.h5
+./build/KITEx graphene_lattice-output.h5    # runs the KPM recursion
+./build/KITE-tools graphene_lattice-output.h5  # writes dos.dat
+python -c "
+import numpy as np, matplotlib.pyplot as plt
+dos = np.loadtxt('dos.dat')
+plt.plot(dos[:, 0], dos[:, 1]); plt.xlabel('E'); plt.ylabel('DOS'); plt.show()
+"
+```
 
 ## License
 

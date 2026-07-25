@@ -312,7 +312,7 @@ The KITE package for pre-processing is split up in various subclasses and contai
                 | `#!python num_disorder`:*`#!python int`* | Number of different disorder realisations.                                      |
 
     
-    :   !!! declaration-function "<span id="calculation-ldos">*function*`#!python ldos(energy, num_moments, position, sublattice, num_disorder=1)`</span>"
+    :   !!! declaration-function "<span id="calculation-ldos">*function*`#!python ldos(energy, num_moments, position, sublattice, num_disorder=1, operators=None)`</span>"
             
             
         :   Calculate the local density of states as a function of energy. 
@@ -326,8 +326,22 @@ The KITE package for pre-processing is split up in various subclasses and contai
                 | `#!python position`:*`#!python int`*                        | Relative index of the unit cell where the LDOS will be calculated. |
                 | `#!python sublattice`:*`#!python list`*                     | Name of the sublattice at which the LDOS will be calculated.       |
                 | `#!python num_disorder`:*`#!python str` or `#!python list`* | Number of different disorder realisations.                         |
+                | `#!python operators`:*`#!python list[str]`*                 | Labels of operators registered via [`#!python add_orbital_coupling()`][calculation-add_orbital_coupling], for which the local operator-weighted spectral density $\mathrm{Tr}[\hat O\,\mathrm{Im}\,G(r,r,E)]$ is computed at every requested `#!python position`, in addition to the plain LDOS (e.g. `#!python operators=['l0', 'l1', 'l2']` for spin). |
 
-    :   !!! declaration-function "<span id="calculation-ldos_map">*function*`#!python ldos_map(energy_, sigma_, vectors_, coef="gaussian")`</span>"
+            **Operator-weighted local spectral density**
+
+            :   With `#!python operators` set, this is the real-space, energy-resolved analogue of a spin- or
+                orbital-resolved ARPES measurement — the local expectation value of an operator *at a fixed energy*,
+                not integrated over the Fermi function. Each label's contribution is written to
+                `#!python /Calculation/ldos/lMU_Operators/<label>` and reconstructed by KITE-tools alongside the plain
+                LDOS. As with [`#!python gaussian_wave_packet()`][calculation-gaussian_wave_packet]'s tracked
+                operators, this shares [`#!python add_orbital_coupling()`][calculation-add_orbital_coupling]'s
+                **on-site-only restriction**: $\hat O$ must be block-diagonal across sites (it may mix orbitals
+                *within* one site, e.g. spin) — an operator with genuine cross-site matrix elements would have those
+                terms silently dropped, and the per-site quantities would no longer sum to the true global
+                $\langle\hat O\rangle$.
+
+    :   !!! declaration-function "<span id="calculation-ldos_map">*function*`#!python ldos_map(energy_, sigma_, vectors_, coef="gaussian", operators=None)`</span>"
 
 
         :   Calculate a full real-space map of the local density of states at one target energy.
@@ -346,6 +360,7 @@ The KITE package for pre-processing is split up in various subclasses and contai
                 | `#!python sigma_`:*`#!python float`*          | Width of the Gaussian (or window) that approximates the Dirac delta.                                  |
                 | `#!python vectors_`:*`#!python int`*          | Number of independent random-phase vectors to average over (analogous to `#!python num_random` for [`#!python dos()`][calculation-dos] — *not* a number of k-points or spatial points). |
                 | `#!python coef`:*`#!python str`*              | Choice of energy-filter kernel, either `#!python "gaussian"` or `#!python "window"`.                  |
+                | `#!python operators`:*`#!python list[str]`*   | Labels of operators registered via [`#!python add_orbital_coupling()`][calculation-add_orbital_coupling], for which the operator-weighted map $\mathrm{Tr}[\hat O\,\mathrm{Im}\,G(r,r,E)]$ is computed over the whole lattice, in addition to the plain map. Written to `#!python /Calculation/ldos_map/Map_Operators/<label>`. Uses the unbiased stochastic estimator $\mathrm{Re}\langle\text{ket}|\hat O|\text{ket}\rangle_r$ (using only the propagated Chebyshev-filtered state, at both orbital indices) — this reduces exactly to the plain `#!python Map` when $\hat O$ is a single-orbital projector. Same on-site-only restriction as `#!python ldos()`'s `#!python operators` (see above). |
 
             !!! Note "Disorder is not ensemble-averaged"
 
@@ -414,10 +429,10 @@ The KITE package for pre-processing is split up in various subclasses and contai
 
                 `Src/FFT/FFT.cpp` performs the momentum-space transform over *all* axes unconditionally, even an
                 axis declared `#!python "open"` (a real, hard-wall boundary where momentum isn't actually conserved).
-                Verified directly in `#!python examples/weyl_spectral_map.py`: with `#!python boundaries=["open", "random", "random"]`,
+                In `#!python examples/weyl_spectral_map.py`, with `#!python boundaries=["open", "random", "random"]`,
                 the spectral weight along the two periodic/twisted axes is sharply peaked, while along the open axis
-                it is smeared and nearly flat — a real, physically-expected consequence of transforming an axis with
-                no translational symmetry, not a bug, but easy to misread as a broken/noisy result if you don't expect it.
+                it is smeared and nearly flat: a physically-expected consequence of transforming an axis with
+                no translational symmetry, easy to misread as a broken/noisy result if you don't expect it.
 
             !!! Info "Example"
 
@@ -521,13 +536,12 @@ The KITE package for pre-processing is split up in various subclasses and contai
 
                 The reconstructed conductivity (via [`#!bash KITE-tools --CondDC`][kitetools])
                 is in units of $e^2/h$ directly — **not** $e^2/\hbar$, $e^2/(\pi h)$, or any other
-                common convention. Verified empirically (not just asserted): the Hall conductivity
-                $\sigma_{xy}$ of a Haldane Chern insulator ($C=1$,
+                common convention. On a Haldane Chern insulator ($C=1$,
                 `#!python examples/dos_dccond_haldane.py`'s own parameters, including its Anderson
-                disorder) reconstructs to $\sigma_{xy}\approx1.01$–$1.02$ at mid-gap — a topological
-                plateau quantized at exactly $C\cdot e^2/h=1\,e^2/h$, insensitive to broadening,
-                disorder, or moment-count details, unlike a semiclassical Drude-regime check would
-                be. The same convention applies to [`#!python conductivity_optical()`][calculation-conductivity_optical]
+                disorder), the Hall conductivity $\sigma_{xy}$ reconstructs to
+                $\sigma_{xy}\approx1.01$–$1.02$ at mid-gap: a topological plateau quantized at
+                $C\cdot e^2/h=1\,e^2/h$, insensitive to broadening, disorder, or moment-count
+                details. The same convention applies to [`#!python conductivity_optical()`][calculation-conductivity_optical]
                 and the [`#!python custom_two()`][calculation-custom_two] family (all built from the
                 same underlying Kubo-Bastin/Gamma2D machinery).
 
@@ -887,22 +901,23 @@ The KITE package for pre-processing is split up in various subclasses and contai
                 automatically. The result is checked numerically Hermitian before being returned; a
                 non-Hermitian result raises `#!python RuntimeError` rather than being silently returned.
 
-            !!! Example "Verified against several known models, not just graphene"
+            !!! Example "Behavior across several known models"
 
                 `#!python examples/band_structure_graphene.py` checks the three textbook graphene
-                energies directly: $E(\Gamma)=\pm3t$, $E(M)=\pm t$, $E(K)=0$ (the Dirac point, exactly
-                two-fold degenerate) — all three reproduced to floating-point precision. Also checked
-                (not shipped as example scripts, but confirmed while building this feature): the Haldane
-                model's gap ($2\times3\sqrt3\,t_2\sin\phi$) matches exactly at both inequivalent BZ
-                corners; `#!python kite.repository.group6_tmd.monolayer_3band('MoS2')` (3 coincident-
-                position sublattices) gives a clean ~1.85 eV direct gap at K with no accidental
-                degeneracy; the T-symmetric cubic Weyl semimetal (`#!python examples/weyl_lt.py`, 3D, two
-                sublattices, hoppings given by the model with same-$\mathbf R$ forward/backward terms
-                rather than relying on the automatic Hermitian-conjugate addition) reproduces its Weyl
-                node exactly at $(\pi/2,\pi/2,\pi/2)$, matching the closed-form
+                energies directly: $E(\Gamma)=\pm3t$, $E(M)=\pm t$, $E(K)=0$ (the Dirac point,
+                two-fold degenerate) — all three reproduced to floating-point precision. On the
+                Haldane model, the gap ($2\times3\sqrt3\,t_2\sin\phi$) matches at both inequivalent
+                BZ corners. `#!python kite.repository.group6_tmd.monolayer_3band('MoS2')`
+                (3 coincident-position sublattices) gives a clean ~1.85 eV direct gap at K with no
+                accidental degeneracy. The T-symmetric cubic Weyl semimetal
+                (`#!python examples/weyl_lt.py`, 3D, two sublattices, hoppings given by the model
+                with same-$\mathbf R$ forward/backward terms rather than relying on the automatic
+                Hermitian-conjugate addition) reproduces its Weyl node at $(\pi/2,\pi/2,\pi/2)$,
+                matching the closed-form
                 $H(\mathbf k)=t[\cos k_x\,\sigma_x+\cos k_y\,\sigma_y+\cos k_z\,\sigma_z]$ to machine
-                precision — confirming the automatic $H_0+H_0^\dagger$ construction is safe even when a
-                lattice's own hopping list already contains what looks like a manually-added return path.
+                precision — the automatic $H_0+H_0^\dagger$ construction stays safe even when a
+                lattice's own hopping list already contains what looks like a manually-added return
+                path.
                 `#!python kite.repository.phosphorene.monolayer_4band()` (4 sublattices with an
                 out-of-plane buckling offset) gives a physically sane, anisotropic, direct ~1.5 eV gap at
                 $\Gamma$ — this case caught a real bug (a shape-mismatch crash whenever a sublattice

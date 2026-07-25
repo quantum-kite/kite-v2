@@ -250,8 +250,8 @@ of the default.
 [macports_recipe]: ../installation.md#23-verified-macports-recipe
 [conda_section]: ../installation.md#conda_section
 [pybinding]: https://docs.pybinding.site/en/stable
-[cmakelists_gh]: https://github.com/quantum-kite/kite/blob/master/CMakeLists.txt
-[genericheader_gh]: https://github.com/quantum-kite/kite/blob/master/Src/Generic.hpp
+[cmakelists_gh]: https://github.com/quantum-kite/kite-v2/blob/master/CMakeLists.txt
+[genericheader_gh]: https://github.com/quantum-kite/kite-v2/blob/master/Src/Generic.hpp
 [settings]: settings.md
 [tb_model]: tb_model.md
 [disorder_doc]: disorder.md

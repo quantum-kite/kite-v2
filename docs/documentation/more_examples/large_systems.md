@@ -18,7 +18,7 @@ the spurious oscillations in the ADoS indicate that the discrete nature of the e
 Probing a small system with high resolution can result in non-physical effects.
 Working with high resolutions (and consequently large systems) is especially important when dealing with localization and other quantum criticality problems[^1].
 g
-If you would like to reproduce these results, we recommend running the script `#!python dos_vacancies.py` in the [Github repository](https://github.com/quantum-kite/kite/blob/b2b4f4d7a6ac7c912cd7fd5f23f050ec5bd3492c/examples/dos_vacancies.py).
+If you would like to reproduce these results, we recommend running the script `#!python dos_vacancies.py` in the [Github repository](https://github.com/quantum-kite/kite-v2/blob/b2b4f4d7a6ac7c912cd7fd5f23f050ec5bd3492c/examples/dos_vacancies.py).
 Note that the RAM requirements for running DOS on the large system specified above requires `~5GB` of RAM memory and around 20 minutes on a compute node with 28 cores.
 
 ![vacancy](../../assets/images/large_systems/vacancy.png)
@@ -62,7 +62,7 @@ In this example, we use a pre-defined lattice object that is loaded with a simpl
 
 Now, you can continue with specifying the other configuration settings as explained in [Getting Started](../index.md).
 
-The full script can be downloaded [here](https://gist.github.com/quantum-kite/eeb25b4f3bd4756763259764ff67d87b); see also the [KITE paper examples' folder](https://github.com/quantum-kite/kite/tree/b2b4f4d7a6ac7c912cd7fd5f23f050ec5bd3492c/examples/paper).
+The full script can be downloaded [here](https://gist.github.com/quantum-kite/eeb25b4f3bd4756763259764ff67d87b); see also the [KITE paper examples' folder](https://github.com/quantum-kite/kite-v2/tree/b2b4f4d7a6ac7c912cd7fd5f23f050ec5bd3492c/examples/paper).
 
 [^1]: A. Ferreira and E. Mucciolo, [Phys. Rev. Lett. **115**, 106601 (2015)](https://link.aps.org/doi/10.1103/PhysRevLett.115.106601)
 

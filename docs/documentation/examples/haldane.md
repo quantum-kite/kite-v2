@@ -10,7 +10,7 @@ This model describes a Chern insulator (or a quantum anomalous Hall insulator) b
 in the absence of any applied external magnetic fields. This characteristic makes Haldane model ideal for illustrating another capability of KITE: the calculation of transverse conductivities reflecting the quantum geometry of wavefunctions [^2] [^3].
 
 Let us use KITE to compute the dc conductivity tensor of the Haldane model. 
-_The full script for this example can be found [here](https://github.com/quantum-kite/kite/blob/313a00e54a9f9aa33b22886eaf97ce62aaec3996/examples/dos_dccond_haldane.py)._
+_The full script for this example can be found [here](https://github.com/quantum-kite/kite-v2/blob/313a00e54a9f9aa33b22886eaf97ce62aaec3996/examples/dos_dccond_haldane.py)._
 
 ### Lattice
 Let us begin with the definition of the Hamiltonian for the case of purely imaginary next-nearest-neighbor hoppings:
@@ -170,7 +170,7 @@ In the present case, where we primarily wanted to see the quantum anomalous Hall
 [kitex]: ../../api/kitex.md
 [kitetools]: ../../api/kite-tools.md
 [disorder]: ../disorder.md
-[repository_example]: https://github.com/quantum-kite/kite/tree/master/examples/dos_dccond_haldane.py
+[repository_example]: https://github.com/quantum-kite/kite-v2/tree/master/examples/dos_dccond_haldane.py
 [getting_started]: ../index.md
 [settings]:../settings.md
 [calculation]: ../../api/kite.md#calculation

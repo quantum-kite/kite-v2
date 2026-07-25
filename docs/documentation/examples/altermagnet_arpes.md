@@ -77,18 +77,38 @@ coordinate swap.
 
 ### Why this is an altermagnet
 
-**Zero net moment.** From the blocks above, $\mathrm{Tr}\,H_\uparrow=(+J-d)+(-J+d)=0$ and
-$\mathrm{Tr}\,H_\downarrow=(-J-d)+(+J+d)=0$ **identically in $\mathbf k$** — the two spin blocks are separately
-traceless, so the spin-up and spin-down spectra have the same sum: no net spin polarization when integrated
-over the filled bands. This is an exact algebraic statement, not just a numerical observation (though the
-example's own `#!python _verify_model()` also confirms it numerically to machine precision on a k-grid).
+**Zero net moment.** This follows from the boxed relation above, $\varepsilon_\uparrow(k_x,k_y)=\varepsilon_\downarrow(k_y,k_x)$,
+by a Brillouin-zone integration, not from either spin block being individually traceless (a traceless $2\times2$
+block only says its two band energies sum to zero at that $\mathbf k$; it says nothing on its own about how many
+states of each spin are occupied). For any band index $\nu$ and common chemical potential $\mu$, temperature $T$:
 
-**Even-parity ($d$-wave) spin splitting.** The splitting is
-$\varepsilon_\downarrow(\mathbf k)-\varepsilon_\uparrow(\mathbf k)\propto d(\mathbf k)=2\delta(c_y-c_x)$, which
-transforms as $\cos k_y-\cos k_x$ — a $d_{x^2-y^2}$-like, **even** function of $\mathbf k$. Contrast:
+$$
+\int_{\mathrm{BZ}} d^2k\ f\big(\varepsilon_{\uparrow,\nu}(k_x,k_y)-\mu\big)
+=\int_{\mathrm{BZ}} d^2k\ f\big(\varepsilon_{\downarrow,\nu}(k_y,k_x)-\mu\big)
+=\int_{\mathrm{BZ}} d^2k\ f\big(\varepsilon_{\downarrow,\nu}(k_x,k_y)-\mu\big),
+$$
 
-- A **conventional antiferromagnet** would need a doubled unit cell / broken translation symmetry to produce
-  any spin splitting; with an intact primitive cell its bands are spin-degenerate.
+where the first equality is the boxed band relation and the second is just relabeling the (dummy) integration
+variables $k_x\leftrightarrow k_y$, valid because the square-lattice BZ and its integration measure are invariant
+under that swap. Summing over bands $\nu$ proves the total spin-up and spin-down occupations are exactly equal
+at any common $\mu,T$ — the correct statement of "no net spin polarization when integrated over the filled
+bands." (The example's own `#!python _verify_model()` confirms the underlying band relation numerically to
+machine precision on a k-grid.)
+
+**Even-parity ($d$-wave) spin splitting.** The exact splitting
+$\varepsilon_\downarrow(\mathbf k)-\varepsilon_\uparrow(\mathbf k)$ is a difference of the two square roots
+above, not itself proportional to $d(\mathbf k)$ in general; it reduces to $\varepsilon_\downarrow-\varepsilon_\uparrow\propto d(\mathbf k)=2\delta(c_y-c_x)$
+only to leading order in $d$ (e.g. $|d|\ll J,|\gamma|$). What is exact at every $\mathbf k$, independent of that
+limit, is the *symmetry* of the splitting: $d(\mathbf k)=2\delta(\cos k_y-\cos k_x)$ is a $d_{x^2-y^2}$-like,
+**even** function of $\mathbf k$, and it is this even-parity, momentum-space symmetry pattern — not a claim about
+the splitting's absolute magnitude or functional form away from that limit — that identifies the model as an
+altermagnet. Contrast:
+
+- A **conventional antiferromagnet**, in the sense of Néel order on a bipartite lattice without a symmetry like
+  the one here relating the two spin sectors by a real-space rotation, is compared here at the level of magnetic
+  space groups: whether translation by one sublattice vector combined with time reversal is a symmetry of the
+  full (spin+lattice) Hamiltonian determines whether the bands stay spin-degenerate at generic $\mathbf k$, not
+  simply whether the chemical unit cell has one site type or two.
 - A **ferromagnet** has a net moment and a spin splitting uniform in sign — not locked to a momentum-space
   symmetry pattern.
 
