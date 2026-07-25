@@ -45,15 +45,15 @@ Internals section (domain decomposition implementation + undocumented tricks) �
 ## Workflow: three roles, don't skip steps
 1. **Plan mode** (built-in) — discuss and scope before touching files. Use this for
    anything non-trivial, especially decisions about doc structure or framing.
-2. **careful-executor** (custom subagent, `.claude/agents/careful-executor.md`) — does
-   the actual file work. Verifies against source before writing; tags claims as
-   `[MECHANICS]` / `[INFERRED REASONING]` / `[NEEDS AUTHOR CHECK]` for anything
-   explaining *why* code works a certain way, not just what it does.
-3. **structure-auditor** (custom subagent, `.claude/agents/structure-auditor.md`) — read
-   only, runs after a multi-file execution, before committing. Checks the *whole* diff
-   for organizational coherence: consistency with existing conventions, orphaned files,
-   duplicated content, broken nav/cross-references, scope drift, and whether inferred-
-   reasoning flags actually survived into the final output.
+2. **careful-executor** (custom subagent, user-level definition — not checked into this
+   repo) — does the actual file work. Verifies against source before writing; tags
+   claims as `[MECHANICS]` / `[INFERRED REASONING]` / `[NEEDS AUTHOR CHECK]` for
+   anything explaining *why* code works a certain way, not just what it does.
+3. **structure-auditor** (custom subagent, user-level definition — not checked into this
+   repo) — read only, runs after a multi-file execution, before committing. Checks the
+   *whole* diff for organizational coherence: consistency with existing conventions,
+   orphaned files, duplicated content, broken nav/cross-references, scope drift, and
+   whether inferred-reasoning flags actually survived into the final output.
 
 For the domain decomposition internals page specifically: the design reasoning behind
 the boundary sizing and optimizations is not recoverable from code alone. The agreed

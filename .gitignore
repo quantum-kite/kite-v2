@@ -126,3 +126,9 @@ __pycache__
 
 # Personal/local-only scratch scripts -- never tracked, never pushed
 /local_scripts/
+
+# macOS Finder metadata
+.DS_Store
+
+# Local scratch output (e.g. rendered audit PDFs/pages) -- never source, never pushed
+/tmp/
