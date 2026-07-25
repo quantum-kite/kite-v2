@@ -96,16 +96,19 @@ void shell_input::printInfo(){
 
 void shell_input::printHelp(){
     std::cout << "KITE-Tools command-line configuration guide. Basic usage:\n\n";
-    std::cout << ".KITE-tools h5_file.h5 [options]\n";
+    std::cout << "./KITE-tools h5_file.h5 [options]\n";
     std::cout << "--help -h    Prints this message\n\n";
     std::cout << "--info -i    Prints information about the compilation process\n\n";
     std::cout << "When run without any more options, KITE-tools will simply read through the h5_file.h5 hdf5 file and find out what needs to be calculated. It will then proceed to calculate all the quantities present in that configuration file using the parameters in that same file, together with some defaults present in the source code. When given options, KITE-tools will still calculate all the quantities requested by the .h5 configuration file, but those parameters may be changed.\n\n";
-    std::cout << "There are four main parameters which may be configured. Each of these has several subparameters associated with them. The main parameters are:\n\n";
+    std::cout << "There are several main parameters which may be configured. Each of these has several subparameters associated with them. The main parameters are:\n\n";
     std::cout << "--DOS        Density of states\n";
     std::cout << "--LDOS       Local density of states\n";
+    std::cout << "--ARPES      Spectral function (ARPES)\n";
     std::cout << "--CondDC     DC conductivity\n";
     std::cout << "--CondOpt    Optical conductivity\n";
-    std::cout << "--CondOpt2   Second-order optical conductivity (photoconductivity)\n\n";
+    std::cout << "--CondOpt2   Second-order optical conductivity (photoconductivity)\n";
+    std::cout << "--CustomOne  Single-vertex custom operator trace (generalized DOS)\n";
+    std::cout << "--CustomTwo  Double-vertex custom operator trace (generalized Kubo-Bastin)\n\n";
 
     std::cout << "After each of these keywords, the program will be expecting the subparameters associated with that word (always separated by spaces):\n\n";
 
@@ -154,7 +157,7 @@ void shell_input::printHelp(){
     std::cout << "           -S              Broadening parameter of the Green's function\n";
     std::cout << "           -d              Broadening parameter of the Dirac delta\n";
     std::cout << "           -I              If 0, uses the DoS to estimate integration range\n";
-    std::cout << "           -F min max num  Fermi energies. min and max may be ommited.\n";
+    std::cout << "           -F min max num  Fermi energies. min and max may be omitted.\n";
     std::cout << "           -N              Name of the output file\n";
     std::cout << "           -M              Number of Chebyshev moments to use in the calculation\n";
     std::cout << "           -t              Number of threads\n";
@@ -185,7 +188,7 @@ void shell_input::printHelp(){
     std::cout << "Examples:\n\n";
     std::cout << "Example 1\n";
     std::cout << "    ./KITE-tools h5_file.h5 --DOS -E 1024\n";
-    std::cout << "    Processes the .h5 file as usual but ignores the number of energy points in the density of states present there. Instead, KITE-tools will use the value 1024 as soecified in the example.\n\n";
+    std::cout << "    Processes the .h5 file as usual but ignores the number of energy points in the density of states present there. Instead, KITE-tools will use the value 1024 as specified in the example.\n\n";
     std::cout << "Example 2\n";
     std::cout << "    ./KITE-tools h5_file.h5 --CondDC -E 552 -S 0.01\n";
     std::cout << "    Processes the .h5 file but uses 552 points for the energy integration and a broadening parameter of 0.01.\n\n";
@@ -193,7 +196,7 @@ void shell_input::printHelp(){
     std::cout << "    ./KITE-tools h5_file.h5 --CondDC -T 0.4 -F 500\n";
     std::cout << "    Calculates the DC conductivity using a temperature of 0.4 and 500 equidistant Fermi energies spanning the spectrum of the Hamiltonian.\n\n";
     std::cout << "Example 4\n";
-    std::cout << "    ./KITE-tools h5_file.h --CondDC -F -1.2 2.5 30 --CondOpt -T 93\n";
+    std::cout << "    ./KITE-tools h5_file.h5 --CondDC -F -1.2 2.5 30 --CondOpt -T 93\n";
     std::cout << "    Calculates the DC conductivity using 30 equidistant Fermi energies in the range [-1.2, 2.5] and the optical conductivity using a temperature of 93.\n";
     std::cout << "\n";
     std::cout << "Copyright (C) 2018-2023, M. Andelkovic, L. Covaci, A. Ferreira, S. M. Joao, J. V. Lopes, T. G. Rappoport\n\n";
