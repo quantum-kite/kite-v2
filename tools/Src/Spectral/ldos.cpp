@@ -24,6 +24,24 @@
 #include "../Tools/functions.hpp"
 #include "../macros.hpp"
 
+// kite-tools' myHDF5.hpp has no vector<string> reader (unlike KITEx's, used
+// by my_get_hdf5 on the simulation side) -- read the variable-length string
+// list written by Python's hp.string_dtype(encoding='utf-8') directly.
+static void read_string_list(std::vector<std::string> &labels, H5::H5File &file, const std::string &path){
+  const H5::DataSet dataset = file.openDataSet(path);
+  const H5::DataSpace dataspace = dataset.getSpace();
+  const H5::StrType str_type = dataset.getStrType();
+  hsize_t dim[1];
+  dataspace.getSimpleExtentDims(dim, NULL);
+  labels.resize(dim[0]);
+  std::vector<char*> buffer(dim[0], nullptr);
+  dataset.read(buffer.data(), str_type);
+  for(hsize_t i = 0; i < dim[0]; i++){
+    labels[i] = buffer[i];
+    free(buffer[i]);
+  }
+}
+
 template <typename T, unsigned DIM>
 ldos<T, DIM>::ldos(system_info<T, DIM>& sysinfo, shell_input & vari){
     // Class constructor
@@ -42,6 +60,7 @@ ldos<T, DIM>::ldos(system_info<T, DIM>& sysinfo, shell_input & vari){
       if(isPossible){
           printLDOS();                  // Print all the parameters used
           calculate();
+          calculate_operators();
       } else {
         std::cout << "ERROR. The LDOS was requested but the data "
             "needed for its computation was not found in the input .h5 file. "
@@ -216,10 +235,67 @@ bool ldos<T, DIM>::fetch_parameters(){
     
     result = true;
   } catch(H5::Exception& e) {debug_message("lDOS: There is no lMU matrix.\n");}
-  
-  
+
+
   NumMoments = MaxMoments;
-  
+
+  // Optional: operator-weighted moments (Tr[O*Im G(r,r,E)]), written by
+  // Src/Simulation/Custom/SimulationLDOSOperator.cpp only when
+  // calculation.ldos(..., operators=[...]) was used. Absent otherwise.
+  try{
+    read_string_list(operator_labels, file, dirName + "Operators");
+
+    H5::DataSet * opdataset;
+    H5::DataSpace * opdataspace;
+    hsize_t opdim[1];
+    opdataset   = new H5::DataSet(file.openDataSet(dirName + "OperatorPositions"));
+    opdataspace = new H5::DataSpace(opdataset->getSpace());
+    opdataspace -> getSimpleExtentDims(opdim, NULL);
+    opdataspace->close(); delete opdataspace;
+    opdataset->close();   delete opdataset;
+    NumOperatorPositions = opdim[0];
+
+    op_positions = Eigen::Matrix<unsigned long, -1, -1>::Zero(NumOperatorPositions,1);
+    get_hdf5(op_positions.data(), &file, (char*)(dirName+"OperatorPositions").c_str());
+
+    if(DIM == 2){
+      global_op_positions = Eigen::Matrix<unsigned long, -1, -1>::Zero(NumOperatorPositions,2);
+      for(unsigned i = 0; i < NumOperatorPositions; i++){
+        int Lx = systemInfo->size[0];
+        global_op_positions(i,0) = op_positions(i)%Lx;
+        global_op_positions(i,1) = op_positions(i)/Lx;
+      }
+    } else if(DIM == 3){
+      global_op_positions = Eigen::Matrix<unsigned long, -1, -1>::Zero(NumOperatorPositions,3);
+      for(unsigned i = 0; i < NumOperatorPositions; i++){
+        int Lx = systemInfo->size[0];
+        int Ly = systemInfo->size[1];
+        global_op_positions(i,0) = op_positions(i)%(Lx);
+        global_op_positions(i,1) = (op_positions(i)%(Lx*Ly))/Lx;
+        global_op_positions(i,2) = op_positions(i)/(Lx*Ly);
+      }
+    }
+
+    for(const auto &label : operator_labels){
+      Eigen::Matrix<std::complex<T>,-1,-1> mat =
+        Eigen::Matrix<std::complex<T>,-1,-1>::Zero(MaxMoments, NumOperatorPositions);
+      std::string opMatrixName = dirName + "lMU_Operators/" + label;
+      if(complex){
+        get_hdf5(mat.data(), &file, (char*)opMatrixName.c_str());
+      } else {
+        Eigen::Matrix<T,-1,-1> matReal =
+          Eigen::Matrix<T,-1,-1>::Zero(MaxMoments, NumOperatorPositions);
+        get_hdf5(matReal.data(), &file, (char*)opMatrixName.c_str());
+        mat = matReal.template cast<std::complex<T>>();
+      }
+      lMU_Operators.push_back(mat);
+    }
+  } catch(H5::Exception& e) {
+    debug_message("lDOS: no operator-weighted moments requested.\n");
+    operator_labels.clear();
+    lMU_Operators.clear();
+  }
+
   file.close();
   debug_message("Left lDOS::fetch_parameters.\n");
   return result;
@@ -321,6 +397,94 @@ void ldos<U, DIM>::calculate(){
       };
     }
     myfile.close();
+  }
+}
+
+
+template <typename U, unsigned DIM>
+void ldos<U, DIM>::calculate_operators(){
+  // Reconstructs Tr[O*Im G(r,r,E)] for each registered operator, reusing the
+  // exact same Jackson/Green-kernel Chebyshev reconstruction as calculate()
+  // above -- only the moment matrix and position list differ, since the
+  // reconstruction stage is operator-agnostic.
+  if(operator_labels.empty()) return;
+
+  for(std::size_t op_idx = 0; op_idx < operator_labels.size(); op_idx++){
+    const std::string &label = operator_labels[op_idx];
+
+    Eigen::Matrix<std::complex<U>, -1, -1> LDOS;
+    LDOS = Eigen::Matrix<std::complex<U>, -1, -1>::Zero(NumEnergies, NumOperatorPositions);
+
+    Eigen::Matrix<std::complex<U>, -1, -1, Eigen::RowMajor> OrderedMU;
+    OrderedMU = Eigen::Matrix<std::complex<U>, -1, -1, Eigen::RowMajor>::Zero(NumEnergies, NumOperatorPositions);
+    OrderedMU = lMU_Operators[op_idx];
+
+    omp_set_num_threads(systemInfo->NumThreads);
+#pragma omp parallel
+    {
+#pragma omp critical
+      {
+        int localN = NumMoments/systemInfo->NumThreads;
+        int thread_id = omp_get_thread_num();
+        long offset = thread_id*localN*NumOperatorPositions;
+        Eigen::Map<Eigen::Matrix<std::complex<U>, -1, -1, Eigen::RowMajor>> locallMU(OrderedMU.data() + offset, localN, NumOperatorPositions);
+
+        Eigen::Matrix<std::complex<U>, -1, -1> GammaE;
+        GammaE = Eigen::Matrix<std::complex<U>, -1, -1>::Zero(NumEnergies, localN);
+
+        U factor;
+
+        if(kernel == "jackson"){
+          for(int i = 0; i < NumEnergies; i++){
+            for(int m = 0; m < localN; m++){
+              factor = 1.0/(1.0 + U((m + thread_id*localN)==0));
+              GammaE(i,m) += delta(m + thread_id*localN,energies(i))*kernel_jackson<U>(m + thread_id*localN, NumMoments)*factor;
+            }
+          }
+        }
+
+        if(kernel == "green"){
+          std::complex<U> c_energy;
+          for(int i = 0; i < NumEnergies; i++){
+            c_energy = std::complex<U>(energies(i), kernel_parameter);
+            for(int m = 0; m < localN; m++){
+              factor = 1.0/(1.0 + U((m + thread_id*localN)==0));
+              GammaE(i,m) += -factor*green<std::complex<U>>(m, 1, c_energy).imag();
+            }
+          }
+        }
+
+        Eigen::Matrix<std::complex<U>, -1, -1> localLDOS;
+        localLDOS = Eigen::Matrix<std::complex<U>, -1, -1>::Zero(NumEnergies, NumOperatorPositions);
+        localLDOS = GammaE*locallMU;
+        LDOS += localLDOS;
+      }
+    }
+
+    U mult = 1.0/systemInfo->energy_scale;
+    std::ofstream myfile;
+    double scale = systemInfo->energy_scale;
+    double shift = systemInfo->energy_shift;
+    for(int i=0; i < NumEnergies; i++){
+      myfile.open(filename + "_" + label + "_" + std::to_string(energies(i)*scale + shift) + ".dat");
+      if(DIM == 2){
+        for(unsigned pos = 0; pos < NumOperatorPositions; pos++){
+          int x, y;
+          x = global_op_positions(pos,0);
+          y = global_op_positions(pos,1);
+          myfile  << x << " " << y << " " << LDOS(i,pos).real()*mult << "\n";
+        };
+      } else if(DIM == 3){
+        for(unsigned pos = 0; pos < NumOperatorPositions; pos++){
+          int x, y, z;
+          x = global_op_positions(pos,0);
+          y = global_op_positions(pos,1);
+          z = global_op_positions(pos,2);
+          myfile  << x << " " << y << " " << z << " " << LDOS(i,pos).real()*mult << "\n";
+        };
+      }
+      myfile.close();
+    }
   }
 }
 

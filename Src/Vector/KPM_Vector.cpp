@@ -47,6 +47,13 @@ void KPM_Vector<T,D>::build_wave_packet(const Eigen::Matrix<double,-1,-1> & k,
 }
 
 template <typename T, unsigned D>
+bool KPM_Vector<T,D>::locate_site(unsigned long pos, std::size_t &local_index){
+  (void) pos;
+  (void) local_index;
+  return false;
+}
+
+template <typename T, unsigned D>
 void KPM_Vector<T,D>::build_site(unsigned long pos){
   (void) pos;
 }

@@ -41,6 +41,17 @@ class ldos{
     // Objects required to successfully calculate the conductivity
     Eigen::Matrix<std::complex<T>, -1, -1> lMU;
 
+    // Operator-weighted generalization (see
+    // Src/Simulation/Custom/SimulationLDOSOperator.cpp): each registered
+    // label gets its own moment matrix and its own (site-only, no orbital
+    // suffix) position list, since an on-site operator's expectation value
+    // is not tied to a single orbital.
+    std::vector<std::string> operator_labels;
+    unsigned NumOperatorPositions;
+    Eigen::Matrix<unsigned long, -1, -1> op_positions;
+    Eigen::Matrix<unsigned long, -1, -1> global_op_positions;
+    std::vector<Eigen::Matrix<std::complex<T>, -1, -1>> lMU_Operators;
+
     std::string name;
 
     // Class methods
@@ -51,6 +62,7 @@ class ldos{
     void set_default_parameters();
     void override_parameters();                 // If shell variables were given, this function overrides the current parameters
     void calculate();                           // Compute the local density of states
-	
+    void calculate_operators();                 // Compute the operator-weighted local spectral density, if requested
+
 };
 

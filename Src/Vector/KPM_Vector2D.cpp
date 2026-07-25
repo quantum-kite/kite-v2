@@ -230,9 +230,14 @@ T KPM_Vector <T, 2>::get_point()
 
 
 template <typename T>
-void KPM_Vector <T, 2>::build_site(unsigned long pos){
-    // Builds an initial vector which is zero everywhere except
-    // for a single site, where it is one
+bool KPM_Vector <T, 2>::locate_site(unsigned long pos, std::size_t &local_index){
+    // Resolves a global flat position (a site, with any orbital encoded as an
+    // additive offset baked into pos itself, see SimulationLMU.cpp) to this
+    // thread's local ghost-included vector index. Returns whether the site
+    // belongs to the current thread -- only that thread should act on
+    // local_index. Extracted from build_site so callers needing more than one
+    // orbital's index at the same site (e.g. an operator-weighted LDOS) don't
+    // have to duplicate this thread/coordinate resolution.
     Coordinates<unsigned long, 3> thread_coords(r.ld);
     Coordinates<unsigned long, 3> thread_coords_gh(r.Ld);
     Coordinates<unsigned long, 3> thread(r.nd);
@@ -241,7 +246,6 @@ void KPM_Vector <T, 2>::build_site(unsigned long pos){
     unsigned long T_thread[3]; // index of the thread
     unsigned long x_thread[3]; // position within the thread
 
-    index = 0;
 #pragma omp critical
 {
     total_coords.set_coord(pos);
@@ -255,20 +259,31 @@ void KPM_Vector <T, 2>::build_site(unsigned long pos){
     thread.set_index(T_thread);
 
     //convert to coordinates with ghosts
-    r.convertCoordinates(thread_coords_gh, thread_coords); 
- 
+    r.convertCoordinates(thread_coords_gh, thread_coords);
+
     // check if the site is in the current thread
     correct_thread = thread.index == r.thread_id;
 }
- 
+
 #pragma omp barrier
- v.setZero();
- v(thread_coords_gh.index,0) = T(correct_thread);
- for (unsigned i = 0; i < r.NStr; i++) {
-   auto &vv = h.hV.position.at(i);
-   for (unsigned j = 0; j < vv.size(); j++)
-     v(vv.at(j), index) = 0.;
- }
+    local_index = thread_coords_gh.index;
+    return correct_thread;
+}
+
+template <typename T>
+void KPM_Vector <T, 2>::build_site(unsigned long pos){
+    // Builds an initial vector which is zero everywhere except
+    // for a single site, where it is one
+    index = 0;
+    std::size_t local_index;
+    bool correct_thread = locate_site(pos, local_index);
+    v.setZero();
+    v(local_index,0) = T(correct_thread);
+    for (unsigned i = 0; i < r.NStr; i++) {
+      auto &vv = h.hV.position.at(i);
+      for (unsigned j = 0; j < vv.size(); j++)
+        v(vv.at(j), index) = 0.;
+    }
 }
 
 template <typename T>

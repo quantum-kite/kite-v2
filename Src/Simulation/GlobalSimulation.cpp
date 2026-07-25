@@ -66,8 +66,10 @@ GlobalSimulation<T, D>::GlobalSimulation(char *name) : rglobal(name)
     simul.calc_wavepacket();
     simul.calc_localized_wavepacket();
     simul.calc_LDOS();
+    simul.calc_LDOS_operators();
     simul.calc_ARPES(); // fetches parameters from .h5 file and calculates ARPES
     simul.calc_ldos();
+    simul.calc_ldos_operators();
     simul.calc_spectral(global_fft);
     simul.calc_custom_one();
     simul.calc_custom_one_local();

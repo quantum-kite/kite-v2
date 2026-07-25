@@ -61,6 +61,7 @@ public:
   void Exchange_Boundaries();
   void test_boundaries_system();
   void empty_ghosts(int mem_index);
+  bool locate_site(unsigned long R, std::size_t &local_index);
   void build_site(unsigned long R);
   void build_planewave(Eigen::Matrix<double,-1,1> & k, Eigen::Matrix<T,-1,1> & weight);
 };

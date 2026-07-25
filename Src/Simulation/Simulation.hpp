@@ -105,6 +105,34 @@ public:
   void calc_LDOS();
   void store_LMU(Eigen::Array<T, -1, -1> *);
 
+  // LDoS, operator-weighted (exact method) -- Tr[O*Im G(r,r,E)] generalization
+  // of the plain LMU/LDOS above, kept in its own translation unit (mirrors
+  // custom_one/custom_two) so the plain path above is untouched.
+  //
+  // Naming note: this deliberately mirrors calc_LDOS()'s capitalization (not
+  // calc_ldos()'s -- see below), because it is the operator-weighted variant
+  // of the SAME exact/deterministic method calc_LDOS() implements (in
+  // SimulationLMU.cpp); this is the pre-existing calc_LDOS() vs calc_ldos()
+  // naming split (LMU/exact vs LDoS/stochastic, an inherited convention, not
+  // introduced here) propagated consistently, not a new inconsistency. Do
+  // NOT "normalize" the corresponding filenames (SimulationLDOSOperator.cpp
+  // vs SimulationLDoSMapOperator.cpp) to differ only by case -- this
+  // repository has been built and edited on a case-INSENSITIVE filesystem
+  // (macOS default), where e.g. "SimulationLDOSOperator.cpp" and
+  // "SimulationLDoSOperator.cpp" resolve to the same file on disk; the
+  // "MapOperator" suffix on the stochastic file's name is deliberately a
+  // different STRING, not just different case, to avoid exactly that
+  // collision (hit once already during development).
+  void calc_LDOS_operators();
+  void LMU_Operators(
+    int NDisorder,
+    int NMoments,
+    const Eigen::Array<unsigned long, -1, 1> &positions,
+    const std::vector<std::string> &operator_labels,
+    const std::vector<Eigen::Matrix<std::complex<double>, -1, -1>> &operator_collection
+  );
+  void store_LMU_Operators(const std::string &label, Eigen::Array<T, -1, -1> *gamma);
+
   void calc_ARPES();
   void ARPES(
     int NDisorder,
@@ -204,6 +232,20 @@ public:
   void calc_ldos();
   void ldos(const int, const value_type, const value_type, const int);
   void store_ldos(const Eigen::Array<value_type, -1, -1> &);
+
+  // LDoS map, operator-weighted (stochastic/Markov method) -- kept in its own
+  // translation unit (mirrors custom_one/custom_two) so the plain path above
+  // is untouched.
+  void calc_ldos_operators();
+  void ldos_operators(
+    const int vectors_,
+    const value_type energy_,
+    const value_type sigma_,
+    const int coef_id_,
+    const std::vector<std::string> &operator_labels,
+    const std::vector<Eigen::Matrix<std::complex<double>, -1, -1>> &operator_collection
+  );
+  void store_ldos_operators(const std::string &label, const Eigen::Array<value_type, -1, -1> &results_);
   // Spectral Function map
   void calc_spectral(GlobalFFT<value_type> &);
   void spectral(

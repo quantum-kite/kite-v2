@@ -579,19 +579,9 @@ class Calculation:
         return self._custom_two_local
 
     @property
-    def get_local_chern(self):
-        """Returns the requested Local Chern number"""
-        return self._local_chern
-
-    @property
     def get_custom_ss_two(self):
         """Returns the trace with custom operators."""
         return self._custom_ss_two
-
-    @property
-    def get_chern_map(self):
-        """Returns the requested Local Chern number"""
-        return self._local_chern
 
     def __init__(self, configuration=None):
 
@@ -618,8 +608,6 @@ class Calculation:
         self._custom_two                     = []
         self._custom_two_local               = []
         self._custom_ss_two                  = []
-        self._local_chern_map                = []
-        self._local_chern                    = []
 
         self._avail_dir_full = {'xx': 0, 'yy': 1, 'zz': 2, 'xy': 3, 'xz': 4, 'yx': 5, 'yz': 6, 'zx': 7, 'zy': 8}
         self._avail_dir_nonl = {'xxx': 0, 'xxy': 1, 'xxz': 2, 'xyx': 3, 'xyy': 4, 'xyz': 5, 'xzx': 6, 'xzy': 7,
@@ -646,7 +634,30 @@ class Calculation:
         self._dos.append({'num_points': num_points, 'num_moments': num_moments, 'num_random': num_random,
                           'num_disorder': num_disorder})
 
-    def ldos(self, energy, num_moments, position, sublattice, num_disorder=1):
+    def _validate_ldos_operators(self, caller, operators):
+        """Shared validation for ldos()/ldos_map()'s operators= argument:
+        every label must be registered, and its matrix must be Hermitian
+        (within a numerical tolerance) so that Tr[O*Im G(r,r,E)] is the
+        real-valued local spectral density the physical picture assumes --
+        a non-Hermitian O has no such guarantee and is rejected outright
+        rather than silently producing a complex/ill-defined result."""
+        for label in operators:
+            if label not in self._custom_operator_collection:
+                raise ValueError(
+                    "{}: operator label '{}' was never registered via "
+                    "add_orbital_coupling.".format(caller, label))
+            matrix = np.asarray(self._custom_operator_collection[label])
+            if matrix.shape[0] != matrix.shape[1]:
+                raise ValueError(
+                    "{}: operator '{}' is not square (shape {}).".format(
+                        caller, label, matrix.shape))
+            if not np.allclose(matrix, matrix.conj().T, atol=1e-10):
+                raise ValueError(
+                    "{}: operator '{}' is not Hermitian (O != O^dagger). "
+                    "Tr[O*Im G(r,r,E)] is only guaranteed real-valued for a "
+                    "Hermitian O.".format(caller, label))
+
+    def ldos(self, energy, num_moments, position, sublattice, num_disorder=1, operators=None):
         """Calculate the local density of states as a function of energy
 
         Parameters
@@ -661,12 +672,48 @@ class Calculation:
             Relative index of the unit cell where the LDOS will be calculated.
         sublattice : str or list
             Name of the sublattice at which the LDOS will be calculated.
+        operators : list of str, optional
+            Labels of operators, previously registered via add_orbital_index/add_orbital_coupling
+            (the same mechanism used by custom_one/custom_two/gaussian_wave_packet), for which the
+            local operator-weighted spectral density rho_O(r,E) = -1/pi * Tr[O*Im G(r,r,E)] will be
+            computed at every requested ``position`` in addition to the plain LDOS. This reuses the
+            same reconstruction pipeline (Jackson-kernel Chebyshev delta-function expansion) as the
+            plain LDOS above, unmodified, so it carries the identical -1/pi normalization already
+            applied there -- rho_O reduces exactly to the ordinary per-orbital LDOS when O is a
+            single-orbital projector. Unlike the always-non-negative plain LDOS, rho_O is signed in
+            general (only guaranteed non-negative when O itself is positive semidefinite). Each
+            label must be Hermitian (O = O^dagger; validated at registration) and expressible as a
+            single on-site matrix, identical at every site -- it cannot represent a quantity that
+            couples different lattice sites (see add_orbital_coupling's documentation). Results are
+            written to ``/Calculation/ldos/lMU_Operators/<label>``.
+
+            Label namespace: these are the SAME labels registered via add_orbital_coupling and used
+            by ``operators=`` on ``ldos_map``/``gaussian_wave_packet`` -- an arbitrary string
+            beginning with "l" (e.g. "l0", "sz", "lproj"). This is a DIFFERENT namespace from the
+            positional ``l0``-``l9`` labels used inside a ``custom_one``/``custom_two`` vertex
+            string (e.g. ``custom.Vertex(moments, [[1.0, "l0"]])``): there, the label's trailing
+            digit is a 0-indexed lookup into the HDF5-group iteration order of registered custom
+            operators, not a name -- using the wrong digit there silently reads the wrong operator
+            (or, historically, has caused an out-of-bounds access) rather than raising an error. The
+            ``operators=`` parameter here has no such positional constraint: any registered label
+            string may be used, and mismatches raise a ValueError at registration time (see above).
+
+            Comparing exact (this method) against ``ldos_map``'s stochastic result for the "same"
+            calculation requires matching them like-for-like: the two methods do not share energy
+            broadening (this method's resolution comes from ``num_moments`` and the reconstruction
+            kernel; ``ldos_map``'s comes from its own ``sigma_``/``coef`` Gaussian or window width)
+            or disorder/twist realizations (each draws its own independent random disorder unless
+            you explicitly fix the same seeds on both), so a numerical mismatch between the two is
+            not by itself evidence of a bug unless the broadening and disorder setup are first
+            aligned.
         """
+        operators = operators or []
+        self._validate_ldos_operators('ldos', operators)
 
         self._ldos.append({'energy': energy, 'num_moments': num_moments, 'position': np.asmatrix(position),
-                           'sublattice': sublattice, 'num_disorder': num_disorder})
+                           'sublattice': sublattice, 'num_disorder': num_disorder, 'operators': operators})
 
-    def ldos_map(self, energy_, sigma_, vectors_, coef = "gaussian"):
+    def ldos_map(self, energy_, sigma_, vectors_, coef = "gaussian", operators=None):
         """Calculate the local density of states as a function of energy
 
         Parameters
@@ -679,12 +726,25 @@ class Calculation:
             Number of different random vectors.
         kernel : string
             Choose the coefficients to be used. These will be translated into numbers which will be read by c++.
+        operators : list of str, optional
+            Labels of operators, previously registered via add_orbital_index/add_orbital_coupling,
+            for which the local operator-weighted map rho_O(r,E) = -1/pi * Tr[O*Im G(r,r,E)] will be
+            computed over the whole lattice in addition to the plain LDOS map. This is a stochastic
+            (random-vector) estimate, like the plain map, and is signed in general -- only guaranteed
+            non-negative when O itself is positive semidefinite, unlike the plain map. Same
+            on-site-only restriction and Hermiticity requirement (validated at registration) as
+            ``ldos``'s ``operators`` parameter. Results are written to
+            ``/Calculation/ldos_map/Map_Operators/<label>``.
         """
 
         coef_dict = {"gaussian": 0, "window": 1}
         coef_id = coef_dict[coef.lower()]
 
-        self._ldos_map.append({'energy': energy_, 'sigma': sigma_, 'vectors': vectors_, 'coef_id': coef_id})
+        operators = operators or []
+        self._validate_ldos_operators('ldos_map', operators)
+
+        self._ldos_map.append({'energy': energy_, 'sigma': sigma_, 'vectors': vectors_, 'coef_id': coef_id,
+                               'operators': operators})
 
     def spectral_map(self, energy_, sigma_, vectors_, coef = "gaussian"):
         """Calculate the local density of states as a function of energy
@@ -1131,12 +1191,6 @@ class Calculation:
                 operators[i].append(operator_sequence[1]) # operator streams
 
         self._custom_ss_two.append({'rank' : len(stream_), 'num_random' : num_random_, 'num_disorder' : num_disorder_, 'operators' : operators, 'coefs' : coefs, 'energies': energies_, 'gamma' : gamma_, 'sigma' : sigma_})
-
-    def local_chern(self, num_disorder_, beta_, miu_, pos_):
-        self._local_chern.append({'num_disorder' : num_disorder_, 'beta' : beta_, 'miu' : miu_, 'pos' : pos_})
-
-    def local_chern_map(self, num_vectors_, beta_, miu_):
-        self._local_chern_map.append({'num_vectors' : num_vectors_, 'beta' : beta_, 'miu' : miu_})
 
 class Configuration:
     def __init__(self, divisions=(1, 1, 1), length=(1, 1, 1), boundaries=('open', 'open', 'open'),
@@ -1922,12 +1976,29 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
             grpc_p.create_dataset('FixPosition', data=np.asarray(fixed_positions), dtype=np.int32)
         grpc_p.create_dataset('NumDisorder', data=dis, dtype=np.int32)
 
+        operator_labels = single_ldos['operators']
+        if operator_labels:
+            grpc_p.create_dataset('Operators', data=operator_labels, dtype=hp.string_dtype(encoding='utf-8'))
+            grpc_p.create_dataset('OperatorPositions', data=np.asarray(fixed_positions), dtype=np.int32)
+            grpc_op = grpc.create_group('ldos/CustomOperators')
+            for label in operator_labels:
+                operator = calculation._custom_operator_collection[label]
+                grpc_op.create_dataset(label, data=np.asarray(operator).astype(config.type))
+
     if calculation.get_ldos_map:
         grpc_p = grpc.create_group('ldos_map')
         grpc_p.create_dataset('Energy', data = np.asarray(calculation._ldos_map[0]['energy']), dtype = np.float64)
         grpc_p.create_dataset('Sigma', data = np.asarray(calculation._ldos_map[0]['sigma']), dtype = np.float64)
         grpc_p.create_dataset('NumVectors', data = np.asarray(calculation._ldos_map[0]['vectors']), dtype = np.int32)
         grpc_p.create_dataset('Coef_ID', data = np.asarray(calculation._ldos_map[0]['coef_id']), dtype = np.int32)
+
+        operator_labels = calculation._ldos_map[0]['operators']
+        if operator_labels:
+            grpc_p.create_dataset('Operators', data=operator_labels, dtype=hp.string_dtype(encoding='utf-8'))
+            grpc_op = grpc.create_group('ldos_map/CustomOperators')
+            for label in operator_labels:
+                operator = calculation._custom_operator_collection[label]
+                grpc_op.create_dataset(label, data=np.asarray(operator).astype(config.type))
 
     if calculation.get_spectral_map:
         grpc_p = grpc.create_group('spectral_map')
@@ -2393,19 +2464,6 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
 
         for label, operator in calculation._custom_operator_collection.items():
             grpc_op.create_dataset(label, data = np.asarray(operator).astype(config.type))
-
-    if calculation.get_local_chern:
-        grpc_p = grpc.create_group('LCM')
-        grpc_p.create_dataset('NumDisorder', data = np.asarray(calculation._local_chern[0]['num_disorder']), dtype = np.int32)
-        grpc_p.create_dataset('Beta', data = np.asarray(calculation._local_chern[0]['beta']), dtype = np.float64)
-        grpc_p.create_dataset('Miu', data = np.asarray(calculation._local_chern[0]['miu']), dtype = np.float64)
-        grpc_p.create_dataset('Pos', data = np.asarray(calculation._local_chern[0]['pos']), dtype = np.int32)
-
-    if calculation._local_chern_map:
-        grpc_p = grpc.create_group('STLCM')
-        grpc_p.create_dataset('NumVectors', data = np.asarray(calculation._local_chern_map[0]['num_vectors']), dtype = np.int32)
-        grpc_p.create_dataset('Beta', data = np.asarray(calculation._local_chern_map[0]['beta']), dtype = np.float64)
-        grpc_p.create_dataset('Miu', data = np.asarray(calculation._local_chern_map[0]['miu']), dtype = np.float64)
 
     print('\n##############################################################################\n')
     print('OUTPUT:\n')
