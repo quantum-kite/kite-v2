@@ -1,23 +1,37 @@
-"""Negative-test regression for the operator-dimension safety check added to
-config_system() (stage-1 re-audit, Section "Open blocker: matrix dimension").
+"""Negative-test regression for config_system()'s operator/orbital-index
+safety checks (stage-1 re-audit and third-pass audit).
 
-Before this fix, add_orbital_coupling() sized a newly registered operator
-matrix from however many orbital names happened to be in
-_orbital_index_collection at that moment -- register only part of the
-lattice basis, or add more orbital names after a label's first coupling
-call, and the resulting matrix stayed undersized. Python accepted this
-silently and KITEx's deterministic kernel (which always loops a, b over the
-FULL orbital range) would read past the matrix's actual bounds: a real
-out-of-bounds access, not merely a cosmetic mismatch.
+Three distinct defects, three distinct checks:
 
-config_system() now computes the lattice's true total orbital count and
-rejects any registered operator whose shape doesn't match exactly. This
-script exercises the failure modes the re-audit named explicitly --
-incomplete, late-grown, duplicate-label, and non-contiguous registrations --
-plus one valid case that must still pass.
+1. Undersized operator matrix (re-audit, Section "Open blocker: matrix
+   dimension"): add_orbital_coupling() sizes a newly registered operator
+   matrix from however many orbital names happened to be in
+   _orbital_index_collection at that moment -- register only part of the
+   lattice basis, or add more orbital names after a label's first coupling
+   call, and the resulting matrix stayed undersized. KITEx's deterministic
+   kernel (which always loops a, b over the FULL orbital range) would read
+   past the matrix's actual bounds. Fixed by checking every operator's shape
+   against the lattice's true total orbital count at export time.
+
+2. Duplicate/non-contiguous orbital indices (third-pass audit, Section "Open
+   API footgun: orbital-index aliases"): add_orbital_index() accepted any
+   integer index with no uniqueness or range check. Two names mapped to the
+   same index still produce a CORRECTLY SIZED matrix (so check #1 above
+   can't catch it) but couplings targeting either name silently overwrite
+   the same entry. Fixed by requiring the index map to be a bijection onto
+   0..N_orb-1.
+
+3. Post-registration Hermiticity mutation (third-pass audit, Section "Open
+   blocker: validation is not final"): ldos()/ldos_map() validate
+   Hermiticity when called, but a later add_orbital_coupling() call on the
+   same label can mutate it into a non-Hermitian matrix before export, and
+   the original check has no way to see that. Fixed by re-validating the
+   final matrix, at export time, for every label actually referenced by an
+   ldos()/ldos_map() request.
 """
 import os
 import sys
+import tempfile
 
 import numpy as np
 
@@ -41,17 +55,25 @@ def _configuration():
 
 
 def _export(lattice, calculation, tag):
-    kite.config_system(lattice, _configuration(), calculation,
-                        filename="/tmp/operator_dimension_regression_{}.h5".format(tag))
+    with tempfile.TemporaryDirectory(prefix="kite_operator_dimension_regression_") as tmpdir:
+        kite.config_system(lattice, _configuration(), calculation,
+                            filename=os.path.join(tmpdir, "{}.h5".format(tag)))
 
 
 def expect_rejected(name, build_fn):
+    """Some malformed registrations are caught by config_system()'s
+    export-time checks (ValueError); others -- any out-of-range index whose
+    matrix position exceeds the current (name-count-sized) matrix -- are
+    already caught earlier, by plain numpy bounds checking inside
+    add_orbital_coupling() itself (IndexError). Both are legitimate
+    "rejected", since either prevents the malformed operator from silently
+    reaching KITEx."""
     lattice = _two_orbital_lattice()
     calculation = kite.Calculation(_configuration())
-    build_fn(calculation)
     try:
+        build_fn(calculation)
         _export(lattice, calculation, name)
-    except ValueError as e:
+    except (ValueError, IndexError) as e:
         print("PASS ({}): correctly rejected -- {}".format(name, e))
         return True
     print("FAIL ({}): no error raised, bad operator silently accepted".format(name))
@@ -112,12 +134,62 @@ def valid_full_basis(calculation):
     calculation.ldos_map(energy_=0.0, sigma_=0.1, vectors_=10, operators=['l0'])
 
 
+def duplicate_index_registration(calculation):
+    """Two orbital names aliased to the same index -- the third-pass audit's
+    own reproduction. Matrix ends up correctly SIZED (2x2, since two names
+    were registered), so check #1 above can't catch this; couplings to A and
+    B silently overwrite the same (0,0) entry instead of writing two
+    different diagonal entries."""
+    calculation.add_orbital_index('A', 0)
+    calculation.add_orbital_index('B', 0)
+    calculation.add_orbital_coupling('A', 'A', -1.0, 'l0')
+    calculation.add_orbital_coupling('B', 'B', 1.0, 'l0')
+    calculation.ldos_map(energy_=0.0, sigma_=0.1, vectors_=10, operators=['l0'])
+
+
+def non_contiguous_registration(calculation):
+    """Indices {0, 2} for a 2-orbital lattice -- valid count, valid
+    uniqueness, but skips index 1 and reaches out of range at index 2."""
+    calculation.add_orbital_index('A', 0)
+    calculation.add_orbital_index('B', 2)
+    calculation.add_orbital_coupling('A', 'A', 1.0, 'l0')
+    calculation.add_orbital_coupling('B', 'B', -1.0, 'l0')
+    calculation.ldos_map(energy_=0.0, sigma_=0.1, vectors_=10, operators=['l0'])
+
+
+def negative_index_registration(calculation):
+    """A negative index is unique and in a sense "contiguous" with 0, but
+    not a valid position in a 0-based orbital basis."""
+    calculation.add_orbital_index('A', -1)
+    calculation.add_orbital_index('B', 1)
+    calculation.add_orbital_coupling('A', 'A', 1.0, 'l0')
+    calculation.add_orbital_coupling('B', 'B', -1.0, 'l0')
+    calculation.ldos_map(energy_=0.0, sigma_=0.1, vectors_=10, operators=['l0'])
+
+
+def post_registration_hermiticity_mutation(calculation):
+    """l0 is Hermitian (diagonal, real) when ldos_map() validates it, but a
+    later add_orbital_coupling() call adds an off-diagonal entry with no
+    Hermitian-conjugate partner, mutating it into a non-Hermitian matrix
+    before export -- the third-pass audit's own reproduction."""
+    calculation.add_orbital_index('A', 0)
+    calculation.add_orbital_index('B', 1)
+    calculation.add_orbital_coupling('A', 'A', 1.0, 'l0')
+    calculation.ldos_map(energy_=0.0, sigma_=0.1, vectors_=10, operators=['l0'])
+    calculation.add_orbital_coupling('A', 'B', 1j, 'l0')  # no conjugate partner
+
+
 if __name__ == "__main__":
     results = [
         expect_rejected("incomplete", incomplete_registration),
         expect_rejected("late_grown", late_grown_registration),
         expect_accepted("sparse_but_fully_sized", sparse_but_fully_sized),
         expect_accepted("valid_full_basis", valid_full_basis),
+        expect_rejected("duplicate_index", duplicate_index_registration),
+        expect_rejected("non_contiguous", non_contiguous_registration),
+        expect_rejected("negative_index", negative_index_registration),
+        expect_rejected("post_registration_hermiticity_mutation",
+                        post_registration_hermiticity_mutation),
     ]
     if all(results):
         print("\nAll operator-dimension regression checks PASSED.")

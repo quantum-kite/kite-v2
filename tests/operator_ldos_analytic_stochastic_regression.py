@@ -15,9 +15,9 @@ sigma_y=-1), each weighted by that eigenstate's O-expectation value:
     rho_sigma_y = g_sigma(0) - g_sigma(2B)   (+1 at E=+B, -1 at E=-B)
     rho_sigma_x = rho_sigma_z = 0            (sigma_x, sigma_z have zero diagonal
                                                in the sigma_y eigenbasis)
-    rho_P_up    = 0.5 * rho_I                (P_up = (I + sigma_y)/2 in this basis,
-                                               so its map is the average of the I
-                                               and sigma_y expressions above)
+    rho_P_up    = 0.5 * rho_I                (P_up = (I + sigma_z)/2 in the declared
+                                               u,d basis; rho_sigma_z = 0 at E=B, so
+                                               this reduces to half of rho_I)
 
 These give a closed-form expectation for all five operators' STOCHASTIC output,
 not just a sign check, without needing to match the deterministic method's

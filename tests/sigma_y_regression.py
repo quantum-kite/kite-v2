@@ -17,9 +17,11 @@ and stochastic (calculation.ldos_map) must AGREE IN SIGN once the transpose
 bug (orb_mtx(b,a) -> orb_mtx(a,b) in
 Src/Simulation/Custom/SimulationLDOSOperator.cpp) is fixed.
 """
+import glob
 import os
 import subprocess
 import sys
+import tempfile
 
 import h5py
 import numpy as np
@@ -28,8 +30,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 import kite
 from kite import lattice as latt
 
-KITEX = os.path.join(os.path.dirname(__file__), "..", "build", "KITEx")
-KITE_TOOLS = os.path.join(os.path.dirname(__file__), "..", "build", "KITE-tools")
+KITEX = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "build", "KITEx"))
+KITE_TOOLS = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "build", "KITE-tools"))
 
 
 def build(output_file):
@@ -63,26 +65,31 @@ def build(output_file):
 
 
 def main():
-    output_file = "sigma_y_regression-output.h5"
-    build(output_file)
+    with tempfile.TemporaryDirectory(prefix="kite_sigma_y_regression_") as tmpdir:
+        cwd = os.getcwd()
+        os.chdir(tmpdir)
+        try:
+            output_file = "sigma_y_regression-output.h5"
+            build(output_file)
 
-    subprocess.run([KITEX, output_file], check=True, capture_output=True)
-    subprocess.run(
-        [KITE_TOOLS, output_file, "--LDOS", "-K", "jackson"],
-        check=True, capture_output=True, cwd=os.path.dirname(output_file) or ".",
-    )
+            subprocess.run([KITEX, output_file], check=True, capture_output=True)
+            subprocess.run(
+                [KITE_TOOLS, output_file, "--LDOS", "-K", "jackson"],
+                check=True, capture_output=True,
+            )
 
-    # Exact (deterministic) result: read the reconstructed .dat file.
-    import glob
-    dat_files = sorted(glob.glob("ldos_l0_*.dat"))
-    if not dat_files:
-        raise SystemExit("No exact-method .dat output found -- KITE-tools reconstruction failed.")
-    exact_val = np.loadtxt(dat_files[0])
-    exact_val = np.atleast_2d(exact_val)[0, -1]
+            # Exact (deterministic) result: read the reconstructed .dat file.
+            dat_files = sorted(glob.glob("ldos_l0_*.dat"))
+            if not dat_files:
+                raise SystemExit("No exact-method .dat output found -- KITE-tools reconstruction failed.")
+            exact_val = np.loadtxt(dat_files[0])
+            exact_val = np.atleast_2d(exact_val)[0, -1]
 
-    # Stochastic result.
-    with h5py.File(output_file, "r") as f:
-        stoch = np.array(f["Calculation"]["ldos_map"]["Map_Operators"]["l0"])[0, 0]
+            # Stochastic result.
+            with h5py.File(output_file, "r") as f:
+                stoch = np.array(f["Calculation"]["ldos_map"]["Map_Operators"]["l0"])[0, 0]
+        finally:
+            os.chdir(cwd)
 
     print(f"exact rho_O(E=B)      = {exact_val:+.6f}")
     print(f"stochastic rho_O(E=B) = {stoch:+.6f}")

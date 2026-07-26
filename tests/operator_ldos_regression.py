@@ -25,6 +25,7 @@ import glob
 import os
 import subprocess
 import sys
+import tempfile
 
 import h5py
 import numpy as np
@@ -33,8 +34,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 import kite
 from kite import lattice as latt
 
-KITEX = os.path.join(os.path.dirname(__file__), "..", "build", "KITEx")
-KITE_TOOLS = os.path.join(os.path.dirname(__file__), "..", "build", "KITE-tools")
+KITEX = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "build", "KITEx"))
+KITE_TOOLS = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "build", "KITE-tools"))
 
 B = 0.3
 OUTPUT_FILE = "operator_ldos_regression-output.h5"
@@ -78,23 +79,29 @@ def build():
 
 
 def main():
-    build()
-    subprocess.run([KITEX, OUTPUT_FILE], check=True, capture_output=True)
-    subprocess.run([KITE_TOOLS, OUTPUT_FILE, "--LDOS", "-K", "jackson"],
-                    check=True, capture_output=True)
+    with tempfile.TemporaryDirectory(prefix="kite_operator_ldos_regression_") as tmpdir:
+        cwd = os.getcwd()
+        os.chdir(tmpdir)
+        try:
+            build()
+            subprocess.run([KITEX, OUTPUT_FILE], check=True, capture_output=True)
+            subprocess.run([KITE_TOOLS, OUTPUT_FILE, "--LDOS", "-K", "jackson"],
+                            check=True, capture_output=True)
 
-    # Plain per-orbital LDOS (position 0 = 'u', position 1 = 'd').
-    plain_dat = np.atleast_2d(np.loadtxt(sorted(glob.glob("ldos0.3*.dat"))[0]))
-    ldos_u, ldos_d = plain_dat[0, -1], plain_dat[1, -1]
+            # Plain per-orbital LDOS (position 0 = 'u', position 1 = 'd').
+            plain_dat = np.atleast_2d(np.loadtxt(sorted(glob.glob("ldos0.3*.dat"))[0]))
+            ldos_u, ldos_d = plain_dat[0, -1], plain_dat[1, -1]
 
-    exact = {}
-    for label in OPERATORS:
-        files = sorted(glob.glob(f"ldos_{label}_0.3*.dat"))
-        exact[label] = np.atleast_2d(np.loadtxt(files[0]))[0, -1]
+            exact = {}
+            for label in OPERATORS:
+                files = sorted(glob.glob(f"ldos_{label}_0.3*.dat"))
+                exact[label] = np.atleast_2d(np.loadtxt(files[0]))[0, -1]
 
-    with h5py.File(OUTPUT_FILE, "r") as f:
-        grp = f["Calculation"]["ldos_map"]["Map_Operators"]
-        stoch = {label: np.array(grp[label])[0, 0] for label in OPERATORS}
+            with h5py.File(OUTPUT_FILE, "r") as f:
+                grp = f["Calculation"]["ldos_map"]["Map_Operators"]
+                stoch = {label: np.array(grp[label])[0, 0] for label in OPERATORS}
+        finally:
+            os.chdir(cwd)
 
     ok = True
 
