@@ -16,19 +16,14 @@
     sublattice/spin at one edge, yet globally spin-up DOS == spin-down DOS by
     symmetry between the two edges). This script computes the corresponding
     local, real-space-resolved probe: calculation.ldos_map(operators=['l0','l1'])
-    maps Sz_A(r), Sz_B(r) separately (see register_sz_operators()) at the
-    default energy E=0.05t, sigma=0.1t -- a Gaussian-broadened tail below the
-    edge-band resonance at E=Delta=0.3t, not the resonance itself. This is a
-    deliberate choice, not an oversight: evaluated directly at E=Delta, the
-    single vacancy-disorder realization's response is no longer a small,
-    edge-localized disturbance on top of the clean pattern -- it becomes
-    substantially larger and spreads well into the ribbon interior (checked
-    directly: row-averaged |Sz_B| at on-resonance energy grows by roughly an
-    order of magnitude through the bulk relative to the clean case, not just
-    near the defect), because part of the zone has additional bands close to
-    E=Delta that vacancies scatter into more easily there. The off-resonance
-    default keeps the clean-vs-vacancy comparison legible as a strictly local
-    effect; it trades some overall signal strength for that stability. For:
+    maps Sz_A(r), Sz_B(r) separately (see register_sz_operators()).
+
+    Energy: the default E=0.05t probes broadened in-gap spectral weight,
+    below the edge-band energy E=Delta=0.3t rather than on it. At E=Delta,
+    the Gaussian window also overlaps bulk states near the band edge, making
+    a single-disorder-realization comparison less visually selective -- see
+    the in-depth write-up (docs/documentation/examples/afm_zigzag_ribbon.md)
+    for the full derivation. For:
       - a clean ribbon (edge polarization visible, cancels in the global
         DOS but not site-by-site);
       - the same ribbon with a low (~5%) concentration of real vacancies

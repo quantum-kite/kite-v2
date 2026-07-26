@@ -22,11 +22,11 @@
     spin-polarized -- see the companion real-space figure -- but related to
     each other by an exact A<->B, up<->down symmetry of the clean
     Hamiltonian, so their contributions cancel in the *global* trace). The
-    Plotted curves are each a finite stochastic (num_random/num_disorder)
+    plotted curves are each a finite stochastic (num_random/num_disorder)
     estimate of that quantity, so they agree within stochastic uncertainty,
     not bit-for-bit -- do not read a small residual gap between the two
     clean-case curves as evidence against the exact symmetry. Vacancies
-    break that exact cancellation for real (they are only introduced on the
+    break that exact cancellation (they are only introduced on the
     A sublattice here -- see afm_zigzag_ribbon.py's register/main), so the
     disordered ribbon's spin-up and spin-down DOS are expected to visibly
     split, especially near the edge-band energy E=+/-Delta, by an amount

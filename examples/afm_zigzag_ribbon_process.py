@@ -158,9 +158,9 @@ def plot_ribbon_comparison(clean_path, vac_path, lx=8, ly=24, n_tile=3,
     ax_clean.set_ylabel("y (nm)")
     cbar = fig.colorbar(sm, ax=[ax_clean, ax_vac], fraction=0.035, pad=0.03,
                          location="right")
-    cbar.set_label(r"$S_z$ ($\hbar$, symmetric log scale)")
+    cbar.set_label(r"$\rho_{S_z}(R,E{=}0.05t)$ ($\hbar/t$, symmetric log scale)")
 
-    fig.suptitle(r"Edge spin polarization in a Néel-gapped bearded/Klein ribbon ($\Delta = 0.3\,t$)",
+    fig.suptitle(r"Spin-weighted spectral density in a Néel-gapped bearded/Klein ribbon ($\Delta = 0.3\,t$)",
                  fontsize=14, fontweight="bold", y=0.995)
     fig.text(0.5, 0.925,
               "A (circles, bottom-edge sign) and B (squares, top-edge sign) sublattices at true "
@@ -168,7 +168,7 @@ def plot_ribbon_comparison(clean_path, vac_path, lx=8, ly=24, n_tile=3,
               ha="center", fontsize=10, color="0.35")
     fig.text(0.5, 0.01,
               "Single disorder realization (no configurational averaging). Candidate vacancy "
-              r"sites: exact-zero $S_z^A$ within 6 rows of the bottom (A) edge only "
+              r"sites: exact-zero $\rho_{S_z}^A$ within 6 rows of the bottom (A) edge only "
               "(see script docstring for why this heuristic cannot be applied elsewhere).",
               ha="center", fontsize=8.5, color="0.4", style="italic")
     fig.tight_layout(rect=[0.0, 0.03, 0.92, 0.90])

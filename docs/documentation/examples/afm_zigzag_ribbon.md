@@ -97,21 +97,17 @@ pattern:
 
 <figure>
     <img src="../../../assets/images/custom_vertex_operators/afm_zigzag_ribbon.png" style="width: 40em;" />
-    <figcaption>Sz_A (circles) and Sz_B (squares) at every site, clean (left) vs. 5% vacancy
-    concentration (right). Signed, symmetric-log color scale shared across both panels. Note this
-    is an energy-resolved, operator-weighted local spectral density at a fixed E, not an
-    equilibrium spin density (which would need occupation weighting and integration over
-    energy).</figcaption>
+    <figcaption>The spin-weighted spectral density $\rho_{S_z}(R,E{=}0.05t)$ (circles: sublattice
+    A; squares: sublattice B) at every site, clean (left) vs. 5% vacancy concentration (right).
+    Signed, symmetric-log color scale shared across both panels — not an equilibrium spin density,
+    which would need occupation weighting and integration over energy.</figcaption>
 </figure>
 
-The default `energy=0.05`, `sigma=0.1` deliberately probes a broadened tail *below* the edge-band
-energy $\Delta=0.3$, not the resonance itself: evaluated directly at $E=\Delta$, a single
-vacancy-disorder realization's response stops being a small, edge-localized disturbance and
-instead grows substantially through the ribbon interior, because part of the Brillouin zone has
-additional bands close to $\Delta$ that vacancies scatter into more easily there. The off-resonance
-default keeps the clean-vs-vacancy comparison legible as a strictly local effect, at the cost of
-weaker overall signal — see `afm_zigzag_ribbon.py`'s docstring for the numerical check behind this
-choice.
+The default `energy=0.05`, `sigma=0.1` probes broadened in-gap spectral weight, below the edge-band
+energy $\Delta=0.3$ rather than on it. $E=\Delta$ is both the ideal edge-state energy *and* the bulk
+band edge (the bulk gap closes at exactly $|E|=\Delta$ in this model) — so a Gaussian window
+centered there also overlaps bulk states, making a single-disorder-realization comparison less
+visually selective.
 
 ### Mapping the global spin balance: `custom_one()` with spin projectors
 

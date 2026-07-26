@@ -31,8 +31,9 @@
     termination, not an ordinary zigzag edge, despite both sublattices still
     forming an otherwise-honeycomb bulk.
 
-    That termination still supports two dispersionless (flat) edge bands,
-    each localized on one sublattice at one edge: the bottom edge (row y=0,
+    That termination still supports two near-flat edge bands, over their
+    localized momentum interval, each localized on one sublattice at one
+    edge: the bottom edge (row y=0,
     coordination-1 A atoms) hosts a state that is purely sublattice A, and at
     E=+Delta that same edge is additionally purely spin-up (verified by
     direct diagonalization). The top edge (coordination-1 B atoms) is the
@@ -181,7 +182,7 @@ def main(ly=24, delta=DELTA, n_kx=400,
     ax_ribbon.axhline(0, color="0.6", lw=0.6, zorder=0)
     ax_ribbon.axhline(+delta, color="0.2", lw=0.9, ls=":", zorder=1)
     ax_ribbon.axhline(-delta, color="0.2", lw=0.9, ls=":", zorder=1)
-    ax_ribbon.annotate(r"edge bands, $E=\pm\Delta$",
+    ax_ribbon.annotate(r"edge bands, $E\simeq\pm\Delta$",
                         xy=(2.6, delta), xytext=(0.3, 0.92), textcoords="axes fraction",
                         fontsize=10, ha="left", va="top",
                         arrowprops=dict(arrowstyle="-", color="0.3", lw=0.8,
