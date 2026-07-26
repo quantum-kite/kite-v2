@@ -706,6 +706,11 @@ class Calculation:
             you explicitly fix the same seeds on both), so a numerical mismatch between the two is
             not by itself evidence of a bug unless the broadening and disorder setup are first
             aligned.
+
+            Cost note: this applies equally to comparing ``operators`` output against the plain
+            LDOS from *this same call* -- KITEx dispatches the operator-weighted calculation
+            separately from the plain one, with its own disorder realization when
+            ``num_disorder`` > 1, not a shared one.
         """
         operators = operators or []
         self._validate_ldos_operators('ldos', operators)
@@ -735,6 +740,13 @@ class Calculation:
             on-site-only restriction and Hermiticity requirement (validated at registration) as
             ``ldos``'s ``operators`` parameter. Results are written to
             ``/Calculation/ldos_map/Map_Operators/<label>``.
+
+            Cost note: multiple labels share one stochastic run (all requested operators are
+            evaluated from the same propagated random vectors), but enabling ``operators`` at all
+            is not free relative to the plain map -- KITEx dispatches the operator-weighted map as
+            its own separate calculation, with its own random-vector propagation and its own
+            disorder realization, independent of the plain map's. Requesting both in the same run
+            costs two independent stochastic calculations, not one shared one.
         """
 
         coef_dict = {"gaussian": 0, "window": 1}
@@ -1482,6 +1494,31 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
     position_atoms = np.array(position_atoms)
     # repeats the positions of atoms based on the number of orbitals
     position = np.repeat(position_atoms, num_orbitals, axis=0)
+
+    # Every registered custom operator (custom_one/custom_two/ldos/ldos_map/
+    # gaussian_wave_packet) must span the FULL orbital basis of this lattice,
+    # not just however many orbital names happened to be registered via
+    # add_orbital_index() before its first add_orbital_coupling() call --
+    # add_orbital_coupling() sizes the matrix from len(_orbital_index_collection)
+    # at that moment (see its implementation), so a user who registers only
+    # part of the basis, or adds more named orbitals after the first coupling
+    # call, silently gets an undersized matrix. The C++ kernels (e.g.
+    # SimulationLDOSOperator.cpp) index every operator with a,b in
+    # [0, NOrbitals), so an undersized matrix is an out-of-bounds read there,
+    # not a Python-level error -- reject it here, at export time, where the
+    # true orbital count is known.
+    total_orbitals = int(np.sum(num_orbitals))
+    for label, operator in calculation._custom_operator_collection.items():
+        operator = np.asarray(operator)
+        if operator.shape != (total_orbitals, total_orbitals):
+            raise ValueError(
+                "Custom operator '{label}' has shape {shape}, but this "
+                "lattice has {n} orbitals total -- every registered operator "
+                "must be a ({n}, {n})-shaped matrix spanning the full orbital "
+                "basis. This usually means add_orbital_index() was not "
+                "called for every orbital before add_orbital_coupling() "
+                "first used this label.".format(
+                    label=label, shape=operator.shape, n=total_orbitals))
 
     # iterate through all the hoppings and add hopping energies to hoppings list
     for name, hop in lattice.hoppings.items():
