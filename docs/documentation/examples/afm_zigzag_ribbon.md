@@ -1,22 +1,33 @@
-## Néel-gapped zigzag ribbon: operator-weighted LDOS and spin-resolved DOS
+## Néel-gapped bearded/Klein ribbon: operator-weighted LDOS and spin-resolved DOS
 
 A worked example of `#!python ldos_map(operators=[...])` and per-spin `#!python custom_one()`
-on a zigzag-terminated graphene ribbon with a fixed (not self-consistently solved) staggered
-on-site mass — opposite sign per sublattice, opposite sign per spin. It exercises three related
-API features together: operator-weighted local spectral density, structural vacancy disorder,
-and spin-resolved total DOS.
+on a bearded/Klein-terminated graphene ribbon with a fixed (not self-consistently solved)
+staggered on-site mass — opposite sign per sublattice, opposite sign per spin. It exercises three
+related API features together: operator-weighted local spectral density, structural vacancy
+disorder, and spin-resolved total DOS.
 
 ### The model
 
 `#!python examples/afm_zigzag_ribbon.py`'s `#!python afm_zigzag_lattice()` builds a 4-sublattice
 honeycomb lattice (`Aup, Bup, Adn, Bdn`) with on-site energies $+\Delta$ on `Aup`/`Bdn` and
 $-\Delta$ on `Bup`/`Adn` ($\Delta=0.3\,t$ here), periodic along $\mathbf a_1$ and open along
-$\mathbf a_2$ — i.e. a ribbon with two zigzag-terminated edges. This mass pattern gaps the bulk
-Dirac cone and pins two flat, chiral-symmetry-protected edge bands at $E=\pm\Delta$, each
-localized on one sublattice at one edge and (because the mass flips sign between spins) on one
-spin as well — see the script's own docstring for the full derivation and literature references.
+$\mathbf a_2$. The three nearest-neighbor bond offsets this lattice uses — $(0,0)$, $(1,-1)$,
+$(0,-1)$ in unit-cell coordinates — put *both* of a bulk A atom's non-intracell bonds toward the
+same row ($y-1$), and both of a bulk B atom's toward $y+1$; cutting the open boundary therefore
+removes *both* of a boundary A atom's inter-row bonds at once (coordination 1), not one of two as
+an ordinary zigzag edge would. This is a **bearded/Klein-type termination**, not an ordinary
+zigzag edge, despite an otherwise-honeycomb bulk.
 
-### Mapping the local spin density: `ldos_map(operators=[...])`
+That termination still supports two near-flat edge bands close to $E=\pm\Delta$, each localized on
+one sublattice at one edge and (because the mass flips sign between spins) on one spin as well.
+These bands sit at $E=\pm\Delta$ *exactly* only at $k=0$ (where the massless edge state is exactly
+single-sublattice, so the diagonal mass term acts on it as a scalar) and stay extremely close to
+$\Delta$ through most of the zone; they are not protected by chiral symmetry of the *massive*
+Hamiltonian itself (the staggered mass commutes, rather than anticommutes, with the sublattice
+operator, so this symmetry argument applies to the massless limit, not the full Hamiltonian) — see
+the script's own docstring for the full, numerically-checked derivation.
+
+### Mapping the local spectral density: `ldos_map(operators=[...])`
 
 `#!python ldos_map()` normally computes a single, plain quantity: the local density of states at
 every site, at one target energy, via a stochastic (random-vector) KPM estimate. Its
@@ -24,8 +35,18 @@ every site, at one target energy, via a stochastic (random-vector) KPM estimate.
 \text{Tr}[O\cdot G(r,r,E)]$ — the same map, but weighted at every site by a Hermitian on-site
 operator $O$ instead of the identity, so instead of "how many states" you get "what expectation
 value of $O$ do the states at this site/energy carry." Passing `#!python operators=None` (the
-default) reproduces the plain LDOS map unchanged; each label in the list adds one *extra* map,
-computed at no extra propagation cost as a byproduct of the same stochastic run.
+default) reproduces the plain LDOS map unchanged.
+
+Two different costs are worth keeping separate here. Requesting **multiple operator labels**
+together (as `l0` and `l1` are here) is cheap: internally, all requested labels are evaluated from
+the *same* random-vector propagation, so adding a second or third label doesn't add another
+stochastic run. Requesting operators **at all**, however, is not free relative to a plain LDOS map:
+KITEx dispatches the operator-weighted map as its own separate calculation
+(`calc_ldos_operators()`, distinct from plain `#!python ldos_map()`'s `calc_ldos()`), with its own
+random-vector propagation and its own disorder realization. If you request both a plain map and an
+operator map in the same run, you pay for two independent stochastic calculations, not one shared
+one — and their results are not guaranteed to come from matching disorder/random-vector draws
+unless you control that yourself (e.g. fixed seeds).
 
 $O$ itself is never passed as a matrix. It's built the same way `#!python custom_one()`/
 `#!python custom_two()`/`#!python gaussian_wave_packet()` build *their* operators — two steps:
@@ -37,9 +58,12 @@ def register_sz_operators(calculation):
     for lbl, idx in [('Aup', 0), ('Bup', 1), ('Adn', 2), ('Bdn', 3)]:
         calculation.add_orbital_index(lbl, idx)
 
-    # Step 2: add_orbital_coupling(row, col, value, label) sets one matrix entry
-    # O[row, col] = value in the operator registered under `label`. Call it once
-    # per nonzero entry; unset entries default to zero.
+    # Step 2: add_orbital_coupling(start, last, c, label) sets one matrix entry
+    # O[last, start] = c in the operator registered under `label` (note the
+    # reversed row/col order relative to the argument order -- invisible for
+    # a diagonal entry like these, where start == last, but matters for an
+    # off-diagonal operator). Call it once per nonzero entry; unset entries
+    # default to zero.
     calculation.add_orbital_coupling('Aup', 'Aup', 0.5, 'l0')   # -> l0 = diag(+0.5, 0, -0.5, 0)
     calculation.add_orbital_coupling('Adn', 'Adn', -0.5, 'l0')  #    = Sz restricted to sublattice A
     calculation.add_orbital_coupling('Bup', 'Bup', 0.5, 'l1')   # -> l1 = diag(0, +0.5, 0, -0.5)
@@ -74,8 +98,20 @@ pattern:
 <figure>
     <img src="../../../assets/images/custom_vertex_operators/afm_zigzag_ribbon.png" style="width: 40em;" />
     <figcaption>Sz_A (circles) and Sz_B (squares) at every site, clean (left) vs. 5% vacancy
-    concentration (right). Signed, symmetric-log color scale shared across both panels.</figcaption>
+    concentration (right). Signed, symmetric-log color scale shared across both panels. Note this
+    is an energy-resolved, operator-weighted local spectral density at a fixed E, not an
+    equilibrium spin density (which would need occupation weighting and integration over
+    energy).</figcaption>
 </figure>
+
+The default `energy=0.05`, `sigma=0.1` deliberately probes a broadened tail *below* the edge-band
+energy $\Delta=0.3$, not the resonance itself: evaluated directly at $E=\Delta$, a single
+vacancy-disorder realization's response stops being a small, edge-localized disturbance and
+instead grows substantially through the ribbon interior, because part of the Brillouin zone has
+additional bands close to $\Delta$ that vacancies scatter into more easily there. The off-resonance
+default keeps the clean-vs-vacancy comparison legible as a strictly local effect, at the cost of
+weaker overall signal — see `afm_zigzag_ribbon.py`'s docstring for the numerical check behind this
+choice.
 
 ### Mapping the global spin balance: `custom_one()` with spin projectors
 
@@ -118,18 +154,20 @@ calculation.custom_one(stream_=vertex, num_random_=num_random, num_disorder_=num
 ```
 
 `#!python calculation.dos()` is also called in the same script, unrelated to the operator — it's
-just the ordinary, un-weighted total DOS, kept alongside as a reference curve. Because
-KITE-tools' `--CustomOne` reconstruction only handles one `#!python custom_one()` vertex per
-HDF5 file, spin-up and spin-down are run as two separate KITEx jobs (two calls to
-`register_spin_projector`, two output files), each producing its own `.h5`/`.dat` output —
-`afm_zigzag_dos_process.py` then loads all four `.dat` files (clean/vacancy × up/down) and plots
-them together.
+just the ordinary, un-weighted total DOS, kept alongside as a reference curve. Because the Python
+exporter's HDF5 writer only ever serializes the *first* registered `#!python custom_one()` vertex
+(`calculation._custom_one[0]`, regardless of how many times you call `custom_one()`), spin-up and
+spin-down are run as two separate KITEx jobs (two calls to `register_spin_projector`, two output
+files), each producing its own `.h5`/`.dat` output — `afm_zigzag_dos_process.py` then loads all
+four `.dat` files (clean/vacancy × up/down) and plots them together.
 
 <figure>
     <img src="../../../assets/images/custom_vertex_operators/afm_zigzag_dos.png" style="width: 40em;" />
     <figcaption>Spin-up vs. spin-down total DOS, clean (left) vs. 5% vacancy (right). Clean: the
-    two curves coincide at every energy — the opposite edge polarizations cancel globally.
-    Vacancy: they visibly split, most strongly at E=&plusmn;&Delta;, the edge-band energy.</figcaption>
+    two curves agree within stochastic uncertainty — exact model-level cancellation of the
+    opposite edge polarizations, not bit-for-bit agreement of the plotted finite-sample estimate.
+    Vacancy: they visibly split, by much more than that stochastic residual, most strongly at
+    E=&plusmn;&Delta;, the edge-band energy.</figcaption>
 </figure>
 
 ### Running it
@@ -165,4 +203,4 @@ gap and edge-band energies before spending time on a full KPM run.
     width) or a different `vacancy_concentration` to see how the edge signal and its disorder
     sensitivity scale.
 
-[afm-ribbon-example]: https://github.com/quantum-kite/kite-v2/tree/master/examples/afm_zigzag_ribbon.py
+[afm-ribbon-example]: https://github.com/quantum-kite/kite-v2/blob/master/examples/afm_zigzag_ribbon.py

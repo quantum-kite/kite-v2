@@ -1,5 +1,5 @@
 """ Post-processing for afm_zigzag_dos.py: spin-resolved total DOS of a
-    zigzag-terminated Neel/AFM graphene ribbon, clean vs. a low (~5%)
+    bearded/Klein-terminated Neel/AFM graphene ribbon, clean vs. a low (~5%)
     concentration of real vacancies.
 
     ##########################################################################
@@ -15,8 +15,8 @@
         KITE-tools <file>.h5 --DOS -N dos_<tag>.dat \\
                              --CustomOne -E -4 4 1000 -N custom_<tag>.dat
 
-    Design: two panels (clean | vacancy), NOT four/overlaid-in-one -- the
-    physically important comparison is spin-up vs. spin-down WITHIN each
+    Design: two panels (clean | vacancy), not four/overlaid-in-one -- the
+    physically important comparison is spin-up vs. spin-down within each
     disorder condition (do they coincide, or not), so each panel gets its
     own pair of curves with a shared, identical y-axis scale across both
     panels (mandatory for a fair "did disorder change this" comparison, same
@@ -80,9 +80,10 @@ def plot_dos_comparison(out_path="plots/afm_zigzag_dos_preview.png"):
     fig.suptitle("Spin-resolved total DOS: global cancellation vs. vacancy-broken symmetry",
                  fontsize=13.5, fontweight="bold", y=1.02)
     fig.text(0.5, 0.925,
-              r"Clean ribbon: spin-up $\equiv$ spin-down globally (edge polarization is purely "
-              "local — see the real-space figure). Vacancies (A sublattice only) break that "
-              "exact cancellation.",
+              r"Clean ribbon: spin-up $\equiv$ spin-down globally as a model symmetry (agreement "
+              "in the plotted stochastic estimate is within statistical error, not bit-for-bit; "
+              "edge polarization is purely local — see the real-space figure). Vacancies (A "
+              "sublattice only) break that exact cancellation for real.",
               ha="center", fontsize=9.5, color="0.35")
     fig.tight_layout(rect=[0, 0, 1, 0.88])
     plt.savefig(out_path, dpi=300)

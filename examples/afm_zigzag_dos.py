@@ -1,4 +1,4 @@
-""" Spin-resolved total density of states of a zigzag-terminated graphene
+""" Spin-resolved total density of states of a bearded/Klein-terminated graphene
     ribbon with a fixed staggered Neel/AFM mass term, clean vs. a low (~5%)
     concentration of real vacancies.
 
@@ -10,22 +10,27 @@
     Physics
     -------
     See afm_zigzag_bands.py's module docstring for the full physical picture.
-    This script computes the GLOBAL counterpart of afm_zigzag_ribbon.py's
-    LOCAL real-space probe: Tr[P_up * delta(E-H)] and Tr[P_dn * delta(E-H)],
+    This script computes the global counterpart of afm_zigzag_ribbon.py's
+    local real-space probe: Tr[P_up * delta(E-H)] and Tr[P_dn * delta(E-H)],
     the total (whole-ribbon, not site-resolved) spin-up and spin-down DOS,
-    via calculation.custom_one() with the spin-up/spin-down PROJECTORS
-    (NOT Sz!) registered separately so they can be compared directly rather
+    via calculation.custom_one() with the spin-up/spin-down projectors
+    (not Sz!) registered separately so they can be compared directly rather
     than only through their difference.
 
-    Expected result: in the CLEAN ribbon, spin-up DOS == spin-down DOS at
-    every energy (the two edges are individually spin-polarized -- see the
-    companion real-space figure -- but related to each other by an exact
-    A<->B, up<->down symmetry of the clean Hamiltonian, so their
-    contributions cancel in the *global* trace). Vacancies break that exact
-    cancellation (they are only introduced on the A sublattice here -- see
-    afm_zigzag_ribbon.py's register/main), so the disordered ribbon's
-    spin-up and spin-down DOS are expected to visibly split, especially near
-    the edge-band energy E=+/-Delta.
+    Expected result: in the clean ribbon, spin-up DOS == spin-down DOS at
+    every energy as a property of the model (the two edges are individually
+    spin-polarized -- see the companion real-space figure -- but related to
+    each other by an exact A<->B, up<->down symmetry of the clean
+    Hamiltonian, so their contributions cancel in the *global* trace). The
+    Plotted curves are each a finite stochastic (num_random/num_disorder)
+    estimate of that quantity, so they agree within stochastic uncertainty,
+    not bit-for-bit -- do not read a small residual gap between the two
+    clean-case curves as evidence against the exact symmetry. Vacancies
+    break that exact cancellation for real (they are only introduced on the
+    A sublattice here -- see afm_zigzag_ribbon.py's register/main), so the
+    disordered ribbon's spin-up and spin-down DOS are expected to visibly
+    split, especially near the edge-band energy E=+/-Delta, by an amount
+    much larger than the clean case's stochastic residual.
 
     Units: energy in units of hopping |t|=1, lengths in nm.
     Last updated: 25/07/2026
@@ -43,13 +48,13 @@ __all__ = ["register_spin_projectors", "main"]
 
 
 def register_spin_projector(calculation, spin):
-    """Tr[P_spin*delta(E-H)] -- the spin PROJECTOR (weight 1.0 on that spin's
+    """Tr[P_spin*delta(E-H)] -- the spin projector (weight 1.0 on that spin's
     two sublattices only), not Sz (which would give only their weighted
-    difference). KITE-tools' --CustomOne reconstructs a SINGLE registered
-    vertex per h5 file (confirmed against this KITE build: a second
-    custom_one() call on the same Calculation is silently not reconstructed
-    by KITE-tools), so spin-up and spin-down are written to two SEPARATE
-    files rather than as two vertices in one -- see main()."""
+    difference). The Python HDF5 exporter only ever serializes the first
+    registered custom_one() vertex (calculation._custom_one[0], regardless of
+    how many times custom_one() is called), so spin-up and spin-down are
+    written to two separate files rather than as two vertices in one -- see
+    main()."""
     for lbl, idx in [('Aup', 0), ('Bup', 1), ('Adn', 2), ('Bdn', 3)]:
         calculation.add_orbital_index(lbl, idx)
     if spin == "up":

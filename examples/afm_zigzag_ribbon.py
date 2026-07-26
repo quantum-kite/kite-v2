@@ -1,6 +1,6 @@
-""" Real-space Sz(r) map of a zigzag-terminated graphene ribbon with a fixed
-    (not self-consistently solved) staggered Neel/AFM mass term, clean vs. a
-    low concentration of real vacancies.
+""" Real-space Sz(r) map of a bearded/Klein-terminated graphene ribbon with a
+    fixed (not self-consistently solved) staggered Neel/AFM mass term, clean
+    vs. a low concentration of real vacancies.
 
     ##########################################################################
     #                         Copyright 2026, KITE                           #
@@ -10,23 +10,42 @@
     Physics
     -------
     See the module docstring of afm_zigzag_bands.py for the full physical
-    picture (bulk Dirac gap, chiral-symmetry-pinned flat edge bands at
-    E=+/-Delta, each 100% one sublattice/spin at one edge, yet globally
-    spin-up DOS == spin-down DOS by symmetry between the two edges). This
-    script computes the corresponding LOCAL, real-space-resolved probe:
-    calculation.ldos_map(operators=['l0','l1']) maps Sz_A(r), Sz_B(r)
-    separately (see register_sz_operators()) at an energy inside the flat
-    edge-band window, for:
-      - a CLEAN ribbon (edge polarization visible, cancels in the *global*
+    picture (bulk gap at both valleys, near-flat edge bands close to
+    E=+/-Delta over most of the zone -- exact at k=0, only visibly dispersive
+    near where they merge with the bulk continuum -- each essentially one
+    sublattice/spin at one edge, yet globally spin-up DOS == spin-down DOS by
+    symmetry between the two edges). This script computes the corresponding
+    local, real-space-resolved probe: calculation.ldos_map(operators=['l0','l1'])
+    maps Sz_A(r), Sz_B(r) separately (see register_sz_operators()) at the
+    default energy E=0.05t, sigma=0.1t -- a Gaussian-broadened tail below the
+    edge-band resonance at E=Delta=0.3t, not the resonance itself. This is a
+    deliberate choice, not an oversight: evaluated directly at E=Delta, the
+    single vacancy-disorder realization's response is no longer a small,
+    edge-localized disturbance on top of the clean pattern -- it becomes
+    substantially larger and spreads well into the ribbon interior (checked
+    directly: row-averaged |Sz_B| at on-resonance energy grows by roughly an
+    order of magnitude through the bulk relative to the clean case, not just
+    near the defect), because part of the zone has additional bands close to
+    E=Delta that vacancies scatter into more easily there. The off-resonance
+    default keeps the clean-vs-vacancy comparison legible as a strictly local
+    effect; it trades some overall signal strength for that stability. For:
+      - a clean ribbon (edge polarization visible, cancels in the global
         DOS but not site-by-site);
-      - the SAME ribbon with a low (~5%) concentration of real vacancies
+      - the same ribbon with a low (~5%) concentration of real vacancies
         (both spin channels removed at the same site -- see
         register_vacancies()) to show vacancy-induced local spin imbalance,
         especially near the edges.
 
-    Boundary conditions: periodic along a1 (armchair direction is NOT used
-    here), open along a2 -- this is what produces the two zigzag-terminated
-    edges (row y=0 and row y=Ly-1).
+    Note on terminology: the output is an energy-resolved, operator-weighted
+    local spectral density (Tr[Sz * Im G(r,r,E)] at a fixed E), not an
+    equilibrium spin density -- the latter would require occupation weighting
+    and integration over energy, which this calculation does not do.
+
+    Boundary conditions: periodic along a1 (armchair direction is not used
+    here), open along a2 -- this produces two bearded/Klein-terminated edges
+    (row y=0 and row y=Ly-1; see afm_zigzag_bands.py's module docstring for
+    why this hopping pattern gives coordination-1 boundary atoms rather than
+    an ordinary zigzag edge's coordination-2).
 
     Units: energy in units of hopping |t|=1, lengths in nm.
     Last updated: 25/07/2026
@@ -72,7 +91,7 @@ def afm_zigzag_lattice(t=T, delta=DELTA):
 
 
 def register_sz_operators(calculation):
-    """Sz resolved PER SUBLATTICE (l0=Sz_A, l1=Sz_B) -- a single Sz spanning
+    """Sz resolved per sublattice (l0=Sz_A, l1=Sz_B) -- a single Sz spanning
     all 4 orbitals would collapse the two-atom basis into one number per
     unit cell and hide the sublattice-alternating (checkerboard) Neel order
     and the edge-resolved sublattice polarization this figure needs."""
@@ -89,7 +108,7 @@ def main(t=T, delta=DELTA, lx=8, ly=24, vacancy_concentration=0.0,
          energy=0.05, sigma=0.1, vectors=4000,
          output_file=None):
     """vacancy_concentration=0.0 -> clean ribbon. A nonzero value (e.g. 0.05
-    for 5%) adds real vacancies: BOTH spin channels removed at the SAME
+    for 5%) adds real vacancies: both spin channels removed at the same
     site, since add_vacancy('Aup') and add_vacancy('Adn') on one shared
     StructuralDisorder instance use the same random site selection (one
     random site index per group, both orbitals at that site removed

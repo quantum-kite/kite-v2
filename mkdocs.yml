@@ -43,7 +43,7 @@ nav:
       - Orbital Magnetization (Rank-One Vertex): 'documentation/examples/orbital_magnetization.md'
       - Rashba-Edelstein Effect: 'documentation/examples/rashba_edelstein.md'
       - Real-Time Wave-Packet Evolution: 'documentation/examples/time_evolution.md'
-      - Néel-Gapped Zigzag Ribbon (Operator LDOS): 'documentation/examples/afm_zigzag_ribbon.md'
+      - Néel-Gapped Bearded/Klein Ribbon (Operator LDOS): 'documentation/examples/afm_zigzag_ribbon.md'
     - KITE scripts v.1.1:
       - About Examples-dir: 'documentation/more_examples/additional_examples.md'
     - Advanced Examples:

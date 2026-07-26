@@ -1,5 +1,5 @@
 """ Post-processing for afm_zigzag_ribbon.py: real-space Sz_A(r), Sz_B(r) map
-    of a zigzag-terminated graphene ribbon with a fixed staggered Neel/AFM
+    of a bearded/Klein-terminated graphene ribbon with a fixed staggered Neel/AFM
     mass term, clean vs. a low (~5%) concentration of real vacancies.
 
     ##########################################################################
@@ -12,17 +12,17 @@
     per UNIT CELL: l0 = Sz_A, l1 = Sz_B (see register_sz_operators() in the
     companion script). Reshape a row as .reshape(ly, lx) to index [y, x].
 
-    Design choice -- discrete markers, no interpolation, matching the
-    (reviewed and corrected) convention now used across every real-space
-    figure in this repository (see rashba_zeeman_spin_texture_process.py's
-    module docstring for the full rationale): this is one stochastic KPM
+    Design choice -- discrete markers, no interpolation, the convention used
+    across every real-space figure in this repository (see
+    rashba_zeeman_spin_texture_process.py's module docstring for the full
+    rationale): this is one stochastic KPM
     estimate per atom, expected to vary sharply (exponential edge decay,
     plus a genuine discontinuity at any vacancy site) rather than smoothly
     -- exactly the case where interpolating between samples would be
     misleading, not merely a style choice.
 
     Color scale -- SymLogNorm, not plain linear or plain log: Sz_A/Sz_B are
-    SIGNED (a real sign difference between the two edges is the physically
+    signed (a real sign difference between the two edges is the physically
     interesting result) but decay over roughly 2-3 orders of magnitude away
     from their edge, ruling out both a plain linear scale (would show only
     the outermost row of atoms and flatten everything else to a uniform
@@ -30,21 +30,20 @@
     sign). SymLogNorm keeps sign, saturates at the (shared, see below) outer
     value, and still resolves the decay into the bulk.
 
-    Shared color scale between the two panels (clean vs. vacancy) is
-    mandatory here, not a default: the whole point of the comparison is
-    whether the vacancy panel deviates from the clean one, which a
-    per-panel-normalized color scale would silently hide.
+    The two panels (clean vs. vacancy) share one color scale: the comparison
+    is whether the vacancy panel deviates from the clean one, which a
+    per-panel-normalized color scale would hide.
 
     Candidate-vacancy markers: this particular disorder model only removes
     the A sublattice (both spin channels together, see
     afm_zigzag_ribbon.py's register/main -- add_vacancy('Aup') and
     add_vacancy('Adn') on one shared StructuralDisorder instance, so a
-    "vacancy" here means the WHOLE A atom at that unit cell is gone,
+    "vacancy" here means the whole A atom at that unit cell is gone,
     regardless of spin), and KITE's Python output does not separately record
     *which* unit cells were selected. Sites where Sz_A is exactly (to
     floating-point precision) zero are strong vacancy candidates -- but only
     where the surrounding clean-case signal is itself far from zero (i.e.
-    near an edge): deep in the ribbon interior, Sz_A is ALSO ~0 simply from
+    near an edge): deep in the ribbon interior, Sz_A is also ~0 simply from
     ordinary exponential edge decay, so an exact zero there is not
     attributable to a vacancy with any confidence. Candidate markers are
     therefore restricted to rows within `edge_rows` of either physical edge;
@@ -104,10 +103,10 @@ def tile_values(values, n_tile):
 
 def find_edge_vacancy_candidates(sz_a, ly, edge_rows=6, tol=1e-9):
     """Rows near the row-0 (bottom, A-terminated) edge only where Sz_A is
-    exactly zero -- see module docstring for why this heuristic is NOT
-    applied deep in the ribbon interior, and NOT near the far (row=ly-1)
+    exactly zero -- see module docstring for why this heuristic is not
+    applied deep in the ribbon interior, and not near the far (row=ly-1)
     edge either: Sz_A decays to exactly 0 there from ordinary exponential
-    edge decay in the CLEAN ribbon too (Sz_A lives on the A/bottom edge, not
+    edge decay in the clean ribbon too (Sz_A lives on the A/bottom edge, not
     the B/top one), so a zero near the top edge carries no vacancy
     information at all."""
     rows, cols = np.where(np.abs(sz_a) < tol)
@@ -123,7 +122,7 @@ def plot_ribbon_comparison(clean_path, vac_path, lx=8, ly=24, n_tile=3,
     XA, YA = tiled_positions(lx, ly, POS_A, n_tile)
     XB, YB = tiled_positions(lx, ly, POS_B, n_tile)
 
-    # Shared color scale across BOTH panels -- see module docstring: the
+    # Shared color scale across both panels -- see module docstring: the
     # comparison is only meaningful if a deviation in the vacancy panel can't
     # be hidden by a rescaled color axis.
     vmax = max(np.abs(sz_a_clean).max(), np.abs(sz_b_clean).max(),
@@ -161,7 +160,7 @@ def plot_ribbon_comparison(clean_path, vac_path, lx=8, ly=24, n_tile=3,
                          location="right")
     cbar.set_label(r"$S_z$ ($\hbar$, symmetric log scale)")
 
-    fig.suptitle(r"Edge spin polarization in a Néel-gapped zigzag ribbon ($\Delta = 0.3\,t$)",
+    fig.suptitle(r"Edge spin polarization in a Néel-gapped bearded/Klein ribbon ($\Delta = 0.3\,t$)",
                  fontsize=14, fontweight="bold", y=0.995)
     fig.text(0.5, 0.925,
               "A (circles, bottom-edge sign) and B (squares, top-edge sign) sublattices at true "

@@ -1,6 +1,6 @@
 """ Band structure of a graphene honeycomb lattice with a fixed (not
     self-consistently solved) staggered Neel/AFM mass term, bulk and as a
-    zigzag-terminated ribbon.
+    bearded/Klein-terminated ribbon.
 
     ##########################################################################
     #                         Copyright 2026, KITE                           #
@@ -12,26 +12,49 @@
     Onsite energy +Delta on sublattice A / -Delta on sublattice B for spin up,
     the opposite sign for spin down -- the standard fixed-ansatz mean-field
     decoupling of the graphene Hubbard-AFM ground state (magnitude chosen in
-    the typical literature range for U ~ t-3t, m ~ 0.1-0.3 t; NOT
+    the typical literature range for U ~ t-3t, m ~ 0.1-0.3 t; not
     self-consistently solved here, see the companion KITE example
     afm_zigzag_ribbon.py for the corresponding real-space calculation).
 
-    Bulk: a single Dirac cone gaps out at the same |E|=Delta for both spins
-    (spin-degenerate in energy, since +Delta-on-A/-Delta-on-B and its
-    opposite are related by A<->B, which leaves the bulk spectrum invariant).
+    Bulk: both graphene valleys (K, K') gap out at the same |E|=Delta for
+    both spins (spin-degenerate in energy, since +Delta-on-A/-Delta-on-B and
+    its opposite are related by A<->B, which leaves the bulk spectrum
+    invariant).
 
-    Zigzag ribbon: chiral symmetry (the bipartite A/B structure with no
-    same-sublattice hopping) pins two dispersionless (flat) edge bands
-    exactly at E=+Delta and E=-Delta. Each is 100% localized on ONE
-    sublattice at ONE ribbon edge: the bottom zigzag edge (row y=0) is pure
-    sublattice A, and at E=+Delta that edge is additionally pure spin-up
-    (verified by direct diagonalization -- see afm_edge_spin_check.py in the
-    session scratch files this example was developed from). The top edge is
-    the mirror image: pure sublattice B, pure spin-down at that same energy.
-    This is the local, real-space-resolved edge spin polarization that
-    afm_zigzag_ribbon.py's ldos_map figure visualizes directly; here we only
-    verify (via exact diagonalization, not KPM/KITE) that the flat edge bands
-    exist at the expected energies and are visibly non-dispersive.
+    Ribbon boundary: this lattice's three nearest-neighbor bonds -- offsets
+    (0,0), (1,-1), (0,-1) in unit-cell coordinates -- put both non-intracell
+    bonds from an A atom in the same direction (towards row y-1), and both
+    non-intracell bonds from a B atom towards row y+1. Cutting the open
+    boundary at row y=0 therefore removes both of a boundary A atom's
+    inter-row bonds at once (coordination 1), not one of two as an ordinary
+    zigzag edge would (coordination 2). This is a bearded/Klein-type
+    termination, not an ordinary zigzag edge, despite both sublattices still
+    forming an otherwise-honeycomb bulk.
+
+    That termination still supports two dispersionless (flat) edge bands,
+    each localized on one sublattice at one edge: the bottom edge (row y=0,
+    coordination-1 A atoms) hosts a state that is purely sublattice A, and at
+    E=+Delta that same edge is additionally purely spin-up (verified by
+    direct diagonalization). The top edge (coordination-1 B atoms) is the
+    mirror image: pure sublattice B, pure spin-down at that same energy. For
+    a genuinely semi-infinite ribbon (or the well-localized part of the edge
+    band near k=0) these bands sit AT E=+Delta and E=-Delta because the
+    massless (Delta=0) edge state is exactly single-sublattice there, and the
+    diagonal mass term acts on it as a scalar; this is not full chiral-symmetry
+    protection of the massive Hamiltonian itself (the staggered mass term
+    commutes, rather than anticommutes, with the sublattice operator sigma_z,
+    so {sigma_z, H} != 0 once Delta != 0). At finite ribbon width (Ly=24
+    here), the two edges hybridize by an amount that grows as the edge band
+    approaches where it merges into the bulk continuum: numerically, the
+    edge-band energy matches Delta to machine precision at k=0, stays within
+    ~1e-7 of Delta through most of the zone, and only departs visibly from
+    Delta close to that merging region near the zone boundary -- see the
+    ribbon panel below, where the "flat" band's curvature away from k=0 is
+    exactly this effect. This is the local, real-space-resolved edge spin
+    polarization that afm_zigzag_ribbon.py's ldos_map figure visualizes
+    directly; here we only verify (via exact diagonalization, not KPM/KITE)
+    that these edge bands exist near the expected energies and are visibly
+    non-dispersive over most of the zone.
 
     This script uses plain numpy exact diagonalization (not KITE/KPM) since
     the ribbon unit cell is small (a handful of atoms per row) and a direct,
@@ -70,7 +93,7 @@ def bulk_bands(kx, ky, delta, t=T):
 
 
 def ribbon_bands(kx, ly, delta, t=T):
-    """Zigzag-ribbon Hamiltonian eigenvalues at reduced momentum kx (in units
+    """Bearded/Klein-terminated ribbon Hamiltonian eigenvalues at reduced momentum kx (in units
     of 1/a, i.e. the physical Bloch phase along a1 is exp(i*kx)), periodic
     along a1, open along a2, ly rows of (A, B) atoms."""
     n = 2 * ly
@@ -150,7 +173,7 @@ def main(ly=24, delta=DELTA, n_kx=400,
     ax_bulk.legend(loc="upper right", handlelength=1.6)
     ax_bulk.grid(False)
 
-    # --- Ribbon: zigzag-terminated, Ly rows ---------------------------------
+    # --- Ribbon: bearded/Klein-terminated, Ly rows --------------------------
     for b in range(ribbon_up.shape[1]):
         ax_ribbon.plot(kx_vals, ribbon_up[:, b], color=up_color, lw=1.0, alpha=0.9)
     for b in range(ribbon_dn.shape[1]):
@@ -168,10 +191,10 @@ def main(ly=24, delta=DELTA, n_kx=400,
     ax_ribbon.set_xlim(-np.pi, np.pi)
     ax_ribbon.set_ylim(-1.2, 1.2)
     ax_ribbon.set_xlabel(r"$k_x a$")
-    ax_ribbon.set_title(r"Zigzag ribbon, $L_y = %d$ rows" % ly)
+    ax_ribbon.set_title(r"Bearded/Klein ribbon, $L_y = %d$ rows" % ly)
     ax_ribbon.grid(False)
 
-    fig.suptitle("Staggered (Néel) mass on zigzag graphene: bulk gap vs. flat edge bands",
+    fig.suptitle("Staggered (Néel) mass on graphene: bulk gap vs. bearded/Klein edge bands",
                  fontsize=13, fontweight="bold", y=1.01)
     fig.tight_layout()
     os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
