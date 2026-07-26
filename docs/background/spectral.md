@@ -177,8 +177,16 @@ $$
 </span>
 
 with random vectors $|r\rangle=\sum_{i=1}^{D} \chi_{r, i}|i\rangle$. Here, $\{|i\rangle\}$ ($i=1,...,D$) are a complete orthonormal basis set of the lattice model (typically position kets).
-The random variables $\chi_{r,i}$ can be real- or complex-valued and fulfill "white noise" statistics:
-$\left\langle\left\langle\chi_{r, i}\right\rangle\right\rangle=0, \quad\left\langle\left\langle\chi_{r, i} \chi_{r^{\prime}, i^{\prime}}\right\rangle\right\rangle=0$ and $\left\langle\left\langle\chi_{r, i}^{*} \chi_{r^{\prime}, i^{\prime}}\right\rangle\right\rangle=\delta_{r, r^{\prime}} \delta_{i, i^{\prime}}$.
+The random variables $\chi_{r,i}$ fulfill "white noise" statistics, with the specific correlators
+depending on whether they're complex or real. For independent random phases $\chi_{r,i}=e^{i\theta_{r,i}}$
+(the usual complex-valued choice):
+$\left\langle\left\langle\chi_{r, i}\right\rangle\right\rangle=0, \quad\left\langle\left\langle\chi_{r, i} \chi_{r^{\prime}, i^{\prime}}\right\rangle\right\rangle=0$ and $\left\langle\left\langle\chi_{r, i}^{*} \chi_{r^{\prime}, i^{\prime}}\right\rangle\right\rangle=\delta_{r, r^{\prime}} \delta_{i, i^{\prime}}$
+(the middle condition only holds because $\chi^*\neq\chi$ for a complex phase). For real-valued
+Rademacher variables ($\chi_{r,i}=\pm1$ with equal probability, so $\chi=\chi^*$), the two
+second-moment conditions above collapse into a single one instead:
+$\left\langle\left\langle\chi_{r, i}\right\rangle\right\rangle=0$ and $\left\langle\left\langle\chi_{r, i} \chi_{r^{\prime}, i^{\prime}}\right\rangle\right\rangle=\delta_{r, r^{\prime}} \delta_{i, i^{\prime}}$.
+Either choice gives an unbiased estimator of Eq. (9); which one KITE uses is an implementation
+detail, not a choice that changes the formula's validity.
 The STE is extremely accurate for sparse matrices of large dimension (only a few random vectors are needed to converge to many decimal places),
 which allows substantial savings in computational time.
 For example, the evaluation of Chebyshev moments of the DOS function for a tight-binding model (where $D=N$, and $N$ is the total number of orbitals or sites in the lattice) requires a total number of operations scaling as

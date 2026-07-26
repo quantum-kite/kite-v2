@@ -188,10 +188,11 @@ single-target routines:
 
 Both map routines are compiled only for the **complex** Hamiltonian instantiation, so
 `#!python is_complex=True` is mandatory even for a real-hopping lattice — otherwise the branch is compiled away
-and the calculation silently produces no output dataset at all. Both trade the exactness of a single-point
-evaluation for linear scaling and per-site stochastic error, with the number of random vectors as the accuracy
-knob and the Markov bound as the guarantee that the per-site error is controlled despite the absence of
-self-averaging.
+and the calculation silently produces no output dataset at all. Both trade the determinism of a single-point
+evaluation (still finite-order, not exact, but with no sampling noise) for linear scaling and per-site
+stochastic error, with the number of random vectors as the accuracy knob. As above, it's positivity — not the
+elementary Markov bound by itself — that makes a per-site error guarantee possible at all without
+self-averaging; the precise quantitative bound is the cited paper's result, not reproduced here.
 
 !!! example
 

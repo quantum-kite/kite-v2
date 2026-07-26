@@ -57,4 +57,4 @@ Finally, a convenient *post-processing tool* ($\texttt{KITE-tools}$), developed 
 [^11]: Anomalous Transport Signatures in Weyl Semimetals with Point Defects, J. P. Santos Pires, S. M. João, A. Ferreira, B. Amorim, and J. M. Viana Parente Lopes, [Phys. Rev. Lett. 129, 196601 (2022)](https://doi.org/10.1103/PhysRevLett.129.196601)
 
 [tutorial]: ../documentation/index.md
-[about]:../about
+[about]:../about/index.md

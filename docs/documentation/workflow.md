@@ -16,7 +16,7 @@ The [tight-binding][tightbinding] (TB) model is defined on a [Python interface][
 
 ## Steps
 
-1. Start by building a [`#!python pb.Lattice`][lattice] that describes a regular tight-binding model (*Section 2*)
+1. Start by building a [`#!python kite.lattice.Lattice`][lattice] that describes a regular tight-binding model (*Section 2*), or a [`#!python pb.Lattice`][pybinding-lattice] if you're using the optional Pybinding backend instead
 2. Add optional terms to the TB Hamiltonian, including disorder patterns and a magnetic field (covered in *Section 6 and 7*)
 3. Specify the _calculations settings_ (*Section 3*) and the desired _target functions_ to be computed (*Section 4*)
 4. Export your KITE model to the [HDF5] file and run [KITEx][kitex] (*Section 4*)
@@ -30,7 +30,8 @@ The [tight-binding][tightbinding] (TB) model is defined on a [Python interface][
 
 [HDF5]: https://www.hdfgroup.org
 [Pybinding]: https://docs.pybinding.site/en/stable
-[lattice]: https://docs.pybinding.site/en/stable/_api/pybinding.Lattice.html
+[lattice]: https://github.com/quantum-kite/kite-v2/blob/master/src/kite/lattice.py
+[pybinding-lattice]: https://docs.pybinding.site/en/stable/_api/pybinding.Lattice.html
 [script]: index.md
 [tightbinding]: ../background/tight_binding.md
 
