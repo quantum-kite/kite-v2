@@ -2138,7 +2138,7 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
         grpc_p.create_dataset('NumDisorder', data=num_disorder, dtype=np.int32)
         grpc_p.create_dataset('mean_value', data=mean_value, dtype=np.int32)
         grpc_p.create_dataset('ProbingPoint', data=np.asmatrix(np.asarray(probing_points)).astype(np.float32))
-        grpc_p.create_dataset('width', data=width, dtype=np.float)
+        grpc_p.create_dataset('width', data=width, dtype=np.float32)
         grpc_p.create_dataset('spinor', data=np.asmatrix(np.asarray(spinor)).astype(config.type))
         grpc_p.create_dataset('k_vector', data=np.asmatrix(np.asarray(k_vector)), dtype=np.float32)
         grpc_p.create_dataset('timestep', data=timestep, dtype=np.float32)
