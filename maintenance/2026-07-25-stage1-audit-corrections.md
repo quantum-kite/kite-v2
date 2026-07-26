@@ -15,8 +15,8 @@ audit"). Updated as work proceeds; not a substitute for reading the audit itself
 | 5 | `custom_two` conventions public for every `p mod 4`, calibration only recorded for `p=1,2` | ✅ Fixed | Derivation was already general (`i^p` period-4 argument); added `tests/custom_two_mod4_regression.py`, which grounds `p=0,3` to the already-validated `p=2` data via linearity of `Z(E)` in `Gamma_mn` (self-consistency to machine precision). Generalized the units paragraph in `rashba_edelstein_graphene_process.py` beyond the one worked example. |
 | 6 | README/tutorial/workflow/installation/example-runner instructions disagree | 🟡 Partially done | Fixed: `README.md` prerequisites (Python≥3.9, no required Pybinding, C++17) + added a verified native-`kite.lattice` quickstart; `docs/documentation/workflow.md` no longer claims the interface is Pybinding-based; `docs/documentation/index.md` tutorial's first-calculation snippet now uses native `kite.lattice` (verified to run) instead of `pybinding.repository.graphene`, and its `tools/build/KITE-tools` path typo is fixed. Not yet done: a full single canonical quickstart page consolidating all of the above in one place; `docs/installation.md` itself not yet fully audited beyond the one Homebrew-installer fix (item 9 below). |
 | 7 | `local_chern`/`local_chern_map` removed from docs (C++ path crashes) but still callable in Python | ✅ Fixed | User decision: **remove entirely** — not part of kite-v2. Removed the `local_chern`/`local_chern_map` methods, `get_local_chern`/`get_chern_map` properties (the latter had a pre-existing bug: returned `_local_chern` instead of `_local_chern_map`), storage init, and the `LCM`/`STLCM` HDF5 export block from `src/kite/__init__.py`. Verified the file still parses and `config_system()` still works on an unrelated example. Note: the underlying C++ (`Src/Simulation/SimulationLCM.cpp`, `SimulationSLCM.cpp`, `calc_lcm()`/`calc_st_lcm()` dispatch) was left in place but is now permanently unreachable (no HDF5 trigger data can ever be written) rather than physically deleted — flag if you also want that C++ code excised. |
-| 8 | Dirty worktree mixes core implementation, tooling, validation, examples, unrelated work, generated files | ⬜ Not started | User has said hold off on committing; no commit-splitting done yet. |
-| 9 | `CLAUDE.md` references 3 missing agent files; internal review narration in public prose | ⬜ Not started | |
+| 8 | Dirty worktree mixes core implementation, tooling, validation, examples, unrelated work, generated files | ✅ Fixed | Split into 6 commits in dependency order (core operator-LDOS fix, regression tests, KITE-tools help fix, examples, documentation, repository hygiene) and pushed to `quantum-kite/master`. |
+| 9 | `CLAUDE.md` references 3 missing agent files; internal review narration in public prose | ✅ Fixed | `careful-executor`/`structure-auditor` are user-level subagent definitions, not checked into this repo — reworded `CLAUDE.md` to say so instead of citing a nonexistent in-repo path. Internal-review citations ("reviewed by `cmt-physicist`") removed from the two files that had them. |
 
 ## Gate A — operator-LDOS (Section 2)
 
@@ -62,10 +62,19 @@ audit"). Updated as work proceeds; not a substitute for reading the audit itself
 - [x] `docs/api/kitex.md` stub expansion (executable syntax, exit behavior, HDF5 read/write contract, rescaling, precision/real-complex instantiation table, decomposition, Python/KITEx/KITE-tools version-coupling caveat) — all facts verified directly against `Src/main.cpp`, not guessed.
 - [x] `local_chern`/`local_chern_map` removed from `src/kite/__init__.py` (see item 7 above).
 - [x] KITE-tools help-text typos fixed (`.KITE-tools`→`./KITE-tools`, "ommited"→"omitted", "soecified"→"specified", `h5_file.h`→`h5_file.h5`) and the top-level mode list completed (was missing `--ARPES`, `--CustomOne`, `--CustomTwo`; also fixed the stale "four main parameters" count). Rebuilt and verified the corrected `--help` output.
-- [ ] `mkdocs build --strict` + link checker in CI.
-- [ ] KITEx/KITE-tools numerical smoke test + small fast test set (CTest/Pytest) in CI. (Note: the new `tests/*.py` regression scripts from this pass are not yet wired into any CI/CTest target.)
+- [x] `mkdocs build --strict` + link checker in CI. Done in the follow-up re-audit pass, see
+  `maintenance/2026-07-25-stage1-reaudit-corrections.md`'s Gate 3.
+- [x] KITEx/KITE-tools numerical smoke test + small fast test set (CTest/Pytest) in CI. Done in the
+  follow-up re-audit pass: the operator-LDOS regression scripts are now wired into
+  `.github/workflows/ci.yml`'s `build-and-test` job. See `maintenance/2026-07-25-stage1-reaudit-corrections.md`'s
+  Gate 1.
 
 ## Other (Section 7)
+
+> Note (added during the follow-up re-audit pass): the `oam_quadrupole_precession` references below are
+> historical — that example and its docs page were removed entirely in a later commit, per user decision
+> (see `maintenance/2026-07-25-stage1-reaudit-corrections.md`'s executive finding #11). Left as-is rather
+> than edited, since this is a record of what was done at the time, not a claim about current repo state.
 
 - [x] Robotic-phrasing cleanup, first pass: removed the clearest process-narration/appeal-to-authority
   instances. Fixed in `docs/api/kite.md` (two "Verified ... not just asserted" headers/sentences
