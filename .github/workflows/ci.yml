@@ -103,6 +103,14 @@ jobs:
           python tests/operator_ldos_analytic_stochastic_regression.py
           python tests/operator_dimension_regression.py
 
+      # Pure-Python, no KITEx/KITE-tools needed -- guards against a regression
+      # of a row/col convention bug in the preview-plotting helper that was
+      # invisible to every eigenvalue-based check (see the test's own
+      # docstring for why that made it easy to miss in the first place).
+      - name: hamiltonian_k convention regression test
+        shell: bash -el {0}
+        run: python tests/hamiltonian_k_convention_regression.py
+
       # NOTE: tests/start_tests.sh is not run here yet. Most of its cases need
       # the optional `pybinding` extra to regenerate configs, and at least one
       # case (tests/test001_KITEx_sq) fails independently of this workflow --

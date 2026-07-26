@@ -364,17 +364,19 @@ def hamiltonian_k(lattice, k):
     sublattice == one orbital here: H(k) has shape (lattice.nsub, lattice.nsub), indexed by
     `Sublattice.alias_id`.
 
-    Gauge / sign convention (derived, not assumed -- see maintenance/native-lattice-viz-plan.md
-    section 5): matches KITE's own ARPES plane-wave state
+    Gauge / sign convention (empirically verified against config_system()'s own real-space
+    hopping export, not just derived on paper -- see maintenance/native-lattice-viz-plan.md
+    section 5 for the ARPES phase-matching derivation this is built on, and the
+    KITE_HOPPING_CONVENTION_FINDING handoff note for the row/col bug this function used to
+    have). `Lattice.add_one_hopping(relative_index=R, from_sub=a, to_sub=b, energy=t)`
+    registers `value = H[row=a, col=b]` -- `from_sub` indexes the ROW, `to_sub` the COLUMN
+    (see `add_one_hopping`'s own docstring; this is the opposite of the "hop from A to B"
+    reading some conventions use). Matching that same row/col assignment here, with KITE's
+    own ARPES plane-wave state
     |k> = (1/sqrt(N)) sum_{r,alpha} w_alpha * exp(i k.(r + d_alpha)) |r,alpha>
-    (docs/documentation/examples/spectral_function.md), which carries the FULL atomic
-    position (unit cell + sublattice offset), not just the cell index. Fourier-transforming
-    a HoppingFamily entry (relative_index=R, from_sub=a, to_sub=b, energy=t) with this same
-    phase gives, with a MINUS sign in the exponent (not the naive plus -- get this backwards
-    and centrosymmetric bands still look right while anything valley/Rashba/Weyl-asymmetric
-    comes out mirror-flipped):
+    (docs/documentation/examples/spectral_function.md) fixing the phase sign, gives:
 
-        H[b, a](k) += t * exp(-i k . (R_cartesian + d_b - d_a))
+        H[a, b](k) += t * exp(-i k . (R_cartesian + d_b - d_a))
 
     `add_one_hopping` only ever stores one direction of a bond ("Does not add the complex
     conjugate hopping", per its own docstring) -- this function builds the one-directional
@@ -382,6 +384,9 @@ def hamiltonian_k(lattice, k):
     which reproduces the missing reverse-direction terms automatically (the same effective
     result as `src/kite/__init__.py`'s own explicit reverse-hopping generation for the real
     HDF5 export, just built directly in k-space here rather than in real space per-bond).
+    Directly verified this matches config_system()'s real-space export element-by-element
+    (not just eigenvalue-equivalent, which transpose/conjugate variants would trivially
+    satisfy for any Hermitian matrix) for a complex, sublattice-asymmetric model.
 
     Parameters
     ----------
@@ -428,7 +433,7 @@ def hamiltonian_k(lattice, k):
                 R_cartesian = np.concatenate([R_cartesian, np.zeros(pad)])
             total = R_cartesian + diff
             phase = np.exp(-1j * np.dot(k, total[:len(k)]))
-            H0[term.to_id, term.from_id] += t * phase
+            H0[term.from_id, term.to_id] += t * phase
 
     H = H0 + H0.conj().T + onsite
 

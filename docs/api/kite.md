@@ -884,22 +884,32 @@ The KITE package for pre-processing is split up in various subclasses and contai
             onsite/hopping value per sublattice pair; multi-orbital-per-sublattice matrices are a separate
             `#!python kite.custom` concern for building observables, not this base Hamiltonian).
 
-            !!! Info "Gauge convention (derived, not assumed)"
+            !!! Info "Gauge convention (verified against config_system's real export, not just derived)"
 
-                Matches KITE's own ARPES plane-wave state (the full atomic position, cell + sublattice
-                offset, enters the phase — see [Spectral Function][spectral-function-example]). For a
-                hopping family with `#!python relative_index=R`, `#!python from_sub=a`, `#!python
-                to_sub=b`, `#!python energy=t`:
+                `#!python Lattice.add_one_hopping(relative_index=R, from_sub=a, to_sub=b, energy=t)`
+                registers `#!python value = H[row=a, col=b]` — `#!python from_sub` indexes the ROW,
+                `#!python to_sub` the COLUMN (the opposite of the "hop from A to B" reading some
+                conventions use; see `#!python add_one_hopping`'s own docstring). Matching that same
+                row/col assignment here, with KITE's own ARPES plane-wave state (the full atomic
+                position, cell + sublattice offset, enters the phase — see
+                [Spectral Function][spectral-function-example]) fixing the phase sign:
                 $$
-                H_{ba}(\mathbf k)\mathrel{+}= t\;e^{-i\,\mathbf k\cdot(\mathbf R_{\text{cart}}+\mathbf d_b-\mathbf d_a)}
+                H_{ab}(\mathbf k)\mathrel{+}= t\;e^{-i\,\mathbf k\cdot(\mathbf R_{\text{cart}}+\mathbf d_b-\mathbf d_a)}
                 $$
                 **with a minus sign in the exponent** — get this backwards and centrosymmetric bands
                 (e.g. graphene) still look right while anything valley/Rashba/Weyl-asymmetric comes out
-                mirror-flipped. Since `#!python add_one_hopping` only ever stores one bond direction, this
-                function builds the one-directional sum $H_0(\mathbf k)$ and returns $H_0(\mathbf
+                mirror-flipped (invisible via eigenvalues alone, since eigenvalues are transpose-invariant
+                — this is exactly how an earlier row/col bug here stayed hidden through every
+                closed-form-gap/band-location check, all of which are eigenvalue-based). Since
+                `#!python add_one_hopping` only ever stores one bond direction, this function builds the
+                one-directional sum $H_0(\mathbf k)$ and returns $H_0(\mathbf
                 k)+H_0(\mathbf k)^\dagger+\text{onsite}$, reproducing the missing reverse-direction terms
                 automatically. The result is checked numerically Hermitian before being returned; a
                 non-Hermitian result raises `#!python RuntimeError` rather than being silently returned.
+                Verified element-by-element (not just eigenvalue-equivalent) against
+                `#!python config_system()`'s own real-space hopping export for a complex,
+                sublattice-asymmetric model, and against the actual C++ propagation code
+                (`Src/Vector/KPM_Vector2D.cpp`).
 
             !!! Example "Behavior across several known models"
 
@@ -914,10 +924,14 @@ The KITE package for pre-processing is split up in various subclasses and contai
                 with same-$\mathbf R$ forward/backward terms rather than relying on the automatic
                 Hermitian-conjugate addition) reproduces its Weyl node at $(\pi/2,\pi/2,\pi/2)$,
                 matching the closed-form
-                $H(\mathbf k)=t[\cos k_x\,\sigma_x+\cos k_y\,\sigma_y+\cos k_z\,\sigma_z]$ to machine
+                $H(\mathbf k)=t[\cos k_x\,\sigma_x-\cos k_y\,\sigma_y+\cos k_z\,\sigma_z]$ to machine
                 precision — the automatic $H_0+H_0^\dagger$ construction stays safe even when a
                 lattice's own hopping list already contains what looks like a manually-added return
-                path.
+                path. (The relative sign on the $\sigma_y$ term reflects `#!python add_one_hopping`'s
+                row=`#!python from_sub`/col=`#!python to_sub` convention above — this is the same
+                model as the more commonly quoted $H(\mathbf k)=t[\cos k_x\,\sigma_x+\cos
+                k_y\,\sigma_y+\cos k_z\,\sigma_z]$ up to relabeling $\sigma_y\to-\sigma_y$, a basis
+                choice, not a different physical system.)
                 `#!python kite.repository.phosphorene.monolayer_4band()` (4 sublattices with an
                 out-of-plane buckling offset) gives a physically sane, anisotropic, direct ~1.5 eV gap at
                 $\Gamma$ — this case caught a real bug (a shape-mismatch crash whenever a sublattice

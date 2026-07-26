@@ -47,7 +47,19 @@ class Lattice:
     def add_one_hopping(
         self, relative_index: list[int], from_sub: str, to_sub: str, hop_name_or_energy
     ) -> None:
-        """Does not add the complex conjugate hopping"""
+        """Registers value = H[row=from_sub, col=to_sub] for the bond from the
+        current unit cell's from_sub orbital to to_sub in the cell offset by
+        relative_index. Note this is `from_sub` indexing the ROW and `to_sub`
+        indexing the COLUMN -- the opposite of the "hop from A to B" reading
+        some tight-binding conventions use (which would put `to_sub` on the
+        row, as H[B,A]). Getting this backwards is invisible for a symmetric
+        hopping matrix and only shows up as a sign/value error once a
+        coupling is complex and asymmetric (H[from,to] != H[to,from]).
+
+        Does not add the complex conjugate hopping -- config_system() adds it
+        automatically at export time (mirroring from_sub/to_sub and
+        conjugate-transposing the energy), so register only one direction of
+        each bond here."""
         name = f"Hop{self.nhop}"
 
         if type(hop_name_or_energy) == str:
@@ -69,7 +81,11 @@ class Lattice:
         self.nhop += 1
 
     def add_hoppings(self, *hoppings) -> None:
-        """Does not add the complex conjugate hopping"""
+        """Plural form of add_one_hopping() -- each argument is a
+        (relative_index, from_sub, to_sub, value) tuple. See
+        add_one_hopping()'s docstring for the row=from_sub/col=to_sub
+        convention and why it's easy to get backwards for complex,
+        asymmetric couplings."""
         for hop in hoppings:
             self.add_one_hopping(*hop)
 
