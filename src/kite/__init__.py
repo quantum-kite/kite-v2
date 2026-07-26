@@ -687,9 +687,9 @@ class Calculation:
             couples different lattice sites (see add_orbital_coupling's documentation). Results are
             written to ``/Calculation/ldos/lMU_Operators/<label>``.
 
-            Label namespace: these are the SAME labels registered via add_orbital_coupling and used
+            Label namespace: these are the same labels registered via add_orbital_coupling and used
             by ``operators=`` on ``ldos_map``/``gaussian_wave_packet`` -- an arbitrary string
-            beginning with "l" (e.g. "l0", "sz", "lproj"). This is a DIFFERENT namespace from the
+            beginning with "l" (e.g. "l0", "lsz", "lproj"). This is a different namespace from the
             positional ``l0``-``l9`` labels used inside a ``custom_one``/``custom_two`` vertex
             string (e.g. ``custom.Vertex(moments, [[1.0, "l0"]])``): there, the label's trailing
             digit is a 0-indexed lookup into the HDF5-group iteration order of registered custom
@@ -1508,6 +1508,33 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
     # not a Python-level error -- reject it here, at export time, where the
     # true orbital count is known.
     total_orbitals = int(np.sum(num_orbitals))
+
+    # add_orbital_index() accepts any integer index with no uniqueness, range,
+    # or contiguity check. Two different orbital names mapped to the same
+    # index alias every add_orbital_coupling() call that targets either name
+    # into the SAME matrix entry -- the resulting operator is still correctly
+    # SIZED (so the shape check below can't catch it), just silently wrong,
+    # since one name's coupling overwrites another's. Require the index map
+    # to be a bijection onto 0..total_orbitals-1 before any operator is used.
+    if calculation._orbital_index_collection:
+        indices = list(calculation._orbital_index_collection.values())
+        if len(set(indices)) != len(indices):
+            seen = {}
+            for name, idx in calculation._orbital_index_collection.items():
+                seen.setdefault(idx, []).append(name)
+            dupes = {idx: names for idx, names in seen.items() if len(names) > 1}
+            raise ValueError(
+                "add_orbital_index() registered more than one orbital name at "
+                "the same index -- {}. Each index must map to exactly one "
+                "orbital, or couplings targeting the aliased names silently "
+                "overwrite the same operator matrix entry.".format(dupes))
+        if sorted(indices) != list(range(total_orbitals)):
+            raise ValueError(
+                "add_orbital_index() registered indices {}, but this lattice "
+                "has {} orbitals total -- indices must be exactly "
+                "0..{}, each used once.".format(
+                    sorted(indices), total_orbitals, total_orbitals - 1))
+
     for label, operator in calculation._custom_operator_collection.items():
         operator = np.asarray(operator)
         if operator.shape != (total_orbitals, total_orbitals):
@@ -1519,6 +1546,26 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
                 "called for every orbital before add_orbital_coupling() "
                 "first used this label.".format(
                     label=label, shape=operator.shape, n=total_orbitals))
+
+    # Hermiticity is checked when ldos()/ldos_map() is first called, but a
+    # label's matrix can still be mutated by a later add_orbital_coupling()
+    # call before export -- re-validate the FINAL matrix for every label an
+    # LDOS/LDOS-map request actually uses. Deliberately scoped to those
+    # labels only: custom_one/custom_two/gaussian_wave_packet operators can
+    # legitimately be non-Hermitian intermediates (e.g. velocity operators),
+    # so this check must not apply to every registered operator indiscriminately.
+    ldos_operator_labels = set()
+    for req in list(calculation._ldos) + list(calculation._ldos_map):
+        ldos_operator_labels.update(req.get('operators') or [])
+    for label in ldos_operator_labels:
+        operator = np.asarray(calculation._custom_operator_collection[label])
+        if not np.allclose(operator, operator.conj().T, atol=1e-10):
+            raise ValueError(
+                "Operator '{}' is not Hermitian (O != O^dagger) at export "
+                "time. It passed Hermiticity validation when registered with "
+                "ldos()/ldos_map(), but a later add_orbital_coupling() call "
+                "mutated it into a non-Hermitian matrix -- Tr[O*Im G(r,r,E)] "
+                "is only guaranteed real-valued for a Hermitian O.".format(label))
 
     # iterate through all the hoppings and add hopping energies to hoppings list
     for name, hop in lattice.hoppings.items():
