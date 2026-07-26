@@ -181,12 +181,17 @@ The random variables $\chi_{r,i}$ fulfill "white noise" statistics, with the spe
 depending on whether they're complex or real. For independent random phases $\chi_{r,i}=e^{i\theta_{r,i}}$
 (the usual complex-valued choice):
 $\left\langle\left\langle\chi_{r, i}\right\rangle\right\rangle=0, \quad\left\langle\left\langle\chi_{r, i} \chi_{r^{\prime}, i^{\prime}}\right\rangle\right\rangle=0$ and $\left\langle\left\langle\chi_{r, i}^{*} \chi_{r^{\prime}, i^{\prime}}\right\rangle\right\rangle=\delta_{r, r^{\prime}} \delta_{i, i^{\prime}}$
-(the middle condition only holds because $\chi^*\neq\chi$ for a complex phase). For real-valued
-Rademacher variables ($\chi_{r,i}=\pm1$ with equal probability, so $\chi=\chi^*$), the two
-second-moment conditions above collapse into a single one instead:
-$\left\langle\left\langle\chi_{r, i}\right\rangle\right\rangle=0$ and $\left\langle\left\langle\chi_{r, i} \chi_{r^{\prime}, i^{\prime}}\right\rangle\right\rangle=\delta_{r, r^{\prime}} \delta_{i, i^{\prime}}$.
-Either choice gives an unbiased estimator of Eq. (9); which one KITE uses is an implementation
-detail, not a choice that changes the formula's validity.
+(the middle condition only holds because $\chi^*\neq\chi$ for a complex phase). For a real-valued
+$\chi$ (so $\chi=\chi^*$), the two second-moment conditions above collapse into a single one
+instead: $\left\langle\left\langle\chi_{r, i}\right\rangle\right\rangle=0$ and
+$\left\langle\left\langle\chi_{r, i} \chi_{r^{\prime}, i^{\prime}}\right\rangle\right\rangle=\delta_{r, r^{\prime}} \delta_{i, i^{\prime}}$
+— any zero-mean, unit-variance, independent real distribution satisfies this (e.g. Rademacher
+$\chi=\pm1$), which is what makes the choice an implementation detail rather than a constraint on
+the formula. KITE's actual real-valued instantiation (`Src/Tools/Random.cpp`) draws
+$\chi=\sqrt3\,(2u-1)$ from $u\sim\text{Uniform}(0,1)$, i.e. a continuous uniform distribution on
+$[-\sqrt3,\sqrt3]$ (mean 0, variance 1) rather than Rademacher; its complex instantiation draws an
+independent random phase $\chi=e^{i\theta}$, $\theta\sim\text{Uniform}(0,2\pi)$, matching the
+complex case above exactly.
 The STE is extremely accurate for sparse matrices of large dimension (only a few random vectors are needed to converge to many decimal places),
 which allows substantial savings in computational time.
 For example, the evaluation of Chebyshev moments of the DOS function for a tight-binding model (where $D=N$, and $N$ is the total number of orbitals or sites in the lattice) requires a total number of operations scaling as
