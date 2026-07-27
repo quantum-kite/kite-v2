@@ -119,19 +119,25 @@ r+\mathbf d_\alpha)}|\mathbf r,\alpha\rangle$ — phase carries the **full atomi
 offset), not just the cell index. Any `H(k)` builder must use the same gauge, or its bands won't line up
 with KITE's own $A(\mathbf k, E)$ at the same nominal $\mathbf k$.
 
-**Derived (not assumed) sign convention**: Fourier-transforming a `HoppingFamily` entry
-(`relative_index=R`, `from_sub=a`, `to_sub=b`, `energy=t_{ab}(R)`, row=to-orbital/col=from-orbital, matching
-the existing h.c.-generation code in `__init__.py`) with that same plane-wave phase gives
+**Derived (not assumed) sign convention** (corrected 2026-07-26 -- this section originally had
+BOTH the row/col assignment and the phase sign backwards, and the code built from it inherited
+both errors; see `maintenance/2026-07-26-hopping-convention-audit.md` and its follow-up for the
+full resolution, including why eigenvalue-only checks couldn't catch either mistake): Fourier-transforming
+a `HoppingFamily` entry (`relative_index=R`, `from_sub=a`, `to_sub=b`, `energy=t_{ab}(R)`,
+row=from-orbital/col=to-orbital -- confirmed directly against `config_system()`'s real-space
+export and the actual C++ propagation code, `Src/Vector/KPM_Vector2D.cpp`) with that same
+plane-wave phase gives
 
 $$
-H_{ba}(\mathbf k) \mathrel{+}= t_{ab}(\mathbf R)\; e^{-i\,\mathbf k\cdot(\mathbf R + \mathbf d_b - \mathbf d_a)}
+H_{ab}(\mathbf k) \mathrel{+}= t_{ab}(\mathbf R)\; e^{+i\,\mathbf k\cdot(\mathbf R + \mathbf d_b - \mathbf d_a)}
 $$
 
-**with a minus sign in the exponent** — not the naive plus. This is the exact bug class already found and
-fixed once this session (commit `e62c839`, the ARPES k-vector fix): a `+` sign is equivalent to evaluating
-at $-\mathbf k$, invisible for centrosymmetric bands but visibly mirror-flipped for anything
-valley/Rashba/Weyl-asymmetric — get this wrong and it'll look plausible right up until someone checks a TMD
-valley or a Weyl point.
+**with a plus sign in the exponent, matching KITE's C++ ARPES plane-wave state exactly**
+(confirmed directly in `build_planewave()`, not assumed). A stray minus sign here computes
+$H(-\mathbf k)$ instead of $H(\mathbf k)$: invisible for centrosymmetric bands (energies at
+$\mathbf k$ and $-\mathbf k$ coincide) but wrong for anything valley/Rashba/Weyl-asymmetric —
+and, like a row/col swap, invisible to any eigenvalue-only check, since both transposition and
+$\mathbf k\to-\mathbf k$ preserve a Hermitian matrix's spectrum.
 
 **Hermitian-conjugate handling**: `add_one_hopping`'s docstring is accurate — it really does store only one
 direction. But the codebase's own established pattern (`__init__.py`'s existing HDF5-export loop) is to

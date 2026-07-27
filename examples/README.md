@@ -88,7 +88,7 @@ These are pure-KITE scripts (using `kite.lattice.Lattice`, `src/kite/lattice.py`
 
 | Script | What it demonstrates |
 | --- | --- |
-| `haldane_orbital_magnetization.py` | Orbital magnetization of the Haldane Chern insulator via `custom.Vertex` + `calculation.custom_one` (rank-one trace `Tr[Tn(H)·A]`, `A = x·H·y − y·H·x`). The reconstructed magnetization slope across the bulk gap matches the exact k-space (Streda-relation) prediction `C/(2π)` to ~3%. Post-process with `../build/KITE-tools ... --CustomOne` then `process_haldane_orbital_magnetization.py`. See the [in-depth write-up][orbital-mag-example]. |
+| `haldane_orbital_magnetization.py` | Orbital magnetization of the Haldane Chern insulator (C=-1 for the stored Haldane phase orientation and KITE's hopping/ARPES convention) via `custom.Vertex` + `calculation.custom_one` (rank-one trace `Tr[Tn(H)·A]`, `A = x·H·y − y·H·x`). The reconstructed magnetization slope across the bulk gap matches the exact k-space (Streda-relation) prediction `-C/(2π)` to ~1%. Post-process with `../build/KITE-tools ... --CustomOne` then `process_haldane_orbital_magnetization.py`. See the [in-depth write-up][orbital-mag-example]. |
 
 **Real-time wave-packet propagation**
 

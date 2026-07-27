@@ -365,18 +365,25 @@ def hamiltonian_k(lattice, k):
     `Sublattice.alias_id`.
 
     Gauge / sign convention (empirically verified against config_system()'s own real-space
-    hopping export, not just derived on paper -- see maintenance/native-lattice-viz-plan.md
-    section 5 for the ARPES phase-matching derivation this is built on, and the
-    KITE_HOPPING_CONVENTION_FINDING handoff note for the row/col bug this function used to
-    have). `Lattice.add_one_hopping(relative_index=R, from_sub=a, to_sub=b, energy=t)`
-    registers `value = H[row=a, col=b]` -- `from_sub` indexes the ROW, `to_sub` the COLUMN
-    (see `add_one_hopping`'s own docstring; this is the opposite of the "hop from A to B"
-    reading some conventions use). Matching that same row/col assignment here, with KITE's
-    own ARPES plane-wave state
-    |k> = (1/sqrt(N)) sum_{r,alpha} w_alpha * exp(i k.(r + d_alpha)) |r,alpha>
-    (docs/documentation/examples/spectral_function.md) fixing the phase sign, gives:
+    hopping export AND the actual C++ propagation/ARPES code, not just derived on paper --
+    see maintenance/2026-07-26-hopping-convention-audit.md, and the follow-up
+    maintenance/2026-07-26-hamiltonian-k-phase-fix.md for the phase-sign correction below).
+    `Lattice.add_one_hopping(relative_index=R, from_sub=a, to_sub=b, energy=t)` registers
+    `value = H[row=a, col=b]` -- `from_sub` indexes the ROW, `to_sub` the COLUMN (see
+    `add_one_hopping`'s own docstring; this is the opposite of the "hop from A to B" reading
+    some conventions use). KITE's C++ ARPES plane-wave state (`build_planewave()` in
+    `Src/Vector/KPM_Vector2D.cpp`/`KPM_Vector3D.cpp`) is
+    |k> = (1/sqrt(N)) sum_{r,alpha} w_alpha * exp(+i k.(r + d_alpha)) |r,alpha>
+    -- a PLUS sign in the exponent (confirmed directly in that C++ code, not assumed).
+    Fourier-transforming a stored hopping term with that same convention gives, matching
+    the row/col assignment above:
 
-        H[a, b](k) += t * exp(-i k . (R_cartesian + d_b - d_a))
+        H[a, b](k) += t * exp(+i k . (R_cartesian + d_b - d_a))
+
+    A minus sign here (this function's own bug until 2026-07-26) computes H_true(-k)
+    instead of H_true(k) -- invisible for centrosymmetric bands (energies at k and -k
+    coincide) but wrong for anything valley/chirality/texture-sensitive, and invisible to
+    any eigenvalue-only check for the same reason plain row/col transposition is.
 
     `add_one_hopping` only ever stores one direction of a bond ("Does not add the complex
     conjugate hopping", per its own docstring) -- this function builds the one-directional
@@ -385,8 +392,12 @@ def hamiltonian_k(lattice, k):
     result as `src/kite/__init__.py`'s own explicit reverse-hopping generation for the real
     HDF5 export, just built directly in k-space here rather than in real space per-bond).
     Directly verified this matches config_system()'s real-space export element-by-element
-    (not just eigenvalue-equivalent, which transpose/conjugate variants would trivially
-    satisfy for any Hermitian matrix) for a complex, sublattice-asymmetric model.
+    (not just eigenvalue-equivalent, which transpose/conjugate/negated-k variants would all
+    trivially satisfy for any Hermitian matrix) for a complex, sublattice-asymmetric model
+    with an UNPAIRED hopping (no reverse-direction term stored explicitly) at a generic k --
+    a paired hopping family (both directions stored) has phase dependence that collapses to
+    cosines and cannot distinguish +ik from -ik, which is why the row-fix's own regression
+    test did not catch this phase bug.
 
     Parameters
     ----------
@@ -432,7 +443,7 @@ def hamiltonian_k(lattice, k):
             if pad > 0:
                 R_cartesian = np.concatenate([R_cartesian, np.zeros(pad)])
             total = R_cartesian + diff
-            phase = np.exp(-1j * np.dot(k, total[:len(k)]))
+            phase = np.exp(1j * np.dot(k, total[:len(k)]))
             H0[term.from_id, term.to_id] += t * phase
 
     H = H0 + H0.conj().T + onsite

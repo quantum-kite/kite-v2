@@ -86,10 +86,15 @@ kite_style.apply()
 # indirect band gap.
 GAP_EDGE = 1.0
 
-# Exact topological prediction for this lattice (C=+1 for the filled/valence
-# band, confirmed against the literature's own bond-phase convention).
-CHERN_NUMBER = 1
-EXPECTED_SLOPE = CHERN_NUMBER / (2 * np.pi)
+# Exact topological prediction for this lattice: C=-1 for the filled/valence
+# band, for the stored Haldane NNN phase orientation and KITE's row=from_id/
+# col=to_id, +i*k.r convention (verified directly against the C++ propagation
+# and ARPES plane-wave code -- see maintenance/2026-07-26-hopping-convention-audit.md
+# and its follow-up). The modern-theory relation for this sign convention is
+# dM/dE_F = -C/(2*pi), which is POSITIVE for C=-1 -- matching the actual,
+# positive slope both KITEx and the k-space calculation below produce.
+CHERN_NUMBER = -1
+EXPECTED_SLOPE = -CHERN_NUMBER / (2 * np.pi)
 
 
 def physical_density(h5_name, dat_name):
@@ -113,11 +118,13 @@ def physical_density(h5_name, dat_name):
 
 def _hopping_terms_and_onsite(lattice):
     """Return (terms, onsite): one-directional hopping terms as
-    (t, to_id, from_id, total_vector), and the (n, n) onsite matrix.
+    (t, from_id, to_id, total_vector), and the (n, n) onsite matrix.
 
-    total_vector = R_cartesian + (d_to - d_from), matching the exact phase
-    convention of kite.visualize.hamiltonian_k -- see that function's
-    docstring for the derivation (minus sign in the exponent).
+    total_vector = R_cartesian + (d_to - d_from), matching the exact
+    row=from_id/col=to_id, +i*k.r convention of kite.visualize.hamiltonian_k
+    -- see that function's docstring for the derivation, verified directly
+    against config_system()'s real-space export and the actual C++
+    propagation/ARPES code (Src/Vector/KPM_Vector2D.cpp).
     """
     n = lattice.nsub
     onsite = np.zeros((n, n), dtype=complex)
@@ -132,19 +139,20 @@ def _hopping_terms_and_onsite(lattice):
         d_b = np.asarray(lattice.sublattices[hop.to_sub].position, dtype=float)[:2]
         for term in hop.terms:
             R = np.asarray(term.relative_index, dtype=float) @ vectors_matrix
-            terms.append((t, term.to_id, term.from_id, R + (d_b - d_a)))
+            terms.append((t, term.from_id, term.to_id, R + (d_b - d_a)))
     return terms, onsite
 
 
 def _hamiltonian_k_batch(lattice, KX, KY):
     """H(k), dH/dkx, dH/dky over a whole k-grid at once (shape (..., n, n)).
 
-    Same gauge/sign convention as kite.visualize.hamiltonian_k, but built with
-    analytic k-derivatives (phase = exp(-i k.total), so d(phase)/dk is exact,
-    no finite differencing) and batched over the grid's leading axes via
-    numpy broadcasting/matmul/eigh -- evaluating hamiltonian_k point-by-point
-    in a Python loop does not scale to a Brillouin-zone grid fine enough for
-    the integral below.
+    Same gauge/sign convention as kite.visualize.hamiltonian_k (row=from_id,
+    col=to_id, +i*k.r phase, matching KITE's C++ ARPES plane-wave state
+    exactly), but built with analytic k-derivatives (phase = exp(+i k.total),
+    so d(phase)/dk is exact, no finite differencing) and batched over the
+    grid's leading axes via numpy broadcasting/matmul/eigh -- evaluating
+    hamiltonian_k point-by-point in a Python loop does not scale to a
+    Brillouin-zone grid fine enough for the integral below.
     """
     terms, onsite = _hopping_terms_and_onsite(lattice)
     n = lattice.nsub
@@ -152,11 +160,11 @@ def _hamiltonian_k_batch(lattice, KX, KY):
     H0 = np.zeros(shape + (n, n), dtype=complex)
     dH0dx = np.zeros_like(H0)
     dH0dy = np.zeros_like(H0)
-    for t, to_id, from_id, total in terms:
-        phase = np.exp(-1j * (KX * total[0] + KY * total[1]))
-        H0[..., to_id, from_id] += t * phase
-        dH0dx[..., to_id, from_id] += t * (-1j * total[0]) * phase
-        dH0dy[..., to_id, from_id] += t * (-1j * total[1]) * phase
+    for t, from_id, to_id, total in terms:
+        phase = np.exp(1j * (KX * total[0] + KY * total[1]))
+        H0[..., from_id, to_id] += t * phase
+        dH0dx[..., from_id, to_id] += t * (1j * total[0]) * phase
+        dH0dy[..., from_id, to_id] += t * (1j * total[1]) * phase
     H = H0 + np.conj(np.swapaxes(H0, -1, -2)) + onsite
     dHdx = dH0dx + np.conj(np.swapaxes(dH0dx, -1, -2))
     dHdy = dH0dy + np.conj(np.swapaxes(dH0dy, -1, -2))
@@ -200,12 +208,15 @@ def kspace_full_range(lattice, Efs, Nk=80):
                 continue
             num = Vx[..., n, m] * Vy[..., m, n]
             dE_nm = E[..., n] - E[..., m]
-            # Sign fixed against the exact Streda-relation check (dM/dE_F =
-            # C/(2*pi) in the gap): the textbook +Im[...] convention here
-            # matches this vertex/electron-charge sign; -Im[...] gave the
-            # exact negative of the expected slope.
-            s_m += np.imag(num) / dE_nm
-            s_o += 2 * np.imag(num) / dE_nm ** 2
+            # Physical electron-charge sign for the modern-theory magnetization
+            # (Xiao-Shi-Niu): the correct real-space M_z operator carries an
+            # overall minus sign relative to the raw Berry-curvature/orbital-
+            # moment expression -Im[...], not +Im[...]. Combined with the
+            # corrected (row=from_id, +i*k.r) H(k) above, this gives
+            # dM/dE_F = -C/(2*pi) in the gap, matching the actual KITEx data
+            # for the stored (C=-1) Haldane phase orientation.
+            s_m -= np.imag(num) / dE_nm
+            s_o -= 2 * np.imag(num) / dE_nm ** 2
         En = E[..., n]
         E_all.append(En.ravel())
         C1_all.append((s_m - En * s_o).ravel())  # coefficient of E_F^0
@@ -242,7 +253,7 @@ def plot(h5_name, dat_name, out_path="plots/haldane_orbital_magnetization_previe
     ax1.axvspan(-GAP_EDGE, GAP_EDGE, color=kite_style.KITE_ACCENT, alpha=0.08)
     ax1.set_ylabel(r"$S(E)$  (nm$^{-2}$)", fontsize=13)
     ax1.set_title("Haldane model: orbital-magnetization spectral density\n"
-                  r"($t_2=t/3$, $\phi=\pi/2$, $\delta=0$: $C=+1$ Chern insulator)",
+                  r"($t_2=t/3$, $\phi=\pi/2$, $\delta=0$: $C=-1$ Chern insulator)",
                   fontsize=12)
 
     ax2.plot(E, M_kspace, color="0.4", ls=":", lw=2.0,
@@ -262,7 +273,7 @@ def plot(h5_name, dat_name, out_path="plots/haldane_orbital_magnetization_previe
     plt.close(fig)
     print(f"Saved {out_path}")
     print(f"Linear-in-gap slope dM/dE_F = {slope:.4f}, "
-          f"vs. exact k-space prediction C/(2*pi) = {EXPECTED_SLOPE:.4f} "
+          f"vs. exact k-space prediction -C/(2*pi) = {EXPECTED_SLOPE:.4f} "
           f"({(slope - EXPECTED_SLOPE) / EXPECTED_SLOPE * 100:+.1f}%)")
     rmse = np.sqrt(np.mean((M - M_kspace) ** 2))
     scale = np.abs(M_kspace).max()

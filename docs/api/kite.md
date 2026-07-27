@@ -890,17 +890,21 @@ The KITE package for pre-processing is split up in various subclasses and contai
                 registers `#!python value = H[row=a, col=b]` — `#!python from_sub` indexes the ROW,
                 `#!python to_sub` the COLUMN (the opposite of the "hop from A to B" reading some
                 conventions use; see `#!python add_one_hopping`'s own docstring). Matching that same
-                row/col assignment here, with KITE's own ARPES plane-wave state (the full atomic
-                position, cell + sublattice offset, enters the phase — see
-                [Spectral Function][spectral-function-example]) fixing the phase sign:
+                row/col assignment here, with KITE's own ARPES plane-wave state — confirmed directly in
+                `#!python build_planewave()` (`Src/Vector/KPM_Vector2D.cpp`/`KPM_Vector3D.cpp`), the full
+                atomic position (cell + sublattice offset) enters the phase — see
+                [Spectral Function][spectral-function-example]:
                 $$
-                H_{ab}(\mathbf k)\mathrel{+}= t\;e^{-i\,\mathbf k\cdot(\mathbf R_{\text{cart}}+\mathbf d_b-\mathbf d_a)}
+                H_{ab}(\mathbf k)\mathrel{+}= t\;e^{+i\,\mathbf k\cdot(\mathbf R_{\text{cart}}+\mathbf d_b-\mathbf d_a)}
                 $$
-                **with a minus sign in the exponent** — get this backwards and centrosymmetric bands
-                (e.g. graphene) still look right while anything valley/Rashba/Weyl-asymmetric comes out
-                mirror-flipped (invisible via eigenvalues alone, since eigenvalues are transpose-invariant
-                — this is exactly how an earlier row/col bug here stayed hidden through every
-                closed-form-gap/band-location check, all of which are eigenvalue-based). Since
+                **with a plus sign in the exponent, matching the C++ ARPES state exactly** — get this
+                backwards (a stray minus sign, as this function itself had until 2026-07-26) and you
+                compute $H(-\mathbf k)$ instead of $H(\mathbf k)$: centrosymmetric bands (e.g. graphene)
+                still look right, since $E(\mathbf k)=E(-\mathbf k)$ for them, but anything
+                valley/chirality/texture-sensitive comes out wrong. Both this and a row/col swap are
+                invisible via eigenvalues alone (transposition and $\mathbf k\to-\mathbf k$ both preserve
+                a Hermitian matrix's spectrum) — exactly how both bugs survived every closed-form
+                gap/band-location check here, which are all eigenvalue-based. Since
                 `#!python add_one_hopping` only ever stores one bond direction, this function builds the
                 one-directional sum $H_0(\mathbf k)$ and returns $H_0(\mathbf
                 k)+H_0(\mathbf k)^\dagger+\text{onsite}$, reproducing the missing reverse-direction terms
@@ -927,11 +931,13 @@ The KITE package for pre-processing is split up in various subclasses and contai
                 $H(\mathbf k)=t[\cos k_x\,\sigma_x-\cos k_y\,\sigma_y+\cos k_z\,\sigma_z]$ to machine
                 precision — the automatic $H_0+H_0^\dagger$ construction stays safe even when a
                 lattice's own hopping list already contains what looks like a manually-added return
-                path. (The relative sign on the $\sigma_y$ term reflects `#!python add_one_hopping`'s
-                row=`#!python from_sub`/col=`#!python to_sub` convention above — this is the same
-                model as the more commonly quoted $H(\mathbf k)=t[\cos k_x\,\sigma_x+\cos
-                k_y\,\sigma_y+\cos k_z\,\sigma_z]$ up to relabeling $\sigma_y\to-\sigma_y$, a basis
-                choice, not a different physical system.)
+                path. This is the specific hopping pattern `#!python weyl_lt.py` stores under
+                `#!python add_one_hopping`'s row=`#!python from_sub`/col=`#!python to_sub` convention
+                — the $-\sigma_y$ (rather than $+\sigma_y$) is not a relabeling/basis choice: swapping
+                the sign of one Pauli term reverses the oriented Weyl charge (chirality) of the node,
+                a genuine physical difference from the more commonly quoted
+                $H(\mathbf k)=t[\cos k_x\,\sigma_x+\cos k_y\,\sigma_y+\cos k_z\,\sigma_z]$, not an
+                equivalent description of the same system.
                 `#!python kite.repository.phosphorene.monolayer_4band()` (4 sublattices with an
                 out-of-plane buckling offset) gives a physically sane, anisotropic, direct ~1.5 eV gap at
                 $\Gamma$ — this case caught a real bug (a shape-mismatch crash whenever a sublattice

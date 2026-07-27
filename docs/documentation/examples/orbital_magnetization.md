@@ -110,8 +110,11 @@ on the A–A bonds and $-\phi$ on the B–B bonds, with $t_2=t/3$, $\phi=\pi/2$,
 but the lattice model's actual (smaller) *indirect* band gap — verified numerically to 10 significant figures
 via [`#!python kite.visualize.hamiltonian_k`][kite-visualize] and independently via a
 Fukui-Hatsugai-Suzuki lattice Chern-number calculation (converged, gap never closes from a $20\times20$ to
-$120\times120$ k-mesh) — is exactly $|E|<1$. Both calculations agree the filled/valence band has **Chern
-number $C=+1$** for this bond-phase assignment.
+$120\times120$ k-mesh) — is exactly $|E|<1$ (the gap magnitude is an eigenvalue-only quantity, unaffected
+by the convention correction below). Both calculations agree the filled/valence band has **Chern
+number $C=-1$** for this bond-phase assignment and KITE's row=`#!python from_sub`/col=`#!python to_sub`,
+$e^{+i\mathbf k\cdot\mathbf r}$ hopping convention (see
+[`#!python hamiltonian_k`][kite-visualize]'s own docstring for that convention).
 
 **Boundaries are OPEN, and this is mandatory:** the position operator entering the vertex is only well-defined
 without periodic wrapping. A direct and physically important consequence is that the finite open sample hosts
@@ -146,8 +149,8 @@ curvature and orbital moment of each band, integrated over the Brillouin zone) e
 the full spectrum — not restricted to the gap. The two agree closely across the entire range, including the
 bulk-band region and the resonance features near the gap edges: the root-mean-square deviation between the two
 curves is **~1% of the peak magnetization**. Inside the gap, $M(E_F)$ rises **linearly**; a fit restricted to
-$|E|<0.8$ gives $\left.dM/dE_F\right|_{\rm fit}=0.156$, compared to the exact topological (Streda-relation)
-prediction $C/(2\pi)=0.1592$ for $C=+1$ — agreement to **~2%**.
+$|E|<0.8$ gives $\left.dM/dE_F\right|_{\rm fit}=0.157$, compared to the exact topological (Streda-relation)
+prediction $-C/(2\pi)=0.1592$ for $C=-1$ — agreement to **~1%**.
 
 !!! example
 

@@ -55,9 +55,11 @@
     Relating A to the actual orbital magnetization operator, and the sign of the
     physical prefactor that belongs in POST-PROCESSING (not here): the reference
     (Vidarte et al., Eq. 1-2) defines
-        M_hat_z = -(i e)/(2 hbar c Area) * (x H y - y H x) = -(e/(2 hbar c Area)) * A,
-    i.e. a NEGATIVE real prefactor multiplying this exact vertex (see
-    process_haldane_orbital_magnetization.py for where that prefactor and the
+        M_hat_z = -(i e)/(2 hbar c Area) * (x H y - y H x) = -(e/(2 hbar c Area)) * i*A,
+    i.e. a NEGATIVE real prefactor multiplying i*A, not A alone -- A is
+    anti-Hermitian (Tr[A*delta(E-H)] is purely imaginary), so the i cannot be
+    dropped here (see process_haldane_orbital_magnetization.py's own
+    docstring, which keeps it, for where that prefactor and the
     Chebyshev-rescaling Jacobian 1/energy_scale are applied).
 
     The Haldane model and why this phase is topological

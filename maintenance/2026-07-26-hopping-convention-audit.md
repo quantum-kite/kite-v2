@@ -44,16 +44,47 @@ matrix construction before touching anything.
   immune — `from_sub == to_sub` makes the row/col swap a no-op on a diagonal entry.
 - `kite.repository`'s TMD builder: no complex hoppings at all in the current model.
 
-## Open — not resolved, flagged for follow-up
+## Resolved (2026-07-26, follow-up pass): the phase sign and the Haldane contradiction
 
-`examples/process_haldane_orbital_magnetization.py` has its own independent copy of the
-same (now-fixed-elsewhere) convention, used to cross-check the real, actually-computed
-KITEx `custom_one` orbital-magnetization output against a topological Chern-number
-prediction (documented as C=+1). Ran the actual KITEx computation: the real data gives a
-magnetization slope of ~+0.156 in the gap, matching C=+1 as documented. Recomputing the
-Chern number via a Fukui-Hatsugai-Suzuki lattice calculation on the now-fixed
-`hamiltonian_k` gives C=-1 instead — a genuine contradiction. Likely explanation: the
-`custom_one` vertex `A = x*H*y - y*H*x` (built in the C++ code) has its own
-row/col-sensitive behavior that doesn't simply compose with `hamiltonian_k`'s convention
-the way assumed. Did not modify this file's convention without resolving the
-contradiction first — spawned as a follow-up task (`task_e72ed758`) rather than guessing.
+The "open" item below (as originally written in this file) was itself based on an
+incomplete fix: `hamiltonian_k()`'s row/col was corrected, but a SEPARATE bug —
+the phase sign, `exp(-i k.r)` instead of `exp(+i k.r)` — was still present, and my own
+speculation that the `custom_one` vertex had a hidden row/col-sensitive behavior was
+wrong. An independent audit found and resolved both:
+
+- **Phase sign**: `hamiltonian_k()`'s `exp(-1j*...)` computed `H(-k)` instead of `H(k)`.
+  Confirmed directly against KITE's actual C++ ARPES plane-wave state
+  (`build_planewave()` in `Src/Vector/KPM_Vector2D.cpp`/`KPM_Vector3D.cpp`: `exp(+i
+  k.(r+d))`, a plus sign, not assumed). Fixed to `exp(+1j*...)`. Like the row/col bug,
+  this is invisible to any eigenvalue-only check (H(k) and H(-k) share a spectrum at any
+  k where -k is also sampled) and to the row-fix's own regression test, whose Weyl
+  fixture used PAIRED hoppings (both directions stored) whose phase dependence collapses
+  to cosines and can't distinguish +ik from -ik. Added an UNPAIRED complex-hopping test
+  case to `tests/hamiltonian_k_convention_regression.py` to actually catch this.
+- **No hidden transpose in `custom_one`**: confirmed directly against
+  `Src/Hamiltonian/HamiltonianRegular.cpp:127-136` — the velocity vertex `v1(ih,io)` uses
+  the exact same row=`from_id` indexing as the hopping matrix itself. My earlier
+  speculation about this being the culprit was wrong.
+- **`process_haldane_orbital_magnetization.py`** had its own independent copy of BOTH the
+  original row/col bug and (implicitly, via the same `hamiltonian_k`-derived formula) the
+  phase-sign issue, used for its Berry-curvature cross-check — fixed to match the
+  corrected convention (row=`from_id`, col=`to_id`, `exp(+i k.r)`). Separately, its
+  modern-theory formula had the opposite-of-correct overall sign for the physical
+  electron-charge magnetization (`+Im[...]` where the correct expression is `-Im[...]`).
+  These two errors were compensating: fixing only one would have visibly broken the
+  documented agreement with the real KITEx data; fixing both together reproduces the
+  existing curve exactly (RMS difference to the pre-fix curve: negligible, well below
+  plotting resolution) while correcting the physical interpretation from **C=+1 to
+  C=-1** and the slope relation from **C/(2π) to -C/(2π)**. Verified end-to-end: ran the
+  real KITEx computation fresh, confirmed the actual data (slope ≈ +0.157) matches
+  `-C/(2π) = +0.159` for `C=-1` to ~1%. Updated `CHERN_NUMBER`, `EXPECTED_SLOPE`, the plot
+  title, and every doc/README reference to this example's Chern number and slope
+  relation accordingly.
+- Also fixed: `haldane_orbital_magnetization.py`'s own docstring dropped an `i` when
+  rewriting the operator prefactor (`M_z = -(e/(2hbar*c*Area))*A` instead of `*i*A` — A is
+  anti-Hermitian, so the `i` cannot be dropped); and `maintenance/native-lattice-viz-plan.md`,
+  the original source of both the row/col and phase-sign conventions this bug traces back
+  to, which had them backwards from the start.
+
+This closes the item without needing to guess: every claim above was verified directly
+against the actual C++ source (not re-derived from scratch) before any code changed.
