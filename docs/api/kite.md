@@ -181,7 +181,7 @@ The KITE package for pre-processing is split up in various subclasses and contai
         | <span id="modification-atr-flux">`#!python flux`:*`#!python float`*</span>                     | The added magnetic flux to the lattice. *This is **not** the exact value used in the calculation, but the value added using the parameter above. |
 
 ## Configuration
-!!! declaration-class "*class* `#!python kite.Configuration(divisions=(1, 1, 1), length=(1, 1, 1), boundaries=('open', 'open', 'open'), is_complex=False, precision=1, spectrum_range=None, angles=(0,0,0), custom_local=False, custom_local_print=False)`"
+!!! declaration-class "*class* `#!python kite.Configuration(divisions=(1, 1, 1), length=(1, 1, 1), boundaries=('open', 'open', 'open'), is_complex=False, precision=1, spectrum_range=None, seed_h=0, seed_v=0, angles=(0,0,0), custom_local=False, custom_local_print=False)`"
     
      
 :   Define the basic parameters used in the calculation
@@ -209,6 +209,27 @@ The KITE package for pre-processing is split up in various subclasses and contai
             !!! Warning
 
                 Automatic scaling can lead to segmentation-errors due to an error in [pybinding].
+
+    : <span id="configuration-seed_h">`#!python seed_h`: *`#!python int`*</span>
+        : Seed for the randomness used to build the Hamiltonian: disorder placement (vacancies,
+          structural defects, Anderson disorder) and random boundary twists. Default `#!python 0`
+          means "don't care" -- KITE picks a fresh random seed every run, so results are not
+          reproducible. Set any positive integer to make the disorder reproducible: re-running
+          the same HDF5 file (same decomposition/build) regenerates the exact same disorder.
+    : <span id="configuration-seed_v">`#!python seed_v`: *`#!python int`*</span>
+        : Seed for the randomness used in stochastic trace calculations (e.g. the LDOS map): the
+          random probe vectors used to estimate the trace, unrelated to physical disorder.
+          Default `#!python 0` ("don't care", not reproducible), same as `#!python seed_h`. Set
+          any positive integer to make these stochastic estimates reproducible.
+
+            !!! Note
+
+                Setting `#!python seed_h`/`#!python seed_v` makes one whole `KITEx` run
+                reproducible as a block. It does not currently guarantee that a "plain" and an
+                "operator-weighted" calculation requested together (e.g. via `#!python operators=`
+                on [`#!python ldos()`][calculation-ldos]/[`#!python ldos_map()`][calculation-ldos_map])
+                draw the same random disorder/probe-vector realization -- see
+                `maintenance/2026-07-26-random-state-report.md` for the open follow-up.
 
     : <span id="configuration-angles">`#!python angles`: *`#!python float` or `#!python tuple(float, float)` or `#!python tuple(float, float, float)`*</span>
         : The angles used for the twisted boundary conditions when `#!python boundary="twist"` is selected.

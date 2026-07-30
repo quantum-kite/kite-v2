@@ -48,6 +48,38 @@ operator map in the same run, you pay for two independent stochastic calculation
 one — and their results are not guaranteed to come from matching disorder/random-vector draws
 unless you control that yourself (e.g. fixed seeds).
 
+### Reproducibility: `seed_h`
+
+This script's vacancy placement (`vacancy_concentration > 0`) comes from randomness that, by
+default, KITE draws from the operating system and never records anywhere — so running the script
+twice puts the vacancies at different sites each time, and neither run can be regenerated later.
+`#!python kite.Configuration()` accepts a `seed_h` parameter that fixes this:
+
+``` python
+configuration = kite.Configuration(
+    divisions=[1, 1], length=[lx, ly], boundaries=['periodic', 'open'],
+    is_complex=True, precision=1, spectrum_range=[-4, 4],
+    seed_h=seed_h,   # 987654321 by default here
+)
+```
+
+`seed_h` seeds the Hamiltonian-side randomness — here, which sites the vacancies land on. It gets
+written into the exported HDF5 file (`/Seed0`) and read back by `KITEx`, so as long as the HDF5
+file, decomposition, and build are unchanged, re-running `KITEx` on it puts the vacancies at the
+exact same sites again — this is what makes a clean-vs-vacancy comparison meaningful (the same
+disorder realization every time) rather than comparing against a new random defect pattern on each
+run. Passing `#!python seed_h=0` (KITE's own default) goes back to "don't care" behavior.
+
+The companion `seed_v` (seeding the random probe vectors `#!python ldos_map()` uses internally) is
+deliberately left at its default here: with `vectors=4000`, the stochastic LDOS estimate is already
+well self-averaged, so which particular random vectors were drawn doesn't change the physical
+picture the way which sites got vacancies does — unlike the vacancy positions, there isn't a
+meaningful "same run again" to preserve for `seed_v` in this example. See `#!python
+kite.Configuration`'s entry in [the API reference][configuration] for the full description of both
+parameters, including the current limitation that neither seed makes a plain map and an
+operator-weighted map requested together draw from the same realization (the "Two different costs"
+paragraph above).
+
 $O$ itself is never passed as a matrix. It's built the same way `#!python custom_one()`/
 `#!python custom_two()`/`#!python gaussian_wave_packet()` build *their* operators — two steps:
 
@@ -200,3 +232,4 @@ gap and edge-band energies before spending time on a full KPM run.
     sensitivity scale.
 
 [afm-ribbon-example]: https://github.com/quantum-kite/kite-v2/blob/master/examples/afm_zigzag_ribbon.py
+[configuration]: ../../api/kite.md#configuration

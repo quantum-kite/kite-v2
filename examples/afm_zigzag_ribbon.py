@@ -43,7 +43,14 @@
     an ordinary zigzag edge's coordination-2).
 
     Units: energy in units of hopping |t|=1, lengths in nm.
-    Last updated: 25/07/2026
+
+    Reproducibility: this script passes an explicit seed_h to
+    kite.Configuration() (see main()'s docstring) so the vacancy placement
+    is fixed rather than drawn fresh from the OS's random source every run
+    -- re-running it puts the defects at the same sites again. See
+    docs/api/kite.md's Configuration entry for what seed_h/seed_v control.
+
+    Last updated: 27/07/2026
 """
 
 import sys
@@ -101,13 +108,24 @@ def register_sz_operators(calculation):
 
 def main(t=T, delta=DELTA, lx=8, ly=24, vacancy_concentration=0.0,
          energy=0.05, sigma=0.1, vectors=4000,
+         seed_h=987654321,
          output_file=None):
     """vacancy_concentration=0.0 -> clean ribbon. A nonzero value (e.g. 0.05
     for 5%) adds real vacancies: both spin channels removed at the same
     site, since add_vacancy('Aup') and add_vacancy('Adn') on one shared
     StructuralDisorder instance use the same random site selection (one
     random site index per group, both orbitals at that site removed
-    together -- see Src/Hamiltonian/HamiltonianVacancies.cpp)."""
+    together -- see Src/Hamiltonian/HamiltonianVacancies.cpp).
+
+    seed_h fixes the vacancy placement, so re-running this script puts the
+    defects at the same sites instead of a fresh random draw each time --
+    this is what matters for a clean-vs-vacancy comparison to be about the
+    same disorder realization. seed_v (the ldos_map stochastic vectors) is
+    left at KITE's default (0, "don't care"): with vectors=4000 the
+    stochastic estimate is already self-averaged, so which particular random
+    vectors it used doesn't change the physical picture the way which sites
+    got vacancies does. Pass seed_h=0 to go back to "don't care" for the
+    vacancy positions too."""
     lattice = afm_zigzag_lattice(t, delta)
 
     struc_disorder = None
@@ -119,6 +137,7 @@ def main(t=T, delta=DELTA, lx=8, ly=24, vacancy_concentration=0.0,
     configuration = kite.Configuration(
         divisions=[1, 1], length=[lx, ly], boundaries=['periodic', 'open'],
         is_complex=True, precision=1, spectrum_range=[-4, 4],
+        seed_h=seed_h,
     )
     calculation = kite.Calculation(configuration)
     operators = register_sz_operators(calculation)

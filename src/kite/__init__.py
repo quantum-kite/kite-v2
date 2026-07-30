@@ -1232,6 +1232,18 @@ class Configuration:
             automatically in the background after this definition. If the term is not specified, a rough estimate of the
             bounds is found.
         custom_potential: Flag to use local potential
+       seed_h : int
+           Seed for the random numbers used to build the Hamiltonian: disorder placement
+           (vacancies, structural defects, Anderson disorder) and random boundary twists.
+           Default is 0, which means "don't care" -- KITE picks a fresh random seed from the
+           operating system every run, so results are not reproducible. Set any positive
+           integer to make the disorder in this run reproducible: running the same HDF5 file
+           again (unchanged decomposition/build) regenerates the exact same disorder.
+       seed_v : int
+           Seed for the random numbers used in stochastic trace calculations (e.g. the LDOS
+           map): the random probe vectors used to estimate the trace, unrelated to physical
+           disorder. Default is 0 ("don't care", not reproducible), same as seed_h. Set any
+           positive integer to make these stochastic estimates reproducible.
        """
 
         if spectrum_range:
@@ -1255,6 +1267,12 @@ class Configuration:
         self._boundaries = boundaries
         self._Twists = np.array(angles, dtype=np.float64)
         self._custom_local = custom_local
+        for name, value in (("seed_h", seed_h), ("seed_v", seed_v)):
+            if not isinstance(value, int) or isinstance(value, bool) or not (0 <= value < 2 ** 32):
+                raise ValueError(
+                    f"{name} must be an integer in [0, 2**32) (0 means 'pick a random seed'); "
+                    f"got {value!r}"
+                )
         self._seed_h = seed_h
         self._seed_v = seed_v
         self._print_custom_local = custom_local_print
