@@ -353,21 +353,44 @@ void customtwo<U, DIM>::calculate(){
     // Overall sign: reading Gamma directly into a square Eigen array here (matching
     // conductivity_dc.cpp's own read pattern) amounts to a different Gamma orientation
     // than the Python post-processing scripts use (moments_matrix = f[...][:].T).
-    // Empirically verified against two independent, physically-grounded references:
-    // for p%4==2 (examples/kane_mele_spin_hall.py), this flips the reconstructed
-    // spin Hall plateau's sign relative to the established, documented value
-    // (docs/documentation/examples/custom_vertex_operators.md: sigma_sz_xy ~ -2.02,
-    // so sign_convention=-1 is needed there); for p%4==1
-    // (examples/rashba_edelstein_graphene.py's pure-Rashba case), the orientation
-    // difference does NOT flip the sign relative to the from-scratch k-space
-    // cross-check (sign_convention=+1 needed there). This is consistent with the
-    // even/odd-NumVelocities split derived in rashba_edelstein_graphene_process.py's
-    // edelstein() docstring: Im(Gamma) is antisymmetric under m<->n for even
-    // NumVelocities (Hermitian Gamma) while Re(Gamma) is antisymmetric for odd
-    // NumVelocities (anti-Hermitian Gamma) -- the two cases pick up the Gamma-
-    // orientation difference through a different symmetric/antisymmetric channel,
-    // so the same fixed "-1" does not apply uniformly across all four residues.
-    U sign_convention = (p % 2 == 0) ? -1.0 : 1.0;
+    // For ODD NumVelocities (p%4 in {1,3}) this orientation difference does NOT flip
+    // the sign, verified against examples/rashba_edelstein_graphene.py's pure-Rashba
+    // case (sign_convention=+1).
+    //
+    // For EVEN NumVelocities (p%4 in {0,2}) it DOES flip the sign -- but which sign is
+    // needed depends on a distinction the original calibration never tested: whether
+    // the two vertex operators A, B are the SAME operator (e.g. sigma_xx: A=B=v_x,
+    // a longitudinal/self-correlation response) or DIFFERENT, direction-mixing
+    // operators (e.g. spin Hall: A={v_x,s_z}/2, B=v_y, an antisymmetric Hall-type
+    // response). By the cyclic property of the trace, Gamma_mn(A,B) = Gamma_nm(B,A)
+    // always; when A=B this makes the (pre-Hermitization) Gamma matrix genuinely
+    // symmetric under m<->n, so store_custom_two's Hermitization forces the FINAL
+    // stored Gamma to be real (Hermitian + symmetric = real), whereas for A!=B
+    // (spin Hall) Gamma stays genuinely complex. The original sign_convention=-1 for
+    // p%4==2 was calibrated ONLY against the A!=B spin-Hall plateau
+    // (docs/documentation/examples/custom_vertex_operators.md: sigma_sz_xy ~ -2.02);
+    // it silently assumed every p%4==2 vertex pair is of that antisymmetric type.
+    // Found wrong empirically (2026-08): reconstructing sigma_xx via custom_two(vx,vx)
+    // on a MoS2 lattice gave a result anti-correlated (r=-0.95) with KITE's
+    // independently-implemented conductivity_dc(direction='xx') on the identical
+    // lattice/config -- i.e. exactly the wrong sign for the A=B case. Confirmed by
+    // Gamma's own realness: spin Hall's stored Gamma is 94% imaginary-weighted
+    // (sum|Im|/sum(|Re|+|Im|)), MoS2 sigma_xx's is 90% real-weighted (the residual
+    // ~10% is stochastic noise, not signal) -- a robust, well-separated runtime
+    // signal for which calibration applies, requiring no change to the (unaffected,
+    // still-passing) A!=B branch. A==B pairs can only ever have EVEN NumVelocities
+    // (identical operators contain the same number of "v" tokens, so the total is
+    // always 2x that count), so the odd branch above is provably unaffected by this
+    // distinction and needs no equivalent check.
+    U sign_convention;
+    if (p % 2 == 0) {
+        U imag_weight = Gamma.imag().cwiseAbs().sum();
+        U real_weight = Gamma.real().cwiseAbs().sum();
+        bool gamma_is_real = imag_weight < 0.5 * (real_weight + imag_weight);
+        sign_convention = gamma_is_real ? 1.0 : -1.0;
+    } else {
+        sign_convention = 1.0;
+    }
 
     response = response*(sign_convention*den*energy_scale_correction);
 
