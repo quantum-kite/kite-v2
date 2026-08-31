@@ -5,7 +5,7 @@ This module is intentionally separate from `kite.lattice` (which stays importabl
 in headless/HDF5-generation-only contexts with no plotting dependency): it pulls in
 matplotlib and is only needed when the caller actually wants a figure.
 
-Scope of this module for now (see maintenance/native-lattice-viz-plan.md):
+Scope of this module for now:
   - `plot_unit_cell`: 2D real-space unit cell + hoppings. 2D lattices only (exactly
     2 primitive vectors) -- no 3D support yet.
   - `plot_brillouin_zone`: 2D Brillouin-zone polygon + reciprocal vectors. 2D
@@ -365,9 +365,7 @@ def hamiltonian_k(lattice, k):
     `Sublattice.alias_id`.
 
     Gauge / sign convention (empirically verified against config_system()'s own real-space
-    hopping export AND the actual C++ propagation/ARPES code, not just derived on paper --
-    see maintenance/2026-07-26-hopping-convention-audit.md, and the follow-up
-    maintenance/2026-07-26-hamiltonian-k-phase-fix.md for the phase-sign correction below).
+    hopping export AND the actual C++ propagation/ARPES code, not just derived on paper).
     `Lattice.add_one_hopping(relative_index=R, from_sub=a, to_sub=b, energy=t)` registers
     `value = H[row=a, col=b]` -- `from_sub` indexes the ROW, `to_sub` the COLUMN (see
     `add_one_hopping`'s own docstring; this is the opposite of the "hop from A to B" reading

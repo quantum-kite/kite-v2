@@ -33,8 +33,7 @@ jobs:
 
   # Windows is not in this matrix: a native (non-Docker) MSVC build needs real
   # portability work (M_PI, and/or/not word-operators, an OpenMP signed-index
-  # requirement, an Eigen::Map overload gap -- see maintenance/installability-plan.md's
-  # "Windows native build dropped" addendum for the full investigation) that's
+  # requirement, an Eigen::Map overload gap) that's
   # been deliberately deprioritized in favor of Docker, which already runs
   # unmodified on Windows via Docker Desktop's WSL2 backend.
   build-and-test:
@@ -115,8 +114,8 @@ jobs:
       # the optional `pybinding` extra to regenerate configs, and at least one
       # case (tests/test001_KITEx_sq) fails independently of this workflow --
       # its checked-in configORIG.h5 fixture predates a C++ change that now
-      # requires /Seed0 and /Seed1 fields. See maintenance/installability-plan.md
-      # for details; fixing the test suite itself is separate, follow-up work.
+      # requires /Seed0 and /Seed1 fields. Fixing the test suite itself is
+      # separate, follow-up work.
 
   docker-build:
     runs-on: ubuntu-latest

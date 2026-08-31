@@ -89,8 +89,7 @@ GAP_EDGE = 1.0
 # Exact topological prediction for this lattice: C=-1 for the filled/valence
 # band, for the stored Haldane NNN phase orientation and KITE's row=from_id/
 # col=to_id, +i*k.r convention (verified directly against the C++ propagation
-# and ARPES plane-wave code -- see maintenance/2026-07-26-hopping-convention-audit.md
-# and its follow-up). The modern-theory relation for this sign convention is
+# and ARPES plane-wave code). The modern-theory relation for this sign convention is
 # dM/dE_F = -C/(2*pi), which is POSITIVE for C=-1 -- matching the actual,
 # positive slope both KITEx and the k-space calculation below produce.
 CHERN_NUMBER = -1

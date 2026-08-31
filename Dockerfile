@@ -1,10 +1,10 @@
 # Multi-stage build for KITE (KITEx + KITE-tools + the `kite` Python interface).
 #
 # Uses the same environment.yml as local conda development and the planned
-# conda-forge recipe, instead of a separately hand-maintained apt-get list --
-# see maintenance/installability-plan.md for why (the previous Dockerfiles
-# drifted out of sync with the actual dependencies: missing FFTW3 entirely,
-# missing Python/numpy/h5py, and based on ubuntu:18.10, EOL since 2019).
+# conda-forge recipe, instead of a separately hand-maintained apt-get list.
+# The previous Dockerfiles drifted out of sync with the actual dependencies:
+# missing FFTW3 entirely, missing Python/numpy/h5py, and based on
+# ubuntu:18.10, EOL since 2019.
 
 FROM condaforge/miniforge3:26.3.2-3 AS builder
 
@@ -25,8 +25,7 @@ RUN mkdir -p build_cxx && cd build_cxx && \
 
 # Smoke test at build time: a broken image fails `docker build` itself,
 # rather than surfacing later for an end user. Deliberately pybinding-free
-# (pybinding isn't installed in this image -- see the optional-extra
-# decision in maintenance/installability-plan.md).
+# (pybinding isn't installed in this image -- it is an optional extra).
 RUN cd examples && \
     python dos_graphene.py && \
     KITEx graphene_lattice-output.h5 && \

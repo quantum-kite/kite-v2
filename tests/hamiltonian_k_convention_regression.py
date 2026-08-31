@@ -19,8 +19,7 @@ Two distinct bugs were found and fixed here (2026-07-26), independently:
 Neither bug ever affected real KITEx simulation results -- config_system()
 builds the HDF5 export independently of hamiltonian_k(). Both affected the
 preview tool itself, and one confirmed downstream script that duplicated the
-same (buggy) convention instead of comparing against real KITEx output (see
-maintenance/2026-07-26-hopping-convention-audit.md and its follow-up).
+same (buggy) convention instead of comparing against real KITEx output.
 
 Critically, BOTH bugs are INVISIBLE to any eigenvalue-based check: H and H^T
 share eigenvalues (row/col swap), and H(k) and H(-k) share the same spectrum

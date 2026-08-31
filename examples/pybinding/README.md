@@ -26,4 +26,3 @@ A native `kite.repository.graphene.monolayer(...)` template also exists now (ver
 `pybinding.repository.graphene`) but hasn't yet been wired into the three disorder examples above —
 that conversion, and deciding what (if anything) to do about `dos_twisted_bilayer.py`'s fundamentally
 different workflow, are what's left to shrink this folder further.
-See `../../maintenance/installability-plan.md` for the broader context on why pybinding was made optional.
