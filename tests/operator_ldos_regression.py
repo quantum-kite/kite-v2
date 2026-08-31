@@ -30,7 +30,7 @@ import tempfile
 import h5py
 import numpy as np
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "python"))
 import kite
 from kite import lattice as latt
 
