@@ -113,8 +113,8 @@ def main(W, t=1.0, t2=0.15, moments=256, num_disorder=1,
     # `disorder` kwarg defaults to None). A Disorder() instance with no
     # add_disorder() calls is truthy but has empty internal arrays, which
     # crashes config_system's `disorder._orbital > -1` check -- this is a
-    # real bug in src/kite/__init__.py (out of scope to fix here, per the
-    # "do not edit src/kite/*" constraint), so the clean case must skip
+    # real bug in python/kite/__init__.py (out of scope to fix here, per the
+    # "do not edit python/kite/*" constraint), so the clean case must skip
     # Disorder entirely rather than construct an empty one.
     disorder = None
     if W > 0:

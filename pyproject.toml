@@ -25,4 +25,4 @@ Documentation = "https://quantum-kite.github.io/kite-v2"
 Repository = "https://github.com/quantum-kite/kite-v2"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/kite"]
+packages = ["python/kite"]

@@ -40,7 +40,7 @@
        extensive area, leaving this fixed, system-size-independent ratio).
     2. KITE's "vx"/"vy" building blocks (Src/Hamiltonian/HamiltonianRegular.cpp)
        are built directly from the hopping values as exported to the HDF5 --
-       which src/kite/__init__.py divides by EnergyScale before KITEx runs.
+       which python/kite/__init__.py divides by EnergyScale before KITEx runs.
        So the vertex KITE actually evaluates is
        A_computed = A_physical / EnergyScale, and rho_A(E) (physical) needs an
        extra factor of EnergyScale to compensate.

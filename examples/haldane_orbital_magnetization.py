@@ -38,7 +38,7 @@
     with plain real coefficients (+1, -1) -- no manually-inserted factor of i.
 
     KITE's raw "vx"/"vy" building block is [H, r] (no i -- see custom_one's own
-    docstring in src/kite/__init__.py for the derivation from the C++ source),
+    docstring in python/kite/__init__.py for the derivation from the C++ source),
     so A above is genuinely ANTI-Hermitian (it's built from an odd number -- one
     -- of "v" tokens per term). Tr[T_n(H) A] is therefore purely IMAGINARY, not
     real: this is the correct, physical signal for this vertex, not an error.

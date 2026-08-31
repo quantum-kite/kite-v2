@@ -51,7 +51,7 @@ def config_system_hamiltonian_k(lattice, k):
     """Independently reconstruct the Bloch Hamiltonian implied by
     config_system()'s own real-space hopping convention (row=from_id,
     col=to_id, +i*k.r phase, plus its auto-generated Hermitian-conjugate
-    mirror terms -- see src/kite/__init__.py's config_system(), around the
+    mirror terms -- see python/kite/__init__.py's config_system(), around the
     lattice.hoppings iteration), WITHOUT calling hamiltonian_k() itself.
     This is the ground-truth reference both tests below check
     hamiltonian_k() against."""

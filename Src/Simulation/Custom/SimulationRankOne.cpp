@@ -335,7 +335,7 @@ void Simulation<T, D>::store_custom_one(
 #pragma omp barrier
   // KITE's raw "v" (velocity) building block is [H, r] -- missing the i/hbar factor
   // of the textbook Hermitian velocity operator (see custom_one's Python docstring,
-  // src/kite/__init__.py). Whether the vertex A is Hermitian or anti-Hermitian
+  // python/kite/__init__.py). Whether the vertex A is Hermitian or anti-Hermitian
   // therefore depends on the PARITY of how many "v" tokens it's built from:
   // Tr[T_n(H)*A] comes out purely REAL for an even count, purely IMAGINARY for an
   // odd count -- both are the genuine physical signal, just living in a different

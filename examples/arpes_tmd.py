@@ -25,7 +25,7 @@ import numpy as np
 def tmd_monolayer(name="MoS2"):
     """Build a monolayer group-6 TMD lattice for the nearest-neighbor 3-band model.
 
-    Thin wrapper around `kite.repository.group6_tmd.monolayer_3band` (`src/kite/repository.py`),
+    Thin wrapper around `kite.repository.group6_tmd.monolayer_3band` (`python/kite/repository.py`),
     a verified, exact port of the same nearest-neighbor 3-band tight-binding model (each of the 3
     d-orbitals -- dz2, dxy, dx2-y2 -- as its own named sublattice at the same position, connected
     by explicit scalar hoppings between every orbital pair, rather than bundling them into one

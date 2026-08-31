@@ -24,7 +24,7 @@ Depending on the type of calculation, various output files will be created in th
 
 ## `examples/*.py`
 
-These are pure-KITE scripts (using `kite.lattice.Lattice`, `src/kite/lattice.py`) — no pybinding dependency required.
+These are pure-KITE scripts (using `kite.lattice.Lattice`, `python/kite/lattice.py`) — no pybinding dependency required.
 
 **Lattice inspection (no KITEx/KITE-tools at all)**
 

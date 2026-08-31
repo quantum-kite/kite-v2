@@ -66,7 +66,7 @@ The tutorial is structured as follows:
 
 [HDF5]: https://www.hdfgroup.org
 [pybinding]: https://docs.pybinding.site/en/stable
-[lattice]: https://github.com/quantum-kite/kite-v2/blob/master/src/kite/lattice.py
+[lattice]: https://github.com/quantum-kite/kite-v2/blob/master/python/kite/lattice.py
 [documentation]: ../documentation/index.md
 [tightbinding]: ../background/tight_binding.md
 

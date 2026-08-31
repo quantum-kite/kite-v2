@@ -10,7 +10,7 @@
 // Jackson-kernel Chebyshev-to-density machinery as dos<T,DIM> (Spectral/dos.hpp),
 // just applied to Gamma (the vertex-weighted moments) instead of MU (the trivial,
 // identity-operator DOS moments). See customone.cpp for why NumVelocities (auto-
-// detected from the vertex string on the Python side, src/kite/__init__.py) matters:
+// detected from the vertex string on the Python side, python/kite/__init__.py) matters:
 // KITE's raw "v" token is missing a factor of i, so Tr[T_n(H)*A] comes out real for
 // an even total count of velocity operators in A, purely imaginary for an odd count
 // -- both are the genuine physical signal, just in a different component.

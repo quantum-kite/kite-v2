@@ -5,7 +5,7 @@ which is an optional extra for KITE (`pip install -e ".[pybinding]"`), not a cor
 
 For most of these, the *only* thing pybinding is used for is lattice construction via `pb.Lattice(...)`,
 `.add_sublattices(...)`, and `.add_hoppings(...)` — KITE's own `kite.lattice.Lattice` class
-(`src/kite/lattice.py`) mirrors that same API and needs no extra dependency. `weyl_pb.py` in this folder
+(`python/kite/lattice.py`) mirrors that same API and needs no extra dependency. `weyl_pb.py` in this folder
 and `../weyl_lt.py` at the top level are the same physical system, one written each way, if you want to
 compare them directly.
 
@@ -18,9 +18,9 @@ A few examples here use more of pybinding than just `pb.Lattice`:
 
 `arpes_bilayer.py`, `arpes_cubic.py`, and `arpes_tmd.py` used to be in this folder too, for
 `pb.results.make_path(...)`, a k-path-interpolation helper — now reproduced natively as
-`kite.visualize.make_path(...)` (`src/kite/visualize.py`), so all three have moved to the top level
+`kite.visualize.make_path(...)` (`python/kite/visualize.py`), so all three have moved to the top level
 of `examples/`. `arpes_tmd.py`'s locally-defined `tmd_monolayer()` was also replaced by
-`kite.repository.group6_tmd.monolayer_3band()` (`src/kite/repository.py`).
+`kite.repository.group6_tmd.monolayer_3band()` (`python/kite/repository.py`).
 
 A native `kite.repository.graphene.monolayer(...)` template also exists now (verified against
 `pybinding.repository.graphene`) but hasn't yet been wired into the three disorder examples above —

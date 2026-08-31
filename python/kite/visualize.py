@@ -389,7 +389,7 @@ def hamiltonian_k(lattice, k):
     conjugate hopping", per its own docstring) -- this function builds the one-directional
     sum H0(k) from exactly the stored hoppings, then returns H0(k) + H0(k)^dagger + onsite,
     which reproduces the missing reverse-direction terms automatically (the same effective
-    result as `src/kite/__init__.py`'s own explicit reverse-hopping generation for the real
+    result as `python/kite/__init__.py`'s own explicit reverse-hopping generation for the real
     HDF5 export, just built directly in k-space here rather than in real space per-bond).
     Directly verified this matches config_system()'s real-space export element-by-element
     (not just eigenvalue-equivalent, which transpose/conjugate/negated-k variants would all

@@ -58,7 +58,7 @@
     -----------
     Two independent KITE runs (KITE only allows a single `arpes()` request
     per Configuration/output file -- see `Calculation.arpes` in
-    src/kite/__init__.py), one per spin, with orbital weights selecting
+    python/kite/__init__.py), one per spin, with orbital weights selecting
     only that spin's two sublattices ([1,1,0,0] for up, [0,0,1,1] for
     down). Both use the SAME 2D k-grid spanning the full square-lattice
     Brillouin zone [-pi,pi] x [-pi,pi] (a1=a2=1, so the reciprocal lattice
