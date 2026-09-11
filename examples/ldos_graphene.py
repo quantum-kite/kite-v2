@@ -1,30 +1,117 @@
-""" Local Density of states of graphene
+""" Local density of states around a single vacancy in graphene
 
     ##########################################################################
-    #                         Copyright 2020/22, KITE                        #
+    #                         Copyright 2020/2026, KITE                      #
     #                         Home page: quantum-kite.com                    #
     ##########################################################################
 
-    Units: Energy in eV
-    Lattice: Honeycomb
-    Configuration: Periodic boundary conditions, double precision,
-                    manual rescaling, size of the system 128x128, with domain decomposition (nx=ny=1)
-    Calculation type: Local density of states (calculation.ldos) at a set of chosen positions/orbitals,
-                       around a single near-decoupled resonant impurity -- NOT just "LDOS at arbitrary
-                       chosen positions" in the abstract: the point of this example is the impurity itself.
+    Units: energy in eV (t = 2.8 eV)
+    Lattice: honeycomb, nearest-neighbour only
+    Configuration: periodic boundaries, double precision, manual rescaling,
+                   128 x 128 unit cells, no domain decomposition (nx = ny = 1)
+    Calculation type: local density of states on a grid of sites around a
+                      single vacancy
+    Last updated: 11/09/2026
 
     Physics
     -------
-    `main()`'s StructuralDisorder block places a single A-sublattice site (node0) whose 3 nearest-neighbor
-    hoppings to its B neighbors (node1/node2/node3) are all set to timp = -0.0 (i.e. severed), while that
-    same site's own onsite energy is shifted by a strong limp = -1.0 (comparable to the hopping t = 2.8 eV
-    rescaled onto this lattice's energy window). The site is not literally removed (it isn't a StructuralDisorder
-    vacancy) -- it is a near-decoupled resonant impurity: still present, but electronically cut off from its
-    neighbors and given a large onsite potential, the textbook setup for an impurity resonance state near the
-    Dirac point. calculation.ldos then maps the resulting LDOS on a 10x10-unit-cell grid (both sublattices) of
-    positions centered on the impurity, which is what reveals the expected sublattice-polarized,
-    STM-observable LDOS pattern around it -- not a generic "pick some points" LDOS demo.
-    Last updated: 08/05/2025
+    main() removes one A-sublattice atom at the centre of the sample with
+    kite.StructuralDisorder(...).add_vacancy('A'). That is the only way to
+    remove a site: hoppings passed to add_structural_disorder are INCREMENTS
+    added on top of the clean hoppings, so setting one to zero changes nothing.
+
+    A single vacancy on a bipartite lattice is not a generic impurity, it is a
+    chiral defect, and its consequences are exact rather than asymptotic:
+
+    * There is exactly one state at E = 0. With nearest-neighbour hoppings and
+      zero on-site energies the honeycomb Hamiltonian anticommutes with the
+      sublattice operator, so the spectrum is symmetric under E -> -E. Removing
+      one site leaves 2*128*128 - 1 = 32767 sites, an odd number, and an
+      odd-dimensional matrix with a symmetric spectrum must have a zero
+      eigenvalue.
+
+      Keep the system size away from multiples of 3. If 3 divides L the Dirac
+      point falls on the k-grid, the clean lattice supplies two further zero
+      modes, and the vacancy state becomes an ill-defined mixture of the three.
+      128 is safe; 126 would not be.
+
+    * The state lives entirely on the OTHER sublattice. Remove an A atom and
+      the zero mode has amplitude only on B sites. Exact diagonalization of
+      this lattice gives a B-sublattice weight of 1.000000 against 7e-30 on A.
+
+    * It is quasi-localized, not exponentially localized. The amplitude falls
+      off as 1/r, so |psi|^2 ~ 1/r^2: r^2 |psi|^2 is flat from r = 2a out to
+      r = 16a. Because the integral of 1/r^2 diverges logarithmically, the
+      normalization grows like ln(L) and the state has no intrinsic size --
+      about half its weight sits within r = 4a and the rest is spread over the
+      whole sample.
+
+    This is the chiral zero mode of vacancy-disordered graphene, whose
+    collective physics is the subject of A. Ferreira and E. R. Mucciolo,
+    Phys. Rev. Lett. 115, 106601 (2015), and which is seen directly by STM.
+
+    calculation.ldos then maps the LDOS on an 11 x 11 unit-cell grid, both
+    sublattices, centred on the vacancy.
+
+    What to check, and what not to
+    ------------------------------
+    Trustworthy:
+      - an E = 0 LDOS peak on B sites near the vacancy, and NO corresponding
+        peak on A sites. This sublattice asymmetry is the sharpest signature
+        and it is exact;
+      - the asymmetry disappearing with distance, both sublattices tending to
+        the clean value, which vanishes at the Dirac point because the pristine
+        DOS goes like |E|;
+      - the E = 0 excess on B sites falling monotonically with distance, with
+        r^2 times the excess roughly flat across the mapped window.
+
+    Not trustworthy -- do not assert these in a test:
+      - the height and the width of the E = 0 peak. The zero mode is a delta
+        function; everything visible is the KPM kernel (Jackson by default, or
+        -K green <eta> in KITE-tools). Both scale with num_moments/energy_scale
+        and carry no physics;
+      - absolute LDOS values compared across different num_moments or
+        spectrum_range;
+      - a numerical fit of the 1/r^2 exponent. The window spans only a factor
+        ~2.5 in r and finite resolution mixes in states away from E = 0. Check
+        the trend, not the exponent;
+      - the value at the vacancy site itself, which KITE sets to zero by
+        construction.
+
+    Resolution, and why num_moments is 640
+    --------------------------------------
+    With energy_scale = 3.01 * 2.8 = 8.428 eV the Jackson width at band centre
+    is sigma_E = pi * energy_scale / M, so FWHM = 2.355 * sigma_E. At the 64
+    moments this example used to request, FWHM was 0.97 eV -- wider than the
+    entire +/-0.4 eV window it asked for, so it resolved nothing at all.
+
+    Resolution matters more here than it first appears. The measured B-to-A
+    contrast at E = 0 is
+
+        LDOS_B(0) / LDOS_A(0)  =  1 + w_B / (2 c sigma_E^2)
+
+    because the zero mode's peak height grows as 1/sigma while the linear Dirac
+    background at E = 0 grows as +sigma. The contrast therefore scales as M^2:
+    roughly 1.4:1 at M = 64 -- a wiggle, not a polarised state -- against about
+    40:1 at M = 640. 640 gives FWHM = 0.097 eV and costs seconds.
+
+    This calculation carries NO stochastic error: calculation.ldos starts from
+    a site-localised vector rather than a random one, so there is no trace
+    estimator, and num_disorder = 1 is correct because the vacancy is a single
+    deterministic defect at a fixed position, not an ensemble. The only error
+    is the Jackson truncation above. That makes this the cleanest example in
+    the repository of a KPM result with no statistical component.
+
+    spectrum_range
+    --------------
+    Declared as [-3.01*t, +3.01*t] = [-8.428, 8.428] eV. The honeycomb
+    bandwidth is +/-3t, reached at Gamma, and a vacancy deletes a row and a
+    column, so by interlacing it cannot push any eigenvalue outside that bound.
+    Note that config_system may still warn that the range looks insufficient:
+    the automatic estimate adds a structural-defect term that assumes the
+    defect can push states outward, which a vacancy cannot. The warning is a
+    false positive here -- do not "fix" it by widening the range, which would
+    only cost resolution.
 """
 
 __all__ = ["main"]
@@ -111,22 +198,12 @@ def main(onsite=(0, 0)):
     # load lattice
     lattice = graphene_lattice(onsite)
 
-    # add StructuralDisorder
-    node0 = [[+0, +0], 'A']
-    node1 = [[+0, +0], 'B']
-    node2 = [[-1, +0], 'B']
-    node3 = [[-1, +1], 'B']
-
-    timp = -0.0
-    limp = -1.0
-
-    struc_disorder = kite.StructuralDisorder(lattice, position=[[32, 32]])
-    struc_disorder.add_structural_disorder(
-        (*node0, *node1, timp),
-        (*node0, *node2, timp),
-        (*node0, *node3, timp),
-        (*node0, limp)
-    )
+    # A single vacancy on the A sublattice, at the centre of the sample.
+    # add_vacancy() is the only way to remove a site: hoppings handed to
+    # add_structural_disorder are INCREMENTS added on top of the clean
+    # hoppings, so setting one to zero changes nothing at all.
+    struc_disorder = kite.StructuralDisorder(lattice, position=[[64, 64]])
+    struc_disorder.add_vacancy('A')
 
     # number of decomposition parts [nx,ny] in each direction of matrix.
     # This divides the lattice into various sections, each of which is calculated in parallel
@@ -154,7 +231,11 @@ def main(onsite=(0, 0)):
         boundaries=[mode, mode],
         is_complex=False,
         precision=1,
-        spectrum_range=[-2.8, 2.8]
+        # Honeycomb bandwidth is exactly 3t, reached at Gamma; a vacancy only
+        # deletes a row and column so by interlacing it cannot exceed that.
+        # The old [-2.8, 2.8] put real eigenvalues at |x| = 3, where T_64(3)
+        # is of order 1e48 and the output was meaningless.
+        spectrum_range=[-3.01 * 2.8, 3.01 * 2.8]
     )
 
     # specify calculation type
@@ -162,20 +243,21 @@ def main(onsite=(0, 0)):
 
     pos_matrix = []
     sub_matrix = []
-    d1 = 32
-    d2 = 32
-    n = 64
+    d1 = 64
+    d2 = 64
 
-    for di in range(-5, 5):
-        for dj in range(-5, 5):
+    # range(-5, 6) is 11 wide and centred; range(-5, 5) ran -5..+4 and put the
+    # vacancy off-centre in the map.
+    for di in range(-5, 6):
+        for dj in range(-5, 6):
             pos_matrix.append([d1 + di, d2 + dj])
             pos_matrix.append([d1 + di, d2 + dj])
             sub_matrix.append('A')
             sub_matrix.append('B')
 
     calculation.ldos(
-        energy=np.linspace(-0.4, 0.4, 41),
-        num_moments=64,
+        energy=np.linspace(-1.0, 1.0, 101),
+        num_moments=640,
         num_disorder=1,
         position=pos_matrix,
         sublattice=sub_matrix
