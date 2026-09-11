@@ -1613,6 +1613,31 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
     # orbital_to in unit cell [i, j, k] is defined  as [i, j, k] x [1, 3, 9] + relative_orbital_num*3**3 3D
     # relative index of orbital_from is unique as only hoppings from the orbitals in the initial unit cell are exported
     for h in hoppings:
+        # The destination is packed into one integer as
+        #     orbital * 3**D + sum_d (n_d + 1) * 3**d
+        # so the cell field is exactly D base-3 digits: -1, 0, +1 and nothing
+        # else. A component of 2 does not reach a further cell -- it carries
+        # into the digit above, which for the last direction is the ORBITAL
+        # field. The result is a bond to a different orbital at shorter range:
+        # a valid file, a clean run, and the spectrum of a different
+        # Hamiltonian. The structural-disorder path already refuses this (see
+        # add_local_bond_disorder); the Hamiltonian path did not.
+        relative_index = np.asarray(h['relative_index'])
+        if np.any(np.abs(relative_index) > 1):
+            raise SystemExit(
+                'Hopping out of range: relative_index {} reaches beyond the '
+                'first-neighbour unit cell.\n'
+                '  KITE can only represent hoppings whose relative_index has '
+                'every component in -1, 0, +1.\n'
+                '  This is a property of the file format, not a tunable limit: '
+                'the destination cell is stored as D base-3 digits, so a '
+                'component of 2 overflows into the orbital field and silently '
+                'produces a different Hamiltonian.\n'
+                '  Raising NGHOSTS does not help -- that is the halo depth, not '
+                'the width of the address.\n'
+                '  Use a larger unit cell so the bond becomes a '
+                'first-neighbour one.'.format(relative_index.tolist()))
+
         hopping_energy = h['hopping_energy']
         it = np.nditer(hopping_energy, flags=['multi_index'])
         while not it.finished:
