@@ -4,14 +4,46 @@
     double-Chebyshev moment matrix /Calculation/CustomTwo/Gamma written by
     KITEx, reconstructs the Kubo-Bastin integrand at a finite reconstruction
     broadening, and integrates it against the Fermi function to give the spin
-    Hall conductivity sigma^{s_z}_{xy} as a function of Fermi energy.
+    Hall conductivity sigma^{s_z}_{xy} as a function of Fermi energy. It is the
+    diag=0 (antisymmetric / Hall) branch of examples/cond_sum.py, reproduced
+    here so the example is self-contained.
 
-    This is the diag=0 (antisymmetric / Hall) branch of examples/cond_sum.py,
-    reproduced here so the example is self-contained. Response is returned in
-    the same convention as KITE's charge-conductivity post-processors (density
-    scaling included); for a spin current the natural quantum is e/(4*pi) but
-    the point of this example is the FLAT PLATEAU across the bulk gap and its
-    sign, not an exactly quantized number at L=64.
+    What to look for, and how tightly to hold it
+    --------------------------------------------
+    At the shipped parameters (t2 = 0.15) the Kane-Mele bulk gap is
+    6*sqrt(3)*t2 = 1.559 |t|, and exact diagonalization confirms this is the
+    true gap -- direct and indirect coincide. The result to check is a FLAT
+    PLATEAU of sigma^{s_z}_{xy} across that gap, with the sign fixed by the
+    s_z and Haldane-phase conventions documented in kane_mele_spin_hall.py.
+    The two spin sectors carry Chern numbers +1 and -1, so the ideal plateau
+    corresponds to a spin Hall conductivity of 2 * e/(4*pi); the response is
+    returned here in the same convention as KITE's charge-conductivity
+    post-processors, density scaling included.
+
+    The plateau will not be flat to machine precision, and the reason is NOT
+    finite size. At L = 64 the bulk correlation length is
+    xi ~ hbar*v_F / (gap/2) ~ 1 unit cell, so the finite-size correction is of
+    order exp(-64) and utterly negligible. The floor is the reconstruction.
+    green_coef and dgreen_coef below are the BARE Chebyshev resolvent
+    coefficients -- no damping kernel is applied -- so the truncation residual
+    after M moments is
+
+        |alpha|^M  ~  exp( -M * eta/energy_scale / sqrt(1 - eps^2) )
+
+    with eps the normalized energy. This is SLOWEST at the band centre,
+    eps = 0, which is exactly where the Kane-Mele gap sits. At M = 256,
+    eta = 0.04 |t| and energy_scale = 4 it gives exp(-2.56) = 7.7%. So at the
+    shipped defaults, hold the plateau to about 10%: flatness better than that
+    is not something the reconstruction can deliver.
+
+    For a tighter number, raise scat_phys and deltascat_phys to 0.08. That
+    costs nothing -- both are post-processing parameters, so no KITEx rerun is
+    needed -- and brings the residual to exp(-5.12) = 0.6%, while 0.08 |t| is
+    still only a twentieth of the gap and does not smear the plateau. Past
+    that point a different floor takes over: the generator uses
+    num_random = 1, and the stochastic trace error over 64*64*4 = 16384 states
+    is of order 1/sqrt(N) ~ 1%. Lowering eta further without also raising
+    num_random and M buys nothing.
 
     Usage:
         python kane_mele_spin_hall_process.py kane_mele_spin_hall-output.h5
