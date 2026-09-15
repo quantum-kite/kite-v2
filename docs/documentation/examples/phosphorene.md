@@ -165,7 +165,7 @@ Let's repeat the procedure for another direction (one may also use the streamlin
                                            num_moments=512,
                                            num_random=5,
                                            num_disorder=1,
-                                           direction='xx',
+                                           direction='yy',
                                            eta=0.02)
     kite.config_system(lattice, configuration, calculation, filename='phyy.h5')
 ```

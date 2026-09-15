@@ -125,10 +125,8 @@ states, the orbital-magnetization spectral density is generically **nonzero insi
 weak uniform on-site disorder ($W=0.05$, well below the gap) on both sublattices and averages over several
 disorder realizations — this converges the stochastic trace considerably faster than a fully clean, large
 `#!python num_random_` run would on its own (matching the same lesson learned for the
-[Kane-Mele disorder example][custom-vertex-example]). Note that the Haldane model has no particle-hole
-symmetry, so the density of states — and hence the stochastic-trace convergence rate — genuinely differs
-between $E>0$ and $E<0$; a `#!python num_random_` too low for the harder side shows up as visibly more
-residual noise in $S(E)$ on that side, even though the two sides use the same disorder and moment count.
+[Kane-Mele disorder example][custom-vertex-example]). If `#!python num_random_` is too low, the
+residual stochastic noise in $S(E)$ can look visibly different on the two sides of $E=0$.
 
 ### Verified result
 
