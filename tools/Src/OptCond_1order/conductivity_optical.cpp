@@ -64,7 +64,7 @@ conductivity_optical<T, DIM>::conductivity_optical(system_info<T, DIM>& info, sh
 template <typename T, unsigned DIM>
 void conductivity_optical<T, DIM>::printOpt(){
   double scale = systemInfo.energy_scale;
-  std::cout << "The optical conductivity will be calculated with these parameters: (eV, Kelvin)\n"
+  std::cout << "The optical conductivity will be calculated with these parameters: (energy units)\n"
     "   Temperature: "            << temperature*scale  << ((default_temperature)?  " (default)":"") << "\n"
     "   Broadening: "             << scat*scale         << ((default_scat)?         " (default)":"") << "\n"
     "   Fermi energy: "           << e_fermi*scale      << ((default_efermi)?       " (default)":"") << "\n"

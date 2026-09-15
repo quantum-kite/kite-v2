@@ -26,7 +26,7 @@ to the definition of magnetic flux per unit cell.
 
 ## What are the units of the temperature? 
 For KITE, the temperature parameter is given in units of energy ($k_B T$) and follows the definition
-of the hopping parameters. To convert to Kelvins, the user needs to devide KITE's temperature by $k_B T$.
+of the hopping parameters. To convert to Kelvin, divide KITE's temperature by $k_B$ ($8.617\times10^{-5}$ eV/K if the hoppings are in eV).
 
 ## How to cite KITE:
 

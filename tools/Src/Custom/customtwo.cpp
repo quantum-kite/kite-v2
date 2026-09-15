@@ -207,7 +207,7 @@ void customtwo<U, DIM>::printCustomTwo(){
         default: component = "-2*Re[Gamma-contraction]"; break;
     }
 
-    std::cout << "The custom_two() Kubo-Bastin response will be calculated with these parameters: (eV, Kelvin)\n"
+    std::cout << "The custom_two() Kubo-Bastin response will be calculated with these parameters: (energy units)\n"
         "   Temperature: "             << temperature*scale             << ((default_temp)?         " (default)":"") << "\n"
         "   Broadening: "              << scat*scale                    << ((default_scat)?         " (default)":"") << "\n"
         "   Delta broadening: "        << deltascat*scale               << ((default_deltascat)?    " (default)":"") << "\n"

@@ -46,6 +46,13 @@ We can now compare the real component of two different optical conductivities
 
 The same strategy can be used to calculate the optical conductivity for different temperatures.
 
+!!! Warning "Temperature is an energy"
+
+    The `#!bash -T` value is $k_{B}T$, in the same energy units as the hopping parameters — not a
+    temperature in Kelvin. With hoppings in eV, `#!bash -T 0.025` is $k_{B}T=0.025$ eV, i.e. about
+    290 K; with $t=1$ it is a fraction of the hopping. Divide by $k_{B}$
+    ($8.617\times10^{-5}$ eV/K) to convert to Kelvin.
+
 
 !!! Info
 

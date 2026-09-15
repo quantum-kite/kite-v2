@@ -324,7 +324,7 @@ void conductivity_dc<U, DIM>::printDC(){
     std::string energy_range = "[" + std::to_string(minEnergy*scale + shift) + ", " + std::to_string(maxEnergy*scale + shift) + "]";
 
     // Prints all the information about the parameters
-    std::cout << "The DC conductivity will be calculated with these parameters: (eV, Kelvin)\n"
+    std::cout << "The DC conductivity will be calculated with these parameters: (energy units)\n"
         "   Temperature: "             << temperature*scale             << ((default_temp)?         " (default)":"") << "\n"
         "   Broadening: "              << scat*scale                    << ((default_scat)?         " (default)":"") << "\n"
         "   Delta broadening: "        << deltascat*scale               << ((default_deltascat)?    " (default)":"") << "\n"
