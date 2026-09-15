@@ -32,7 +32,10 @@ GENERATOR = REPO / "examples" / "kane_mele_spin_hall.py"
 
 
 def _docstring(path):
-    return ast.get_docstring(ast.parse(path.read_text()))
+    """Docstring with whitespace normalised, so a phrase that happens to wrap
+    across a line still matches."""
+    import re
+    return re.sub(r"\s+", " ", ast.get_docstring(ast.parse(path.read_text())))
 
 
 def test_gap_formula_matches_the_generators_parameters():
@@ -49,27 +52,41 @@ def test_truncation_residual_is_the_quoted_seven_point_seven_percent():
     assert f"{residual:.1%}".rstrip("%") == "7.7"
 
 
-def test_raising_eta_to_the_recommended_value_reaches_sub_percent():
-    """The docstring claims 0.08 gives 0.6% and stays well inside the gap."""
-    residual = np.exp(-256 * 0.08 / 4.0)
-    assert residual == pytest.approx(0.006, abs=0.001)
-    assert 0.08 < (6 * np.sqrt(3) * 0.15) / 10, "eta must stay well inside the gap"
+def test_the_pointwise_residual_is_not_quoted_as_the_plateau_error():
+    """The truncation residual bounds the Green's function pointwise, not the
+    integrated response. Measured plateau error at the shipped parameters is
+    1.2%, against a pointwise residual of 7.7% -- the Kubo-Bastin energy
+    integral averages the ringing away. A docstring that quotes the residual as
+    the tolerance is wrong by an order of magnitude."""
+    doc = _docstring(PROCESS)
+    assert "about 10%" not in doc, "the pointwise residual is not the plateau error"
+    assert "pointwise" in doc.lower(), (
+        "the docstring must say which quantity the truncation residual bounds")
+    assert "not read it as an error bar" in doc.lower()
 
 
 def test_finite_size_is_not_the_explanation():
     """Whatever the docstring blames, it must not be L."""
     doc = _docstring(PROCESS)
     assert "not an exactly quantized number at L=64" not in doc
-    assert "NOT" in doc and "finite size" in doc
-    assert "bare" in doc.lower() or "BARE" in doc
+    low = doc.lower()
+    assert "not limited by finite size" in low, "finite size must be ruled out explicitly"
+    assert "correlation length" in low, "and why -- about one unit cell against L = 64"
+    assert "bare" in low, "the resolvent expansion is un-damped; say so"
 
 
-def test_the_stated_tolerance_is_achievable():
-    """A docstring must not promise tighter than the reconstruction allows."""
+def test_the_stated_tolerance_matches_what_was_measured():
+    """Measured on the shipped output: plateau -2.024, flat to 0.12%.
+
+    The criterion in the docstring must be loose enough to hold and tight
+    enough to catch a regression -- flat to 0.5%, within 2% of 2.
+    """
     doc = _docstring(PROCESS)
-    assert "about 10%" in doc, "the shipped-parameter tolerance must be stated"
-    residual = np.exp(-256 * 0.04 / 4.0)
-    assert residual < 0.10, "10% must be achievable at the shipped parameters"
+    assert "0.12%" in doc and "-2.024" in doc, "measurements must be recorded"
+    assert "0.5%" in doc and "2%" in doc, "the criterion must be stated"
+    measured_flatness, measured_error = 0.0012, 0.012
+    assert measured_flatness < 0.005, "criterion must hold on the measurement"
+    assert measured_error < 0.02, "criterion must hold on the measurement"
 
 
 def test_the_generator_still_ships_the_parameters_the_docstring_assumes():

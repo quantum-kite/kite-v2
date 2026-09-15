@@ -57,29 +57,21 @@ def graphene(onsite=(0, 0), nearest_neighbors=1):
             ([1,  0], 'B', 'B', t_nn),
         )
 
-    if nearest_neighbors >= 3:
-        lat.add_hoppings(
-            [(-2, +1), 'A', 'B', t_nnn],
-            [(+0, -1), 'A', 'B', t_nnn],
-            [(+0, +1), 'A', 'B', t_nnn],
-        )
-
-    if nearest_neighbors >= 4:
-        lat.add_hoppings(
-            ([-2, +1], 'A', 'A', t_nn),
-            ([-2, +1], 'B', 'B', t_nn),
-            ([1, +1], 'A', 'A', t_nn),
-            ([1, +1], 'B', 'B', t_nn),
-            ([1, -2], 'A', 'A', t_nn),
-            ([1, -2], 'B', 'B', t_nn),
-        )
 
     lat.min_neighbors = 2
 
     return lat
 
 
-lattice = graphene(nearest_neighbors=3)
+# Next-nearest neighbours (A-A and B-B) are the deepest shell KITE can represent
+# in a one-unit-cell basis: a hopping's destination cell is stored as base-3
+# digits, so every component of relative_index must be -1, 0 or +1. The third-
+# and fourth-neighbour bonds of this lattice sit at (-2, +1) and (1, -2), and a
+# component of 2 does not reach a further cell -- it re-encodes as a different
+# orbital at shorter range. Those shells have been removed rather than left
+# switched off, because a model that cannot be exported should not be reachable
+# by changing one argument.
+lattice = graphene(nearest_neighbors=2)
 
 lx = int(sys.argv[1])
 ly = int(sys.argv[2])

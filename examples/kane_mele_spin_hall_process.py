@@ -8,42 +8,37 @@
     diag=0 (antisymmetric / Hall) branch of examples/cond_sum.py, reproduced
     here so the example is self-contained.
 
-    What to look for, and how tightly to hold it
-    --------------------------------------------
+    What you should see
+    -------------------
     At the shipped parameters (t2 = 0.15) the Kane-Mele bulk gap is
-    6*sqrt(3)*t2 = 1.559 |t|, and exact diagonalization confirms this is the
-    true gap -- direct and indirect coincide. The result to check is a FLAT
-    PLATEAU of sigma^{s_z}_{xy} across that gap, with the sign fixed by the
-    s_z and Haldane-phase conventions documented in kane_mele_spin_hall.py.
-    The two spin sectors carry Chern numbers +1 and -1, so the ideal plateau
-    corresponds to a spin Hall conductivity of 2 * e/(4*pi); the response is
-    returned here in the same convention as KITE's charge-conductivity
-    post-processors, density scaling included.
+    6*sqrt(3)*t2 = 1.559 |t|. Across that gap sigma^{s_z}_{xy} shows a flat,
+    quantized plateau: the two spin sectors carry Chern numbers +1 and -1, so
+    the expected value is |Delta C| = 2 in the units this script prints, with
+    the sign fixed by the s_z and Haldane-phase conventions documented in
+    kane_mele_spin_hall.py.
 
-    The plateau will not be flat to machine precision, and the reason is NOT
-    finite size. At L = 64 the bulk correlation length is
-    xi ~ hbar*v_F / (gap/2) ~ 1 unit cell, so the finite-size correction is of
-    order exp(-64) and utterly negligible. The floor is the reconstruction.
+    Measured on the shipped output over |mu| < 0.6 * (gap/2): plateau -2.024,
+    flat to 0.12%. Hold it to flat within 0.5% and within 2% of 2.
+
+    Outside the gap the curve is noisy. That is expected and is not a defect:
+    the generator uses num_random = 1, so the stochastic trace error over
+    64*64*4 = 16384 states is of order 1%, and it is most visible where the
+    response is varying rather than on the plateau itself. Raise num_random if
+    you want the band region smooth; the plateau does not need it.
+
+    A note on the reconstruction, since it is easy to misread
+    --------------------------------------------------------
+    The plateau is NOT limited by finite size. At L = 64 the bulk correlation
+    length is about one unit cell, so the finite-size correction is of order
+    exp(-64). Raising L will not make the plateau flatter.
+
     green_coef and dgreen_coef below are the BARE Chebyshev resolvent
-    coefficients -- no damping kernel is applied -- so the truncation residual
-    after M moments is
-
-        |alpha|^M  ~  exp( -M * eta/energy_scale / sqrt(1 - eps^2) )
-
-    with eps the normalized energy. This is SLOWEST at the band centre,
-    eps = 0, which is exactly where the Kane-Mele gap sits. At M = 256,
-    eta = 0.04 |t| and energy_scale = 4 it gives exp(-2.56) = 7.7%. So at the
-    shipped defaults, hold the plateau to about 10%: flatness better than that
-    is not something the reconstruction can deliver.
-
-    For a tighter number, raise scat_phys and deltascat_phys to 0.08. That
-    costs nothing -- both are post-processing parameters, so no KITEx rerun is
-    needed -- and brings the residual to exp(-5.12) = 0.6%, while 0.08 |t| is
-    still only a twentieth of the gap and does not smear the plateau. Past
-    that point a different floor takes over: the generator uses
-    num_random = 1, and the stochastic trace error over 64*64*4 = 16384 states
-    is of order 1/sqrt(N) ~ 1%. Lowering eta further without also raising
-    num_random and M buys nothing.
+    coefficients -- no damping kernel is applied -- so the truncated series
+    leaves a residual in the Green's function pointwise in energy. That
+    residual does not carry over to the plateau, because the Kubo-Bastin
+    integral averages over energy. Do not read it as an error bar. Both
+    broadenings are post-processing parameters, so they can be varied without
+    rerunning KITEx if you want to see this for yourself.
 
     Usage:
         python kane_mele_spin_hall_process.py kane_mele_spin_hall-output.h5
