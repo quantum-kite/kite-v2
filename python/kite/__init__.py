@@ -498,6 +498,62 @@ def _count_velocity_operators(operator_strings):
     return counts[0] if counts else 0
 
 
+# Moment-count constraints imposed by the C++ accumulation loops.
+#
+# The loops write more than one entry per iteration, and index past the array
+# if the count does not divide. Two distinct classes, and they are not
+# interchangeable:
+#
+#   pair-stepping   n += 2        dos, ldos, arpes, custom_one, custom_one_local
+#   block-stepping  n += MEMORY   conductivity_dc, conductivity_optical,
+#                                 conductivity_optical_nonlinear, custom_two,
+#                                 custom_two_local
+#
+# MEMORY is a compile-time constant in Src/Generic.hpp, guarded by #ifndef and
+# defaulting to 16. A binary built with -DMEMORY=8 changes the constraint, so
+# this value must be read from the build rather than hardcoded wherever that
+# becomes possible; until then 16 matches the shipped default.
+#
+# Deliberately NOT constrained here: singleshot_conductivity_dc steps by one,
+# and ldos_map, spectral_map, custom_singleshot_two, lcm and st_lcm carry no
+# num_moments at all -- their resolution comes from a width parameter.
+KITE_MEMORY = 16
+
+
+def _check_num_moments(num_moments, calculation, stepping):
+    """Reject a moment count the C++ loops cannot accumulate.
+
+    Failing here, in Python, costs a clear message. Failing in C++ costs an
+    out-of-bounds write, which may crash or may return numbers -- at
+    num_moments=1000 conductivity_dc overruns by 8008 elements, and whether
+    that faults depends on where the allocation lands.
+    """
+    if not isinstance(num_moments, (int, np.integer)) or num_moments <= 0:
+        raise SystemExit(
+            "{}: num_moments must be a positive integer, got {!r}".format(
+                calculation, num_moments))
+
+    if stepping == "pair" and num_moments % 2 != 0:
+        raise SystemExit(
+            "{}: num_moments must be EVEN, got {}.\n"
+            "  The C++ accumulation loop advances two moments per iteration and "
+            "writes both, so an odd count indexes one element past the array.\n"
+            "  Use {} or {}.".format(calculation, num_moments,
+                                     num_moments - 1, num_moments + 1))
+
+    if stepping == "block" and num_moments % KITE_MEMORY != 0:
+        raise SystemExit(
+            "{}: num_moments must be a multiple of {}, got {}.\n"
+            "  This calculation accumulates in blocks of {} moments, so a count "
+            "that does not divide overruns the array by {} elements -- evenness "
+            "is not sufficient here.\n"
+            "  Use {} or {}.".format(
+                calculation, KITE_MEMORY, num_moments, KITE_MEMORY,
+                KITE_MEMORY - num_moments % KITE_MEMORY,
+                num_moments - num_moments % KITE_MEMORY,
+                num_moments + KITE_MEMORY - num_moments % KITE_MEMORY))
+
+
 class Calculation:
 
     @property
@@ -630,6 +686,7 @@ class Calculation:
         num_disorder : int
             Number of different disorder realisations.
         """
+        _check_num_moments(num_moments, "dos", "pair")
 
         self._dos.append({'num_points': num_points, 'num_moments': num_moments, 'num_random': num_random,
                           'num_disorder': num_disorder})
@@ -792,6 +849,7 @@ class Calculation:
         num_disorder : int
             Number of different disorder realisations.
         """
+        _check_num_moments(num_moments, "arpes", "pair")
 
         self._arpes.append({'k_vector': k_vector, 'weight': weight, 'num_moments': num_moments, 'num_disorder': num_disorder})
 
@@ -911,6 +969,7 @@ class Calculation:
         temperature : float
             Value of the temperature at which we calculate the response.
         """
+        _check_num_moments(num_moments, "conductivity_dc", "block")
         if direction not in self._avail_dir_full:
             print('The desired direction is not available. Choose from a following set: \n',
                   self._avail_dir_full.keys())
