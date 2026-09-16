@@ -138,8 +138,9 @@ $$
 \sigma^{s_z}_{xy}\approx -2.02
 $$
 
-across the bulk gap ($|E|\lesssim 0.74\,t$), consistent with the expected quantized $\mathbb Z_2$ spin Hall
-value — the plateau's *existence* and *flatness* are the physics being demonstrated at this lattice size, not
+across the bulk gap ($|E|\lesssim 0.74\,t$), consistent with the expected quantized spin Hall value. The
+quantization follows from $s_z$ conservation: with no Rashba term the two spin sectors decouple into
+independent Chern insulators, so $\sigma^{s_z}_{xy}$ is fixed by their Chern numbers — the plateau's *existence* and *flatness* are the physics being demonstrated at this lattice size, not
 a claim of an exact quantized integer. The overall sign of $\sigma^{s_z}_{xy}$ is fixed by the arbitrary choice
 of which spin is assigned $+\tfrac12$ in the `l0` matrix — flipping every `l0` entry flips the sign of the
 plateau; this is a genuine convention, not a physical ambiguity.
@@ -147,9 +148,9 @@ plateau; this is a genuine convention, not a physical ambiguity.
 ### The disorder-washout extension
 
 `#!python examples/kane_mele_spin_hall_disorder.py` adds on-site (Anderson) disorder of uniform width $W$ on
-all four sublattices and sweeps $W$. Physically, the $\mathbb Z_2$ invariant — and hence the quantized plateau
-— is protected as long as (i) the bulk mobility gap survives and (ii) time-reversal symmetry is preserved on
-average. On-site potential disorder respects TRS, so for $W$ well below the gap the plateau should be
+all four sublattices and sweeps $W$. Physically, the plateau is protected as long as (i) the bulk mobility
+gap survives, (ii) time-reversal symmetry is preserved on average, and (iii) $s_z$ remains conserved —
+on-site potential disorder satisfies all three. On-site potential disorder respects TRS, so for $W$ well below the gap the plateau should be
 essentially untouched; once $W$ approaches and exceeds $E_g\approx1.56\,t$, disorder broadening closes the
 mobility gap and the plateau degrades.
 

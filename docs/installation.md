@@ -271,8 +271,17 @@ and open a new terminal window.
 
 **If you use MacPorts:**
 
-MacPorts does not package conda/miniforge (`#!bash port search miniforge` returns no match) — there's
-no MacPorts-specific install path. Use the official installer script instead, which is
+MacPorts packages `#!bash micromamba`, which is conda-compatible and reads `#!bash environment.yml`
+directly, so the environment below can be created through MacPorts itself:
+
+``` bash
+sudo port install micromamba
+micromamba env create -f environment.yml
+micromamba activate kite
+```
+
+MacPorts does not package conda or miniforge themselves (`#!bash port search miniforge` returns no
+match). If you prefer them to micromamba, use the official installer script, which is
 package-manager-agnostic and installs into its own prefix (`#!bash ~/miniforge3` by default), entirely
 separate from MacPorts' `#!bash /opt/local`:
 
