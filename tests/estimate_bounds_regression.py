@@ -126,3 +126,56 @@ def test_it_beats_the_automatic_estimate_for_graphene():
     automatic = 6 * 2.8
     assert hi < 0.6 * automatic
     assert hi > 3 * 2.8, "but it must still contain the spectrum"
+
+
+# ---------------------------------------------------------------------------
+# The automatic path inside config_system (T-023)
+# ---------------------------------------------------------------------------
+
+def _export(lattice, tmp_path, **kwargs):
+    import h5py
+    dim = len(lattice.vectors)                 # 2D and 3D lattices need matching lengths
+    configuration = kite.Configuration(
+        divisions=[1] * dim, length=[16] * dim, boundaries=["periodic"] * dim,
+        is_complex=bool(kwargs.get("modification")), precision=1)   # no spectrum_range
+    calculation = kite.Calculation(configuration)
+    calculation.dos(num_points=100, num_moments=32, num_random=1)
+    path = str(tmp_path / "auto.h5")
+    kite.config_system(lattice, configuration, calculation, filename=path, **kwargs)
+    with h5py.File(path, "r") as f:
+        return float(f["EnergyScale"][()])
+
+
+def test_automatic_scaling_uses_the_estimator(tmp_path):
+    """Omitting spectrum_range must give the real half-bandwidth plus margin,
+    not the coordination-six rule.
+
+    For graphene the old expression returned 6*|t| against a true 3*|t| -- twice
+    too wide -- and since sigma = pi*energy_scale/M that halved the resolution
+    every user got by default.
+    """
+    scale = _export(graphene(t=2.8), tmp_path)
+    assert scale == pytest.approx(3 * 2.8 * 1.10, rel=1e-6)
+    assert scale < 6 * 2.8, "must be tighter than the old coordination-six rule"
+
+
+def test_automatic_scaling_still_contains_the_spectrum(tmp_path):
+    for build, half_width in ((graphene, 3.0), (square, 4.0), (cubic, 6.0)):
+        assert _export(build(), tmp_path) > half_width
+
+
+def test_automatic_scaling_accounts_for_disorder(tmp_path):
+    """The old rule ignored disorder entirely."""
+    lat = graphene()
+    disorder = kite.Disorder(lat)
+    disorder.add_disorder("A", "Uniform", 0.0, 0.3)
+    clean = _export(graphene(), tmp_path)
+    dirty = _export(lat, tmp_path, disorder=disorder)
+    assert dirty > clean
+
+
+def test_a_magnetic_field_does_not_use_the_band_edges(tmp_path):
+    """Hofstadter broadening exceeds the zero-field edges, so the BZ scan is
+    not a bound once a field is applied."""
+    scale = _export(graphene(), tmp_path, modification=kite.Modification(flux=1 / 16))
+    assert scale >= 3.0, "must still contain the zero-field spectrum at least"

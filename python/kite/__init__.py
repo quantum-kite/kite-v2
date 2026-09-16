@@ -1525,20 +1525,35 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
     # if bounds are not specified, find a rough estimate
     if not config.energy_scale:
 
-        max_hopping_energy = 0
-        for name, hop in lattice.hoppings.items():
-            hopping_energy = np.max(np.abs(hop.energy))
-            if hopping_energy > max_hopping_energy:
-                max_hopping_energy = hopping_energy
-
-        max_onsite_energy = 0
-        for name, sub in lattice.sublattices.items():
-            onsite_energy = np.max(np.abs(sub.energy))
-            if onsite_energy > max_onsite_energy:
-                max_onsite_energy = onsite_energy
-
-        bound = max_onsite_energy + 6 * max_hopping_energy
-        e_min, e_max = - bound, bound
+        # The estimate diagonalises the Bloch Hamiltonian the lattice already
+        # defines, so the clean term is exact, and adds the disorder
+        # contributions additively (Weyl). It supersedes the earlier
+        # `max_onsite + 6*max_hopping`, which assumed coordination six and
+        # ignored disorder entirely: for graphene it returned twice the true
+        # half-bandwidth, halving the resolution at fixed num_moments, while
+        # for a simple cubic lattice it landed the band edge exactly on +-1.
+        #
+        # If anything about the model is beyond what the estimator handles, it
+        # falls back to the old expression rather than guessing: a bound that
+        # is too wide costs resolution, one that is too narrow is silent.
+        try:
+            e_min, e_max = estimate_bounds(
+                lattice, disorder=disorder,
+                disorder_structural=disorder_structural,
+                magnetic_field=bool(kwargs.get('modification', None)
+                                    and (getattr(kwargs['modification'], 'magnetic_field', None)
+                                         or getattr(kwargs['modification'], 'flux', None))))
+        except Exception as exc:
+            max_hopping_energy = max(
+                (np.max(np.abs(hop.energy)) for hop in lattice.hoppings.values()),
+                default=0)
+            max_onsite_energy = max(
+                (np.max(np.abs(sub.energy)) for sub in lattice.sublattices.values()),
+                default=0)
+            bound = max_onsite_energy + 6 * max_hopping_energy
+            e_min, e_max = -bound, bound
+            print('Bound estimate fell back to the coordination-six rule ({}).'.format(
+                type(exc).__name__))
         print('Using default bounds: ({:.2f}, {:.2f}) eV.'.format(e_min, e_max))
 
         config._energy_scale = (e_max - e_min) / 2.0
