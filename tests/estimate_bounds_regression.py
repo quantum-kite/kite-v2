@@ -77,10 +77,19 @@ def test_the_interval_contains_the_spectrum(build, half_width):
     assert lo < -half_width and hi > half_width
 
 
-def test_the_margin_is_small():
-    """A bound twice too wide halves the resolution at fixed num_moments."""
+def test_the_margin_is_generous_but_not_wasteful():
+    """10% headroom by PM decision (2026-09-16).
+
+    The two failure modes are not symmetric: under-padding puts eigenvalues
+    outside [-1, 1], where the run still exits 0 and writes meaningless numbers,
+    while over-padding only costs resolution, linearly. A small amount of
+    Anderson disorder the caller forgot to declare is enough to cross a 1%
+    margin, so 1% was too tight.
+    """
     lo, hi = kite.estimate_bounds(graphene())
-    assert (hi - lo) / 6.0 < 1.05, "more than 5% padding on a clean lattice"
+    padding = (hi - lo) / 6.0
+    assert padding == pytest.approx(1.10, rel=1e-6)
+    assert padding < 1.5, "but it must not throw away resolution either"
 
 
 def test_uniform_disorder_uses_the_standard_deviation_correctly():
@@ -89,7 +98,7 @@ def test_uniform_disorder_uses_the_standard_deviation_correctly():
     disorder = kite.Disorder(lat)
     disorder.add_disorder("A", "Uniform", 0.0, 0.2)
     lo, hi = kite.estimate_bounds(lat, disorder=disorder)
-    assert hi == pytest.approx((3.0 + np.sqrt(3) * 0.2) * 1.01, rel=1e-6)
+    assert hi == pytest.approx((3.0 + np.sqrt(3) * 0.2) * 1.10, rel=1e-6)
 
 
 def test_gaussian_disorder_uses_a_tail_cut():
@@ -97,7 +106,7 @@ def test_gaussian_disorder_uses_a_tail_cut():
     disorder = kite.Disorder(lat)
     disorder.add_disorder("A", "Gaussian", 0.0, 0.1)
     lo, hi = kite.estimate_bounds(lat, disorder=disorder)
-    assert hi == pytest.approx((3.0 + 8.0 * 0.1) * 1.01, rel=1e-6)
+    assert hi == pytest.approx((3.0 + 8.0 * 0.1) * 1.10, rel=1e-6)
 
 
 def test_a_magnetic_field_falls_back_to_gershgorin():

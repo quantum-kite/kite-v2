@@ -27,8 +27,10 @@ Contributions, following the project's own rules:
     structural defects   max over nodes of |dU| + sum|dt|, since the supplied
                          values are increments on top of the clean hopping
 
-The returned interval carries a margin so the spectrum does not sit on +-1,
-where the Chebyshev reconstruction weight 1/sqrt(1-x^2) diverges.
+The returned interval carries a 10% margin so the spectrum does not sit near
++-1, where the Chebyshev reconstruction weight 1/sqrt(1-x^2) diverges. That is
+deliberately generous: under-padding fails silently, over-padding only costs
+resolution.
 """
 
 import numpy as np
@@ -41,7 +43,15 @@ __all__ = ["estimate_bounds", "clean_band_extrema", "gershgorin_bound"]
 DEFAULT_GAUSSIAN_LAMBDA = 8.0
 
 #: Fractional headroom left between the spectrum and +-1.
-DEFAULT_MARGIN = 0.01
+#:
+#: 10%, not the ~1% that Weisse's epsilon suggests. The asymmetry of the two
+#: failure modes decides it: padding too much costs resolution linearly, since
+#: sigma = pi*energy_scale/M, while padding too little puts eigenvalues outside
+#: [-1, 1], where the recursion diverges and the run still exits 0 with
+#: meaningless numbers and no warning. A little Anderson disorder that the
+#: caller forgot to pass, or a structural defect increment, is enough to cross
+#: a 1% margin.
+DEFAULT_MARGIN = 0.10
 
 
 def clean_band_extrema(lattice, grid=24):
