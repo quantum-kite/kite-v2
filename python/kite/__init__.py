@@ -18,6 +18,12 @@ import warnings
 from scipy.sparse import coo_matrix
 from scipy.spatial import cKDTree
 
+# Spectral bounds for the Chebyshev rescaling. Documented as public API in
+# docs/api/kite.md but never imported here, so kite.estimate_bounds raised
+# AttributeError. The implementation no longer needs pybinding: it scans the
+# Bloch Hamiltonian the lattice already defines.
+from .bounds import estimate_bounds, clean_band_extrema, gershgorin_bound
+
 
 # Class that introduces Structural Disorder into the initially built lattice.
 # The exported dataset StructuralDisorder has the following groups:
