@@ -1885,6 +1885,17 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
     grp_dis = grp.create_group('Disorder')
 
     if disorder:
+        # A Disorder object that was constructed but never given an
+        # add_disorder() call leaves _orbital as an empty list, and the
+        # comparison below then raises a TypeError that names neither the
+        # object nor the omission.
+        if len(np.asarray(disorder._orbital).shape) < 2:
+            raise SystemExit(
+                'Disorder: the Disorder object passed to config_system has no '
+                'disorder in it.\n'
+                '  Call add_disorder() on it before exporting, for example:\n'
+                "      disorder.add_disorder('A', 'Uniform', 0.0, 0.1)\n"
+                '  Or omit the disorder= argument entirely for a clean system.')
         present = disorder._orbital > -1
         len_orb = np.max(np.sum(present, axis=0))
         disorder._orbital = disorder._orbital[0:len_orb, :]
@@ -2248,7 +2259,21 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
         grpc_p.create_dataset('mean_value', data=mean_value, dtype=np.int32)
         grpc_p.create_dataset('ProbingPoint', data=np.asmatrix(np.asarray(probing_points)).astype(np.float32))
         grpc_p.create_dataset('width', data=width, dtype=np.float32)
-        grpc_p.create_dataset('spinor', data=np.asmatrix(np.asarray(spinor)).astype(config.type))
+        # The seeded state carries one amplitude per orbital of the unit cell. A
+        # shorter or longer spinor is not caught downstream: KITEx reads a fixed
+        # stride, so a mismatched row silently seeds the wrong orbitals rather
+        # than failing.
+        spinor_arr = np.asmatrix(np.asarray(spinor)).astype(config.type)
+        if spinor_arr.shape[1] != total_orbitals:
+            raise SystemExit(
+                'gaussian_wave_packet: spinor has {} component(s) but the lattice '
+                'has {} orbital(s) per unit cell.\n'
+                '  The spinor gives the amplitude on each orbital of one unit cell, '
+                'so it must have exactly one entry per orbital, in the order the '
+                'sublattices were added.\n'
+                '  Got shape {}.'.format(
+                    spinor_arr.shape[1], total_orbitals, tuple(spinor_arr.shape)))
+        grpc_p.create_dataset('spinor', data=spinor_arr)
         grpc_p.create_dataset('k_vector', data=np.asmatrix(np.asarray(k_vector)), dtype=np.float32)
         grpc_p.create_dataset('timestep', data=timestep, dtype=np.float32)
 
