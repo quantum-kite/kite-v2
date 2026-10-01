@@ -104,9 +104,8 @@ These are pure-KITE scripts (using `kite.lattice.Lattice`, `python/kite/lattice.
 
 **Utility / plotting helper scripts**
 
-The folder also contains a handful of non-calculation helper scripts that are not examples in their own
-right: `process_cond.py` and `process_statistics.py`
-(post-processing helpers used by some of the scripts above), plus
+The folder also contains a few shared helpers that are not examples in their own right:
+`process_arpes.py` (a symlink to `tools/process_arpes.py`, imported by the `arpes_*.py` scripts),
 `myaux.py`, `kite_style.py`, and `kite.mplstyle` (shared plotting/style helpers).
 
 ## `examples/pybinding/*.py`
