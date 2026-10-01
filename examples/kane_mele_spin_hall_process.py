@@ -1,45 +1,13 @@
 """ Post-processing for kane_mele_spin_hall.py: Kubo-Bastin spin Hall integral.
 
-    KITE-tools does compute custom_two (it writes custom_two.dat), and agrees
-    with this script to about 1% across the plateau. This script reads the raw
-    double-Chebyshev moment matrix /Calculation/CustomTwo/Gamma written by
-    KITEx, reconstructs the Kubo-Bastin integrand at a finite reconstruction
-    broadening, and integrates it against the Fermi function to give the spin
-    Hall conductivity sigma^{s_z}_{xy} as a function of Fermi energy, so the
-    reconstruction broadening and the energy grid can be varied without
-    re-running KITEx.
+    Reads the moment matrix /Calculation/CustomTwo/Gamma written by KITEx and
+    integrates the Kubo-Bastin integrand against the Fermi function to give
+    sigma^{s_z}_{xy}(mu). KITE-tools computes the same quantity into
+    custom_two.dat; this script exists so the reconstruction broadening and the
+    energy grid can be varied without re-running KITEx.
 
-    What you should see
-    -------------------
-    At the shipped parameters (t2 = 0.15) the Kane-Mele bulk gap is
-    6*sqrt(3)*t2 = 1.559 |t|. Across that gap sigma^{s_z}_{xy} shows a flat,
-    quantized plateau: the two spin sectors carry Chern numbers +1 and -1, so
-    the expected value is |Delta C| = 2 in the units this script prints, with
-    the sign fixed by the s_z and Haldane-phase conventions documented in
-    kane_mele_spin_hall.py.
-
-    Measured on the shipped output over |mu| < 0.6 * (gap/2): plateau -2.024,
-    flat to 0.12%. Hold it to flat within 0.5% and within 2% of 2.
-
-    Outside the gap the curve is noisy. That is expected and is not a defect:
-    the generator uses num_random = 1, so the stochastic trace error over
-    64*64*4 = 16384 states is of order 1%, and it is most visible where the
-    response is varying rather than on the plateau itself. Raise num_random if
-    you want the band region smooth; the plateau does not need it.
-
-    A note on the reconstruction, since it is easy to misread
-    --------------------------------------------------------
-    The plateau is NOT limited by finite size. At L = 64 the bulk correlation
-    length is about one unit cell, so the finite-size correction is of order
-    exp(-64). Raising L will not make the plateau flatter.
-
-    green_coef and dgreen_coef below are the BARE Chebyshev resolvent
-    coefficients -- no damping kernel is applied -- so the truncated series
-    leaves a residual in the Green's function pointwise in energy. That
-    residual does not carry over to the plateau, because the Kubo-Bastin
-    integral averages over energy. Do not read it as an error bar. Both
-    broadenings are post-processing parameters, so they can be varied without
-    rerunning KITEx if you want to see this for yourself.
+    The spin Hall plateau and what sets its flatness are discussed in
+    docs/documentation/examples/custom_vertex_operators.md.
 
     Usage:
         python kane_mele_spin_hall_process.py kane_mele_spin_hall-output.h5
