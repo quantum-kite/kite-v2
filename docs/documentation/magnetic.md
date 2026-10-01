@@ -92,8 +92,8 @@ Instead of a field in Tesla, $n$ can be set through the flux per unit cell direc
 modification = kite.Modification(flux=1/512)
 ```
 
-which gives $n=\textrm{flux}\times N_{2}$. Unlike `#!python magnetic_field`, this value is **not**
-rounded to an integer, so with periodic boundary conditions give it as an exact multiple of $1/N_{2}$.
+which gives $n=\textrm{flux}\times N_{2}$. Unlike `#!python magnetic_field`, this value is **truncated** rather than rounded, so with periodic
+boundary conditions give it as an exact multiple of $1/N_{2}$.
 
 
 
