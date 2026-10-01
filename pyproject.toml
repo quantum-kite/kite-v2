@@ -26,3 +26,9 @@ Repository = "https://github.com/quantum-kite/kite-v2"
 
 [tool.hatch.build.targets.wheel]
 packages = ["python/kite"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# The suite's own files are named for what they pin rather than with a test_
+# prefix, so the default pattern would collect none of them.
+python_files = ["test_*.py", "*_regression.py", "*_sweep.py"]
