@@ -1,12 +1,13 @@
 """ Post-processing for kane_mele_spin_hall.py: Kubo-Bastin spin Hall integral.
 
-    There is NO KITE-tools step for custom_two. This script reads the raw
+    KITE-tools does compute custom_two (it writes custom_two.dat), and agrees
+    with this script to about 1% across the plateau. This script reads the raw
     double-Chebyshev moment matrix /Calculation/CustomTwo/Gamma written by
     KITEx, reconstructs the Kubo-Bastin integrand at a finite reconstruction
     broadening, and integrates it against the Fermi function to give the spin
-    Hall conductivity sigma^{s_z}_{xy} as a function of Fermi energy. It is the
-    diag=0 (antisymmetric / Hall) branch of examples/cond_sum.py, reproduced
-    here so the example is self-contained.
+    Hall conductivity sigma^{s_z}_{xy} as a function of Fermi energy, so the
+    reconstruction broadening and the energy grid can be varied without
+    re-running KITEx.
 
     What you should see
     -------------------

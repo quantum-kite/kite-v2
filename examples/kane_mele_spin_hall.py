@@ -19,9 +19,9 @@
       A = (1/2){v_x, s_z}   (the spin current in x, symmetrized anticommutator)
       B = v_y               (the charge velocity in y)
     KITE then builds the double-Chebyshev moment matrix Gamma_{mn} =
-    Tr[T_m(H) B T_n(H) A]; the Kubo-Bastin energy integral is done in Python
-    (see kane_mele_spin_hall_process.py, adapted from examples/cond_sum.py, the
-    diag=0 antisymmetric/Hall branch).
+    Tr[T_m(H) B T_n(H) A]; KITE-tools does the Kubo-Bastin energy integral and
+    writes custom_two.dat. kane_mele_spin_hall_process.py repeats it in Python
+    to plot sigma^{s_z}_xy against Fermi energy.
 
     Sign convention
     ---------------
