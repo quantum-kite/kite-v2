@@ -18,7 +18,9 @@ LABELS = {'l0': 'S_x', 'l1': 'S_y', 'l2': 'S_z'}
 
 def load(file_path):
     with h5py.File(file_path, "r") as f:
-        timestep = float(np.array(f["Calculation"]["gaussian_wave_packet"]["timestep"]))
+        # timestep is stored with one entry per wave-packet calculation, so it is
+        # a length-1 array here rather than a scalar.
+        timestep = float(np.array(f["Calculation"]["gaussian_wave_packet"]["timestep"]).ravel()[0])
         energy_scale = float(np.array(f["EnergyScale"]))
         series = {label: np.array(f["Calculation"]["gaussian_wave_packet"][label]).flatten().real
                   for label in LABELS}
