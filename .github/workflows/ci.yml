@@ -34,7 +34,12 @@ jobs:
       - run: pip install "mkdocs-material==9.7.6"
       - run: mkdocs build --strict
 
+  # Gated on check-docs: `mkdocs gh-deploy` does not take --strict, so without
+  # this the two jobs race on a push to master and a site that failed the
+  # strict build is published anyway -- which would make the strict check
+  # advisory rather than a gate.
   deploy-docs:
+    needs: check-docs
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:

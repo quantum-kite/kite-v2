@@ -7,7 +7,9 @@ pages:
     - docs
   script:
     - pip install mkdocs-material
-    - mkdocs build --site-dir public
+    # --strict for the same reason as the GitHub workflow: without it mkdocs
+    # prints a warning for a broken link and exits 0, and this job publishes.
+    - mkdocs build --strict --site-dir public
   artifacts:
     paths:
       - public
