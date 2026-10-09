@@ -84,17 +84,22 @@ def test_custom_two_and_conductivity_dc_agree_in_sign(tmp_path):
 def test_custom_two_is_exactly_twice_conductivity_dc(tmp_path):
     """Pins the normalization, which a correlation test cannot.
 
-    The two paths differ by a factor of two *in source*: customtwo.cpp:349 uses
+    The two paths differ by a factor of two in source: customtwo.cpp:349 uses
     `den = 2.0*num_orbitals*spin_degeneracy/...` where conductivity_dc.cpp:376
-    uses `den = num_orbitals*spin_degeneracy/...`, and both read the same
-    `spin_degeneracy` from systemInfo. Measured here on the same file, the
-    median pointwise ratio is 1.95.
+    uses `den = num_orbitals*spin_degeneracy/...`. Measured here on the same
+    file, the median pointwise ratio is 1.95.
 
-    This test does NOT claim 2 is the physically correct relationship -- the two
-    constants were calibrated against different references (the Kane-Mele spin
-    Hall plateau and the Haldane e^2/h plateau respectively) and reconciling them
-    is open. It pins the relationship so that a change to either normalization
-    is visible instead of silent.
+    That factor is a convention difference, not an error. The two were
+    calibrated against references that differ in whether spin is in the model:
+    conductivity_dc against the Haldane e^2/h plateau, which is spinless, and
+    custom_two against the Kane-Mele spin Hall plateau, whose four sublattices
+    (Aup, Bup, Adn, Bdn) carry spin explicitly. The lattice used here is the
+    spinless one (sublattices A and B, NOrbitals = 2), so a user who wants a
+    spin-degenerate result from conductivity_dc supplies the factor of 2
+    themselves.
+
+    This test pins the relationship so a change to either normalization is
+    visible instead of silent.
     """
     _, custom = _run_tools("--CustomTwo", tmp_path)
     _, builtin = _run_tools("--CondDC", tmp_path)
