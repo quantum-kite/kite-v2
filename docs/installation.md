@@ -234,7 +234,7 @@ cmake -DCMAKE_C_COMPILER=/opt/local/bin/gcc-mp-14 -DCMAKE_CXX_COMPILER=/opt/loca
 (float/double), and `#!bash Found OpenMP`, and `#!bash make` should complete with only benign
 deprecation warnings (safe to ignore, as noted in Section 3).
 
-### 2.4 Using conda (recommended for reproducibility) { #conda_section }
+### 2.4 Using conda (recommended) { #conda_section }
 
 !!! note "Linux/macOS only — see [Docker][docker_section] on Windows"
 

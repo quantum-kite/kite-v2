@@ -8,12 +8,15 @@ version = "1.1.0"
 description = "Python interface for KITE: a real-space quantum transport simulator based on the Chebyshev/Kernel Polynomial Method"
 readme = "README.md"
 license = { file = "LICENSE.md" }
-requires-python = ">=3.9"
+requires-python = ">=3.9,<3.13"
+# Floors, not pins, and they must match environment.yml: `pip install -e .` is
+# the last step of every documented install route, so these are the only bounds
+# the non-conda routes get.
 dependencies = [
-    "numpy",
-    "scipy",
-    "h5py",
-    "matplotlib",
+    "numpy >=1.20",
+    "scipy >=1.6",        # scipy.integrate.simpson, which replaced simps
+    "h5py >=3.0",
+    "matplotlib >=3.4",
 ]
 
 [project.optional-dependencies]
