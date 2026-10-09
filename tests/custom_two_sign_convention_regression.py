@@ -7,19 +7,15 @@ so it cannot see a magnitude error, and it says nothing about the vertex pairs
 or disorder strengths where the sign is actually decided on a knife edge. This
 file covers both.
 
-Some cases below fail against the current binary. Those are marked xfail
-(strict) and named individually, so they report as expected failures until the
-defect is fixed and then fail loudly if the markers are left behind.
-
-**The defect.** `store_custom_two` writes Tr[T_m B T_n A] -- the bare
-Chebyshev index on the row (Src/Simulation/Custom/SimulationRankTwo.cpp:169) --
-while the reconstruction was written against Gamma2D.cpp:138, which puts the
-sandwiched index there. The two conventions are exact transposes, so the
-reconstruction needs a sign: +1 if Gamma is symmetric, -1 if antisymmetric.
-Rather than undo the transpose, tools/Src/Custom/customtwo.cpp:386 infers which
-case it is in by measuring how real Gamma is, against a 0.5 threshold. That
-inference is sound in principle -- for a Hermitian Gamma, symmetric means real
--- but it is measured as an L1 ratio on stochastic data.
+**Why the convention needs care.** `store_custom_two` writes Tr[T_m B T_n A] --
+the bare Chebyshev index on the row (Src/Simulation/Custom/SimulationRankTwo.cpp
+:169) -- while the reconstruction was written against Gamma2D.cpp:138, which
+puts the sandwiched index there. The two storage conventions are exact
+transposes, so `customtwo.cpp` undoes the transpose when it reads Gamma. It used
+instead to infer a global sign at runtime from how real Gamma was; that is the
+right discriminant for a Gamma that is purely symmetric or purely antisymmetric,
+but it was an L1 ratio against a 0.5 threshold measured on stochastic data, and
+several shipped Gammas are neither.
 """
 
 import subprocess
@@ -33,13 +29,6 @@ h5py = pytest.importorskip("h5py")
 REPO = Path(__file__).resolve().parents[1]
 SWEEP = REPO / "sweep-data"
 KITE_TOOLS = REPO / "build" / "KITE-tools"
-
-# The L1 realness ratio the C++ compares against 0.5.
-THRESHOLD = 0.5
-# How far from the threshold the discriminant must sit to be trustworthy. A
-# margin of 0.15 still allows a Gamma that is only 65% one way or the other.
-REQUIRED_MARGIN = 0.15
-
 
 def _gammas():
     """Every stored custom_two Gamma in the sweep output, newest run wins."""
@@ -56,33 +45,9 @@ def _gammas():
     return found
 
 
-def _realfrac(gamma):
-    real = np.abs(gamma.real).sum()
-    imag = np.abs(gamma.imag).sum()
-    return real / (real + imag)
-
-
 GAMMAS = _gammas()
 needs_sweep = pytest.mark.skipif(
     not GAMMAS, reason="needs sweep-data/; run tests/run_all_examples.py first")
-
-# The shipped cases that fail today, named individually rather than with a
-# blanket xfail, so the clean cases stay genuine passes and a newly-failing one
-# is a real failure rather than a silent addition to a known-bad bucket.
-DISCRIMINANT_FAILS = {"kane_mele_spin_hall_disorder_W1", "kane_mele_spin_hall_disorder_W2"}
-SYMMETRY_FAILS = {"kane_mele_spin_hall_disorder_W0.5",
-                  "kane_mele_spin_hall_disorder_W1",
-                  "kane_mele_spin_hall_disorder_W2"}
-
-
-def _params(known_bad, reason):
-    out = []
-    for name, gamma in GAMMAS:
-        stem = name.split("/")[-1].removesuffix("-output")
-        marks = [pytest.mark.xfail(strict=True, reason=f"known defect: {reason}")] \
-            if stem in known_bad else []
-        out.append(pytest.param(name, gamma, marks=marks, id=stem))
-    return out
 
 
 # --------------------------------------------------------------------------
@@ -144,41 +109,48 @@ def test_custom_two_is_exactly_twice_conductivity_dc(tmp_path):
 # The discriminant, and the premise underneath it.
 # --------------------------------------------------------------------------
 
-@needs_sweep
-@pytest.mark.parametrize("name,gamma",
-                         _params(DISCRIMINANT_FAILS, "discriminant sits near the threshold"))
-def test_sign_discriminant_is_well_separated(name, gamma):
-    """The runtime test must not be deciding a sign on a coin flip.
+KANE_MELE = SWEEP / "kane_mele_spin_hall" / "kane_mele_spin_hall-output.h5"
 
-    customtwo.cpp:386 takes sign = +1 if realfrac > 0.5 else -1. For that to be
-    trustworthy the measured value has to sit clearly on one side. On the
-    shipped kane_mele_spin_hall_disorder.py it reads 0.064, 0.344, 0.438 and
-    0.472 at W = 0, 0.5, 1 and 2: the antisymmetric signal decays with disorder
-    while the stochastic real-part floor does not.
+
+@pytest.mark.skipif(not (KANE_MELE.exists() and KITE_TOOLS.exists()),
+                    reason="needs the Kane-Mele fixture and a built KITE-tools")
+def test_kane_mele_plateau_stays_quantized():
+    """The calibration the reconstruction must not break.
+
+    With no Rashba term the two spin sectors decouple into independent Chern
+    insulators carrying +1 and -1, so sigma^{s_z}_{xy} sits on a plateau of
+    magnitude 2 across the bulk gap. This is the reference the normalization was
+    calibrated against, and any change to how Gamma is contracted has to
+    reproduce it.
     """
-    value = _realfrac(gamma)
-    assert abs(value - THRESHOLD) > REQUIRED_MARGIN, (
-        f"{name}: realfrac = {value:.4f} is within {REQUIRED_MARGIN} of the "
-        f"{THRESHOLD} threshold, so the overall sign of this result is decided "
-        f"by a margin comparable to the stochastic noise")
+    subprocess.run([str(KITE_TOOLS), KANE_MELE.name, "--CustomTwo"],
+                   cwd=str(KANE_MELE.parent), capture_output=True, text=True, check=True)
+    data = np.loadtxt(KANE_MELE.parent / "custom_two.dat")
+    mu, sigma = data[:, 0], data[:, 1]
+    plateau = sigma[np.abs(mu) < 0.6].mean()
+    assert plateau == pytest.approx(-2.0, rel=0.10), (
+        f"the spin Hall plateau is {plateau:.4f}, not the quantized -2")
 
 
 @needs_sweep
-@pytest.mark.parametrize("name,gamma",
-                         _params(SYMMETRY_FAILS, "Gamma is mixed-symmetry"))
-def test_gamma_is_symmetric_or_antisymmetric(name, gamma):
-    """The premise the whole heuristic rests on.
+def test_the_stored_gammas_are_not_all_cleanly_symmetric():
+    """Why a single global sign cannot be inferred from the data.
 
-    A single global sign can only be correct if Gamma is purely symmetric
-    (transposing changes nothing) or purely antisymmetric (transposing negates
-    it). A Gamma with both parts needs them treated differently, and no choice
-    of sign does that -- which is why undoing the transpose at read time is the
-    exact fix and the sign branch is not.
+    A global sign can only be correct when Gamma is purely symmetric
+    (transposing is a no-op) or purely antisymmetric (transposing negates it).
+    This records that the shipped Gammas are not all one or the other, which is
+    why the reconstruction undoes the storage transpose directly instead of
+    inferring a sign at runtime. It is a property of the stored data, so it does
+    not change when the reconstruction changes -- it is here to stop the runtime
+    inference being reintroduced as an apparently safe simplification.
     """
-    scale = np.abs(gamma).sum()
-    symmetric = np.abs(gamma - gamma.T).sum() / scale
-    antisymmetric = np.abs(gamma + gamma.T).sum() / scale
-    assert min(symmetric, antisymmetric) < 0.25 * max(symmetric, antisymmetric), (
-        f"{name}: |G-G^T|/|G| = {symmetric:.3f} and |G+G^T|/|G| = "
-        f"{antisymmetric:.3f} are comparable, so this Gamma is neither "
-        f"symmetric nor antisymmetric and no single sign is correct for it")
+    mixed = []
+    for name, gamma in GAMMAS:
+        scale = np.abs(gamma).sum()
+        symmetric = np.abs(gamma - gamma.T).sum() / scale
+        antisymmetric = np.abs(gamma + gamma.T).sum() / scale
+        if min(symmetric, antisymmetric) >= 0.25 * max(symmetric, antisymmetric):
+            mixed.append(f"{name} (|G-G^T|={symmetric:.3f}, |G+G^T|={antisymmetric:.3f})")
+    assert mixed, (
+        "no shipped Gamma is mixed-symmetry any more; if that is genuinely true "
+        "this test has lost its subject, but check the fixtures first")

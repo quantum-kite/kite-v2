@@ -136,6 +136,12 @@ bool customtwo<T, DIM>::fetch_parameters(){
     try{
         Gamma = Eigen::Array<std::complex<T>,-1,-1>::Zero(NumMoments, NumMoments);
         get_hdf5(Gamma.data(), &file, (char*)MatrixName.c_str());
+        // store_custom_two writes Tr[T_m B T_n A]: SimulationRankTwo.cpp:169 puts
+        // the BARE Chebyshev index on the row, while Gamma2D.cpp:138 -- which the
+        // reconstruction was written against -- puts the SANDWICHED index there.
+        // The two storage conventions are exact transposes, so undo it here and
+        // the triple product below matches CondDC/fill.cpp's exactly.
+        Gamma = Gamma.transpose().eval();
         result = true;
     } catch(H5::Exception& e) {debug_message("CustomTwo: There is no Gamma matrix.\n");}
 
@@ -350,49 +356,21 @@ void customtwo<U, DIM>::calculate(){
             / systemInfo->unit_cell_area / unit_scale;
     U energy_scale_correction = std::pow(systemInfo->energy_scale, NumVelocities - 2);
 
-    // Overall sign: reading Gamma directly into a square Eigen array here (matching
-    // conductivity_dc.cpp's own read pattern) amounts to a different Gamma orientation
-    // than the Python post-processing scripts use (moments_matrix = f[...][:].T).
-    // For ODD NumVelocities (p%4 in {1,3}) this orientation difference does NOT flip
-    // the sign, verified against examples/rashba_edelstein_graphene.py's pure-Rashba
-    // case (sign_convention=+1).
+    // No sign convention is applied here: the orientation mismatch that used to
+    // need one is undone by the transpose in fetch_parameters(), so this path
+    // now contracts the same way CondDC/fill.cpp does.
     //
-    // For EVEN NumVelocities (p%4 in {0,2}) it DOES flip the sign -- but which sign is
-    // needed depends on a distinction the original calibration never tested: whether
-    // the two vertex operators A, B are the SAME operator (e.g. sigma_xx: A=B=v_x,
-    // a longitudinal/self-correlation response) or DIFFERENT, direction-mixing
-    // operators (e.g. spin Hall: A={v_x,s_z}/2, B=v_y, an antisymmetric Hall-type
-    // response). By the cyclic property of the trace, Gamma_mn(A,B) = Gamma_nm(B,A)
-    // always; when A=B this makes the (pre-Hermitization) Gamma matrix genuinely
-    // symmetric under m<->n, so store_custom_two's Hermitization forces the FINAL
-    // stored Gamma to be real (Hermitian + symmetric = real), whereas for A!=B
-    // (spin Hall) Gamma stays genuinely complex. The original sign_convention=-1 for
-    // p%4==2 was calibrated ONLY against the A!=B spin-Hall plateau
-    // (docs/documentation/examples/custom_vertex_operators.md: sigma_sz_xy ~ -2.02);
-    // it silently assumed every p%4==2 vertex pair is of that antisymmetric type.
-    // Found wrong empirically (2026-08): reconstructing sigma_xx via custom_two(vx,vx)
-    // on a MoS2 lattice gave a result anti-correlated (r=-0.95) with KITE's
-    // independently-implemented conductivity_dc(direction='xx') on the identical
-    // lattice/config -- i.e. exactly the wrong sign for the A=B case. Confirmed by
-    // Gamma's own realness: spin Hall's stored Gamma is 94% imaginary-weighted
-    // (sum|Im|/sum(|Re|+|Im|)), MoS2 sigma_xx's is 90% real-weighted (the residual
-    // ~10% is stochastic noise, not signal) -- a robust, well-separated runtime
-    // signal for which calibration applies, requiring no change to the (unaffected,
-    // still-passing) A!=B branch. A==B pairs can only ever have EVEN NumVelocities
-    // (identical operators contain the same number of "v" tokens, so the total is
-    // always 2x that count), so the odd branch above is provably unaffected by this
-    // distinction and needs no equivalent check.
-    U sign_convention;
-    if (p % 2 == 0) {
-        U imag_weight = Gamma.imag().cwiseAbs().sum();
-        U real_weight = Gamma.real().cwiseAbs().sum();
-        bool gamma_is_real = imag_weight < 0.5 * (real_weight + imag_weight);
-        sign_convention = gamma_is_real ? 1.0 : -1.0;
-    } else {
-        sign_convention = 1.0;
-    }
-
-    response = response*(sign_convention*den*energy_scale_correction);
+    // What stood here chose the sign at runtime from how real the stored Gamma
+    // was. That is the right discriminant in principle -- transposing negates an
+    // antisymmetric Gamma and leaves a symmetric one alone, and for a Hermitian
+    // Gamma symmetric means real -- but it was an L1 ratio compared against 0.5
+    // on stochastic data. On the shipped examples/kane_mele_spin_hall_disorder.py
+    // it reads 0.064, 0.344, 0.438, 0.472 at W = 0, 0.5, 1, 2: the antisymmetric
+    // signal decays with disorder while the real-part noise floor does not. From
+    // W = 0.5 upward that Gamma is also genuinely mixed-symmetry, where no single
+    // sign is correct for both parts. See
+    // tests/custom_two_sign_convention_regression.py.
+    response = response*(den*energy_scale_correction);
 
     save_to_file(response);
 }
