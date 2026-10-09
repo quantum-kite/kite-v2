@@ -6,6 +6,20 @@ on:
       - master
   pull_request:
 jobs:
+  # Two tracked paths differing only by case collapse into one on macOS and
+  # Windows, which makes the repository impossible to clone intact. A Src/ and
+  # src/ pair did exactly that. The runner here is Linux and case-sensitive, so
+  # it is the one machine that would never notice on its own -- hence an
+  # explicit check. No dependencies and no build: it reads the git index.
+  check-paths:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.x
+      - run: python tests/case_collision_regression.py
+
   # Runs on every push and PR (unlike deploy-docs below, which only runs on
   # push to master): a strict build turns any broken internal link, missing
   # nav target, or other mkdocs warning into a CI failure, catching link rot
