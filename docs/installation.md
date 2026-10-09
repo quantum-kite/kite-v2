@@ -272,13 +272,27 @@ and open a new terminal window.
 **If you use MacPorts:**
 
 MacPorts packages `#!bash micromamba`, which is conda-compatible and reads `#!bash environment.yml`
-directly, so the environment below can be created through MacPorts itself:
+directly, so the environment below can be created through MacPorts itself. Run these from the
+`#!bash kite/` directory, since `#!bash environment.yml` and `#!bash .` are resolved relative to it:
 
 ``` bash
 sudo port install micromamba
+eval "$(micromamba shell hook --shell "$(basename "${SHELL}")")"
 micromamba env create -f environment.yml
 micromamba activate kite
+pip install -e .
 ```
+
+!!! warning "`#!bash micromamba activate` needs the shell hook first"
+
+    Without the `#!bash eval` line, `#!bash micromamba activate kite` fails with
+    `#!bash critical libmamba Shell not initialized` — micromamba runs as a subprocess and cannot
+    modify the parent shell on its own. The `#!bash eval` lasts for the current terminal session;
+    for a permanent setup run `#!bash micromamba shell init --shell "$(basename "${SHELL}")"` once
+    and open a new terminal. This is micromamba's equivalent of `#!bash conda init` below.
+
+Then build as in [Section 3][kitex_kitetools], substituting `#!bash $MAMBA_ROOT_PREFIX/envs/kite` for
+`#!bash $CONDA_PREFIX` if that variable is not set in your shell.
 
 MacPorts does not package conda or miniforge themselves (`#!bash port search miniforge` returns no
 match). If you prefer them to micromamba, use the official installer script, which is
