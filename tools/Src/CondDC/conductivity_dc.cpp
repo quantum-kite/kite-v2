@@ -126,7 +126,7 @@ void conductivity_dc<T, DIM>::set_default_parameters(){
     // 0.99], dE = 3.87e-3 against a broadening of 2.5e-3, so the grid was
     // coarser than the Lorentzian it integrates. Measured on graphene
     // sigma_xx: 513 -> 6.9859, 1025 -> 6.7164, 2049 -> 6.8521, 8193 -> 6.8519.
-    NEnergies           = 2049;
+    NEnergies           = 1025;
     default_NEnergies   = true;
 
     deltascat           = 0.01/scale;       // scattering parameter in the delta function

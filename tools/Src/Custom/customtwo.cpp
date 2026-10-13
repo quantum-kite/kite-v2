@@ -83,7 +83,7 @@ void customtwo<T, DIM>::set_default_parameters(){
     // than the Lorentzian being integrated, costing about 1% silently.
     // Measured on the Kane-Mele spin Hall plateau: 513 -> -2.0656,
     // 1025 -> -2.0884, 2049 -> -2.0874, 4097 and 32769 -> -2.0874.
-    NEnergies = 2049;
+    NEnergies = 1025;
     default_NEnergies = true;
 
     filename = "custom_two.dat";
