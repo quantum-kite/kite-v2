@@ -133,7 +133,37 @@ orbital operator is a full $N_\text{orb}\times N_\text{orb}$ matrix, and registe
 silently truncate it. The two vertices are the symmetrized spin current $A=\tfrac12\{\hat v_x,\hat s_z\}$ and
 the charge velocity $B=\hat v_y$.
 
-**Verified result.** The Kubo-Bastin post-processing yields a genuinely **flat plateau** at
+### Reproducing it
+
+``` bash
+python kane_mele_spin_hall.py                    # writes kane_mele_spin_hall-output.h5
+../build/KITEx kane_mele_spin_hall-output.h5     # computes the moment matrix Gamma_mn
+python kane_mele_spin_hall_process.py            # Kubo-Bastin integral and plot
+```
+
+with the parameters that produce the plateau below:
+
+| | |
+| --- | --- |
+| Lattice | honeycomb, $64\times64$ cells, 4 sublattices (Aup, Bup, Adn, Bdn) |
+| $t$, $t_2$ | $1.0$, $0.15$ |
+| Chebyshev moments $M$ | 256 |
+| Random vectors | 1 |
+| Spectral half-width $\delta\varepsilon$ | 4 |
+| Green's-function broadening $\eta$ | 0.04 |
+| Dirac-delta broadening | 0.04 |
+| Temperature $k_BT$ | 0.01 |
+| Fermi energies | 201 points over $[-2, 2]$ |
+| Energy-integration grid | 2000 points over $[-0.995, 0.995]$ (reduced units) |
+
+The broadening is the one to watch. It sets the energy resolution, and the moment count has to be
+large enough to resolve it: $M \gtrsim 10\,\delta\varepsilon/\eta$ (see
+[Optimisation][optimization]). Here that gives $M \gtrsim 1000$ against the 256 the example ships,
+which is close enough for a flat plateau; reconstructing the same moments at a much finer $\eta$
+leaves the series truncated and the plateau acquires a percent-level ripple.
+
+**Verified result.** At these parameters the Kubo-Bastin post-processing yields a genuinely
+**flat plateau** at
 
 $$
 \sigma^{s_z}_{xy}\approx -2.00
@@ -194,3 +224,4 @@ wiggles there are stochastic, not physical structure.
 [haldane-example]: haldane.md
 [kane_mele_example]: https://github.com/quantum-kite/kite-v2/tree/master/examples/kane_mele_spin_hall.py
 [kane_mele_disorder_example]: https://github.com/quantum-kite/kite-v2/tree/master/examples/kane_mele_spin_hall_disorder.py
+[optimization]: ../optimization.md
