@@ -121,7 +121,12 @@ void conductivity_dc<T, DIM>::set_default_parameters(){
     NumThreads          = systemInfo.NumThreads;
     default_NumThreads  = true;
 
-    NEnergies           = 513;              // Number of energies used in the energy integration
+    // Number of energies used in the energy integration. The step must stay
+    // well under `scat` below (0.01/scale): at the former 513 over [-0.99,
+    // 0.99], dE = 3.87e-3 against a broadening of 2.5e-3, so the grid was
+    // coarser than the Lorentzian it integrates. Measured on graphene
+    // sigma_xx: 513 -> 6.9859, 1025 -> 6.7164, 2049 -> 6.8521, 8193 -> 6.8519.
+    NEnergies           = 2049;
     default_NEnergies   = true;
 
     deltascat           = 0.01/scale;       // scattering parameter in the delta function

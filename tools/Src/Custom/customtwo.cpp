@@ -77,7 +77,13 @@ template <typename T, unsigned DIM>
 void customtwo<T, DIM>::set_default_parameters(){
     double scale = systemInfo->energy_scale;
 
-    NEnergies = 513;
+    // The integration step has to be well under the broadening it resolves.
+    // At the former default of 513 points over [-0.99, 0.99], dE = 3.87e-3
+    // against a default broadening of 0.01/energy_scale = 2.5e-3 -- coarser
+    // than the Lorentzian being integrated, costing about 1% silently.
+    // Measured on the Kane-Mele spin Hall plateau: 513 -> -2.0656,
+    // 1025 -> -2.0884, 2049 -> -2.0874, 4097 and 32769 -> -2.0874.
+    NEnergies = 2049;
     default_NEnergies = true;
 
     filename = "custom_two.dat";
