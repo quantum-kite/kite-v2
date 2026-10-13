@@ -4,18 +4,16 @@ native (pybinding-free) lattice tools, visualizing it, and computing its band st
 lattice's own hoppings with [`#!python kite.visualize`][kitevisualize].
 In the following sections, we will learn how to use [KITEx][kitex] to significantly scale up the simulations and introduce modifications to the lattice model.
 
-For efficiency, the default options of KITE's core code ([KITEx][kitex]) assume that the lattice model has a certain degree of interconnectivity or hopping range. 
-Specifically, the default is that the tight-binding Hamiltonian has non-zero matrix elements between orbitals that belong to unit cells 
-that are separated by at most 2 lattice spacings along a given direction (for example, in a simple single-orbital 1D chain this would allow defining models
-with up to second-nearest neighbors). To relax this constraint and thus be able to simulate more complex lattice models, users must adjust the NGHOSTS parameter in `#!bash kite/Src/Generic.hpp` and recompile [KITEx][kitex], otherwise an error message is output and the KITE program exits.
+A hopping connects orbitals in the same unit cell or in a first-neighbour cell: every component of
+`#!python relative_index` is `#!python -1`, `#!python 0` or `#!python +1`.
 
-!!! Info
+This bounds the cell offset, not the neighbour shell, so how far it reaches depends on the basis. On a
+honeycomb lattice the next-nearest-neighbour bonds are A–A and B–B at offsets like `#!python [1, -1]`
+and fit; in a single-orbital 1D chain only nearest neighbours do. For a model that reaches further,
+define a supercell — a larger unit cell brings those bonds back within one cell step.
 
-    `NGHOSTS` is the depth of the "ghost" halo KITEx adds around each thread's sub-domain in its
-    [domain decomposition][code_structure] — it has to be at least as deep as the longest-range hopping
-    in your model, which is why the default of 2 caps interconnectivity at 2 lattice spacings. See
-    [Code Structure & Compilation Options][code_structure] for how this connects to domain decomposition,
-    `TILE`, and memory usage.
+`#!python kite.config_system()` refuses a model that exceeds this and names the offending
+`#!python relative_index`.
 
 !!! Note
 

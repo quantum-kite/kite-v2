@@ -32,14 +32,11 @@ ensures all threads have completed the copy, and each thread then reads its neig
 buffer into its own ghost region. This is implemented with OpenMP barriers and shared memory, not message
 passing, since all threads reside in a single process.
 
-The default value of `NGHOSTS` is not arbitrary. As stated in [tight-binding models][tb_model] and
-[Disorder][disorder_doc], KITE's default build assumes that hopping terms — and disorder patterns, which
-are themselves special hopping or on-site terms — connect unit cells no more than two lattice spacings
-apart in any given direction. The ghost halo must be at least as deep as the longest-range hopping present
-in the model, since a thread cannot otherwise access the site it needs to couple to across a sub-domain
-boundary; `NGHOSTS = 2` is therefore the constant that encodes this maximum supported hopping range.
-Models with longer-range hoppings (third-nearest-neighbor and beyond) require increasing `NGHOSTS` in
-`Src/Generic.hpp` and recompiling KITEx, as described in [Compilation Options](#compilation-options) below.
+The ghost halo must be at least as deep as the longest-range hopping in the model, since a thread cannot
+otherwise reach the site it needs to couple to across a sub-domain boundary. As stated in
+[tight-binding models][tb_model] and [Disorder][disorder_doc], a hopping — and a disorder pattern, which
+is itself a special hopping or on-site term — spans at most one unit cell in each direction, so
+`NGHOSTS = 2` covers every model KITE accepts.
 
 `TILE` is a related but distinct constant: a cache-blocking granularity for the Hamiltonian-vector multiply
 loops, unconnected to hopping range. It intersects domain decomposition through a single constraint,
@@ -174,8 +171,7 @@ This mechanism relies on the `#ifndef` guard present in the definition of each c
       `Src/Lattice/LatticeStructure.cpp`, `Src/Vector/KPM_Vector2D.cpp`/`KPM_Vector3D.cpp`, and
       `Src/Hamiltonian/HamiltonianDefects.cpp` — as loop bounds
       (`for(i = NGHOSTS; i < Ld[d] - NGHOSTS; ...)`), boundary-exchange buffer indexing, and ghost-buffer
-      size calculations. Increasing this constant to support longer-range hopping models requires
-      auditing those call sites, as the change is not risk-free.
+      size calculations. It covers every model KITE accepts and is not a tuning knob.
     - **`PATTERNS`** is unused in the current codebase — a repository-wide search finds only its own
       definition, with no call sites.
     - `VVERBOSE`/`SSPRINT` are minor debug switches (very verbose tracing, and an internal print-frequency
