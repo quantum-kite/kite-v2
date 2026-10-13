@@ -46,9 +46,21 @@ def _rerun(example, flag):
 def test_kane_mele_spin_hall_plateau_is_quantized():
     """docs/documentation/examples/custom_vertex_operators.md.
 
-    With no Rashba term the two spin sectors decouple into independent Chern
-    insulators, so sigma^{s_z}_{xy} is fixed by their Chern numbers and the
-    plateau sits near -2 across the bulk gap. The page's window is |E| < 0.74t.
+    The model has no Rashba term -- every hopping is spin-diagonal -- so s_z is
+    exactly conserved, the two spin sectors are independent Chern insulators
+    with C = +-1, and sigma^{s_z}_{xy} is quantized at -2 across the bulk gap.
+    The page's window is |E| < 0.74t.
+
+    The tolerance is 10% rather than something tighter because the measured
+    value depends on the reconstruction broadening, and KITE-tools' default is
+    finer than this example's moment count supports. At eta = 0.04, matched to
+    M = 256, the plateau is -2.004; at KITE-tools' default eta = 0.01 it is
+    -2.098, because `M >~ 10*energy_scale/eta` (docs/documentation/optimization.md)
+    asks for M >~ 4000 and the example ships 256, so the reconstruction rings.
+    That is a property of the parameters, not a disagreement between routes: the
+    Python reconstruction gives -2.095 at the same eta, within 0.1% of
+    KITE-tools. Do not tighten this without also fixing the broadening, which
+    currently cannot be set from the command line.
     """
     _rerun("kane_mele_spin_hall", "--CustomTwo")
     data = _data("kane_mele_spin_hall", "custom_two.dat")

@@ -133,10 +133,10 @@ orbital operator is a full $N_\text{orb}\times N_\text{orb}$ matrix, and registe
 silently truncate it. The two vertices are the symmetrized spin current $A=\tfrac12\{\hat v_x,\hat s_z\}$ and
 the charge velocity $B=\hat v_y$.
 
-**Verified result.** `#!bash KITE-tools --CustomTwo` yields a genuinely **flat plateau** at
+**Verified result.** The Kubo-Bastin post-processing yields a genuinely **flat plateau** at
 
 $$
-\sigma^{s_z}_{xy}\approx -2.1
+\sigma^{s_z}_{xy}\approx -2.00
 $$
 
 across the bulk gap ($|E|\lesssim 0.74\,t$), consistent with the expected quantized spin Hall value. The
