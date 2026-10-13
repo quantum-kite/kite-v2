@@ -23,14 +23,28 @@ project(KITE)
 
 
 find_package(HDF5 COMPONENTS CXX C HL)
-if(${HDF5_FOUND})
-  include_directories(${HDF5_INCLUDE_DIR})
-  set(HDF5_USE_STATIC_LIBRARIES ON)
-  MESSAGE(STATUS "Hdf5 Library:  ${HDF5_CXX_HL_LIBRARIES}")
-  MESSAGE(STATUS "Hdf5Hl Library:  ${HDF5_CXX_LIBRARIES}")
-else()
-  MESSAGE(STATUS "Couldn't find HDF5")
+
+# HDF5 is required, not optional, and so are its C++ and high-level components:
+# the configuration file, the moments and the results all travel through it, and
+# "H5Cpp.h" is included unconditionally. Reporting a missing dependency as a
+# status line and configuring anyway turns one clear line into a wall of C++
+# errors much later, with the cause scrolled away. No minimum version is
+# asserted here -- which version is actually required has not been established.
+if(NOT HDF5_FOUND)
+    message(FATAL_ERROR
+        "KITE requires HDF5 with the C++ and high-level APIs, and CMake could not find it.\n"
+        "  Many distributions ship HDF5 without them; KITE needs all three components.\n"
+        "  Install a build that has them and point CMake at it:\n"
+        "      -DCMAKE_PREFIX_PATH=<prefix>   (or set $HDF5_ROOT)\n"
+        "  or use the conda environment, which pins a matched HDF5 alongside the compiler:\n"
+        "      conda env create -f environment.yml && conda activate kite\n"
+        "  See docs/installation.md for the supported routes.")
 endif()
+
+include_directories(${HDF5_INCLUDE_DIR})
+set(HDF5_USE_STATIC_LIBRARIES ON)
+MESSAGE(STATUS "Hdf5 Library:  ${HDF5_CXX_HL_LIBRARIES}")
+MESSAGE(STATUS "Hdf5Hl Library:  ${HDF5_CXX_LIBRARIES}")
 MESSAGE(STATUS "Compiler:  ${CMAKE_CXX_COMPILER}")
 
 option(USE_SYSTEM_EIGEN "Use the system-installed Eigen3 instead of the bundled copy in third_party/eigen3" OFF)
