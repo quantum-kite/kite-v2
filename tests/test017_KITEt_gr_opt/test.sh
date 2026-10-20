@@ -1,7 +1,7 @@
 #!/bin/bash
  
 S=3
-tools=../KITE-tools
+tools=${KITE_TOOLS:-../../build/KITE-tools}
 
 # This script will compare the .h5 file
 if [[ "$1" == "redo" ]]; then
@@ -14,8 +14,8 @@ if [[ "$1" == "redo" ]]; then
     cp config.h5 configORIG.h5 
     cp config_sym.h5 config_symORIG.h5 
 
-    SEED=$S ../KITEx config.h5 > log_KITEx
-    SEED=$S ../KITEx config_sym.h5 >> log_KITEx
+    SEED=$S ${KITEX:-../../build/KITEx} config.h5 > log_KITEx
+    SEED=$S ${KITEX:-../../build/KITEx} config_sym.h5 >> log_KITEx
     cp config.h5 configREF.h5
     cp config_sym.h5 config_symREF.h5
 

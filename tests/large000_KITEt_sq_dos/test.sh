@@ -11,7 +11,7 @@ fi
 if [[ "$1" == "redo" ]]; then
     # Recreate all the .h5 configuration files from scratch
 
-    ../KITE-tools $file > log_KITEx
+    ${KITE_TOOLS:-../../build/KITE-tools} $file > log_KITEx
     cp dos.dat dosREF.dat
 
     python test.py

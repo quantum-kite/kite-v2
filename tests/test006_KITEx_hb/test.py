@@ -17,7 +17,7 @@ dsets=["/Calculation/conductivity_optical_nonlinear/Gamma0yyy",
 for dset in dsets:
 
     dset1 = dset2 = dset
-    result = subprocess.run(["SEED=ones ../KITEx config.h5"], capture_output=True, shell=True)
+    result = subprocess.run(["SEED=ones ${KITEX:-../../build/KITEx} config.h5"], capture_output=True, shell=True)
     error_code = result.returncode
     if error_code != 0:
         print("ERROR")

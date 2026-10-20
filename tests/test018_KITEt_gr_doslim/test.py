@@ -10,8 +10,8 @@ N1 = 51
 N2 = N1*2-1
 d = (N1-1)//2
 
-result1 = subprocess.run([f"../KITE-tools config.h5 --DOS -E -0.1 0.1 {N1} -N dos1.dat -X"], capture_output=True, shell=True)
-result2 = subprocess.run([f"../KITE-tools config.h5 --DOS -E -0.2 0.2 {N2} -N dos2.dat -X"], capture_output=True, shell=True)
+result1 = subprocess.run([f"${KITE_TOOLS:-../../build/KITE-tools} config.h5 --DOS -E -0.1 0.1 {N1} -N dos1.dat -X"], capture_output=True, shell=True)
+result2 = subprocess.run([f"${KITE_TOOLS:-../../build/KITE-tools} config.h5 --DOS -E -0.2 0.2 {N2} -N dos2.dat -X"], capture_output=True, shell=True)
 # print("stdout:", result.stdout)
 # print("stderr:", result.stderr)
 error_code = result1.returncode*result2.returncode

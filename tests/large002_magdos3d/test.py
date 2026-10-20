@@ -12,7 +12,7 @@ file4 = "dosREF.dat"
 dset1 = dset2 = "/Calculation/dos/MU"
 tol = 1e-8
 
-commands = ["SEED=3 ../KITEx config.h5", "../KITE-tools config.h5"]
+commands = ["SEED=3 ${KITEX:-../../build/KITEx} config.h5", "${KITE_TOOLS:-../../build/KITE-tools} config.h5"]
 
 for command in commands:
     result = subprocess.run([command], capture_output=True, shell=True)

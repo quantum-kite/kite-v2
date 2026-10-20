@@ -1,4 +1,4 @@
-/usr/bin/time -v ../KITEx config.h5 &> out.dat
+/usr/bin/time -v ${KITEX:-../../build/KITEx} config.h5 &> out.dat
 
 cat out.dat | grep Elapsed | awk '{print $8}'
 

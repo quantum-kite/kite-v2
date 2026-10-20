@@ -10,7 +10,7 @@ file2 = "configREF.h5"
 dset1 = dset2 = "/Calculation/arpes/kMU"
 tol = 1e-8
 
-result = subprocess.run(["SEED=3 ../KITEx config.h5"], capture_output=True, shell=True)
+result = subprocess.run(["SEED=3 ${KITEX:-../../build/KITEx} config.h5"], capture_output=True, shell=True)
 # print("stdout:", result.stdout)
 # print("stderr:", result.stderr)
 error_code = result.returncode

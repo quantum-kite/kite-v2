@@ -8,7 +8,7 @@ if [[ "$1" == "redo" ]]; then
     python config.py > log_config
 
     chmod 755 config.h5
-    SEED=$S ../KITEx config.h5 > log_KITEx
+    SEED=$S ${KITEX:-../../build/KITEx} config.h5 > log_KITEx
 
     python test.py
     rm -r __pycache__

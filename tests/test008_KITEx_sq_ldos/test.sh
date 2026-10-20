@@ -8,7 +8,7 @@ if [[ "$1" == "redo" ]]; then
     cp config.h5 configORIG.h5 
 
     # Seed doesn't need to be specified in LDOS
-    ../KITEx config.h5 > log_KITEx
+    ${KITEX:-../../build/KITEx} config.h5 > log_KITEx
     cp config.h5 configREF.h5
 
     python test.py

@@ -7,7 +7,7 @@ if [[ "$1" == "redo" ]]; then
     chmod 755 config.h5
     cp config.h5 configORIG.h5 
 
-    SEED=$S ../KITEx config.h5 > log_KITEx
+    SEED=$S ${KITEX:-../../build/KITEx} config.h5 > log_KITEx
     cp config.h5 configREF.h5
 
     python test.py
