@@ -13,7 +13,8 @@
     Calculation type: Arpes
     Last updated: 08/05/2025
 """
-import pybinding as pb
+from kite import lattice as latt
+from kite import visualize
 from math import sqrt
 import kite
 import sys
@@ -36,7 +37,7 @@ c0 = 0.335                                # [nm] interlayer spacing
 
 def bilayer_graphene_rashba():
 
-  lat = pb.Lattice(
+  lat = latt.Lattice(
       a1=[a/2,  a/2 * sqrt(3)],
       a2=[-a/2, a/2 * sqrt(3)])
 
@@ -170,7 +171,7 @@ points.append([KG5, Gamma])
 
 
 path_num = int(sys.argv[12])
-k_path = pb.results.make_path(*points[path_num], step=float(sys.argv[3]))
+k_path = visualize.make_path(*points[path_num], step=float(sys.argv[3]))[0]
 moments = int(sys.argv[2])
 LIM = 10
 nx = ny = 4

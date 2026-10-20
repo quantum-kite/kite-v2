@@ -4,20 +4,15 @@ import matplotlib.pyplot as mpl
 
 # ************************************
 # keep these definitions for kite website
-import seaborn as sns
+from cycler import cycler
 
 mpl.rcParams['figure.dpi'] = 640
 mpl.rcParams['savefig.dpi'] = 640
-sns.set_style("white")
 # Kite color scheme
 colors = ["dusty purple", "faded green", "windows blue", "amber", "greyish"]
-current_palette = sns.xkcd_palette(colors)
-sns.set_palette(current_palette)
-sns.set_style("ticks")
-# sns.set_context("talk", font_scale=1.2)
+mpl.rcParams['axes.prop_cycle'] = cycler(color=['xkcd:' + c for c in colors])
 
 mpl.rc('text', usetex=True)
-mpl.rc('text.latex', unicode=True)
 font = {'family': 'serif',
         'weight': 'bold',
         'size': 28}

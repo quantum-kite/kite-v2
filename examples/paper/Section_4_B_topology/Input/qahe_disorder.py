@@ -14,11 +14,13 @@
     Last updated: 08/05/2025
 """
 import numpy as np
-import pybinding as pb
+from kite import lattice as latt
 import matplotlib.pyplot as plt
 import kite
-from pybinding.repository.graphene import a_cc, a
-from pybinding.constants import hbar
+from kite.repository import graphene
+
+a, a_cc = graphene.a, graphene.a_cc
+hbar = 6.58211899e-16   #: [eV*s]
 from math import sqrt, pi
 
 el_charge = 1.602 * 10 ** -19  #: [C] electron charge
@@ -59,7 +61,7 @@ def honeycomb_lattice_with_SO(onsite=(0, 0)):
     """
 
     # create a lattice with 2 primitive vectors
-    lat = pb.Lattice(
+    lat = latt.Lattice(
         a1=a1, a2=a2
     )
 

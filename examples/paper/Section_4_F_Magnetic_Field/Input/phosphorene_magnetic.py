@@ -15,7 +15,7 @@
     Last updated: 08/05/2025
 """
 import kite
-import pybinding as pb
+from kite import lattice as latt
 from math import pi, sin, cos
 
 
@@ -33,7 +33,7 @@ def monolayer_4band(num_hoppings=4):
     theta = 96.79 * (pi / 180)
     phi = 103.69 * (pi / 180)
 
-    lat = pb.Lattice(a1=[ax, 0], a2=[0, ay])
+    lat = latt.Lattice(a1=[ax, 0], a2=[0, ay])
 
     h = a * sin(phi - pi / 2)
     s = 0.5 * ax - a * cos(theta / 2)

@@ -15,7 +15,8 @@
 """
 import kite
 import numpy as np
-import pybinding as pb
+from kite import lattice as latt
+import time
 import matplotlib.pyplot as plt
 import subprocess
 import sys
@@ -25,8 +26,10 @@ import shutil
 import multiprocessing
 from numpy import linalg as LA
 
-from pybinding.repository.graphene import a_cc, a
-from pybinding.constants import hbar
+from kite.repository import graphene
+
+a, a_cc = graphene.a, graphene.a_cc
+hbar = 6.58211899e-16   #: [eV*s]
 from math import sqrt, pi
 
 el_charge = 1.602 * 10 ** -19  #: [C] electron charge
@@ -77,7 +80,7 @@ def honeycomb_lattice_with_SO(onsite=(0, 0)):
     """
 
     # create a lattice with 2 primitive vectors
-    lat = pb.Lattice(
+    lat = latt.Lattice(
         a1=a1, a2=a2
     )
     print(a1, a2)
@@ -282,10 +285,10 @@ if __name__ == '__main__':
     else:
         kite.config_system(lattice, configuration, calculation, filename=name)
 
-    pb.utils.tic()  # measure the time
+    _started = time.time()  # measure the time
 
     # # I have an alias for KITEx in zsh, useful for having everything in one script
     sp = subprocess.Popen(['/usr/bin/bash', '-i', '-c', 'KITEwavepacketLeib {}'.format(name)])
     sp.communicate()
 
-    pb.utils.toc('Time for time evolution ')
+    print('Time for time evolution ', time.time() - _started, 's')

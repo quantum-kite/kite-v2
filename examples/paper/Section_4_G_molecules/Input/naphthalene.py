@@ -14,9 +14,9 @@
     Last updated: 08/05/2025
 """
 import kite
-import pybinding as pb
+from kite import lattice as latt
 from math import pi, sqrt
-#from pybinding.repository import graphene
+#from kite.repository import graphene
 
 def naphthalene():
     """Return the lattice specification for naphthalene (2 rings) """
@@ -26,7 +26,7 @@ def naphthalene():
     t = -1      # [eV] nearest neighbour hopping
     #t2 = 0.2
     # create a lattice with 2 primitive vectors
-    lat = pb.Lattice(
+    lat = latt.Lattice(
         a1=[al, 0],
         a2=[0, 3 * a]
     )
