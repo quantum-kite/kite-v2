@@ -480,7 +480,7 @@ The KITE package for pre-processing is split up in various subclasses and contai
                 | `#!python num_disorder`:*`#!python int`*                    | Number of different disorder realisations.                                                                    |
 
     
-    :   !!! declaration-function "<span id="calculation-gaussian_wave_packet">*function*`#!python gaussian_wave_packet(num_points, num_moments, timestep, k_vector, spinor, width, mean_value, num_disorder=1, operators=None, probing_point=0)`</span>"
+    :   !!! declaration-function "<span id="calculation-gaussian_wave_packet">*function*`#!python gaussian_wave_packet(num_points, num_moments, timestep, k_vector, spinor, width, mean_value, num_disorder=1, operators=None)`</span>"
             
             
         :   Calculate the time evolution function of a wave packet.
@@ -491,14 +491,13 @@ The KITE package for pre-processing is split up in various subclasses and contai
                 |--------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------|
                 | `#!python num_points`:*`#!python int`*                             | Number of time points for the time evolution.                                                                   |
                 | `#!python num_moments`:*`#!python int`*                            | Number of polynomials in the Chebyshev expansion.                                                               |
-                | `#!python timestep`:*`#!python float`*                             | Timestep for calculation of time evolution.                                                                     |
+                | `#!python timestep`:*`#!python float`*                             | Timestep in rescaled units, conjugate to the rescaled energy: it is the argument of the Bessel expansion KITE propagates with. Physical time is this divided by `#!python EnergyScale`. |
                 | `#!python k_vector`:*`#!python array_like`*                        | Different wave vectors, components corresponding to vectors b0 and b1.                                          |
-                | `#!python spinor`:*`#!python array_like`*                          | Spinors for each of the k vectors.                                                                              |
+                | `#!python spinor`:*`#!python array_like`*                          | Amplitude on each orbital of the unit cell, one spinor per k vector. Seeded as given, with no projection onto the eigenstates of H(k), so unless it is an eigenvector the packet starts with weight in several bands. |
                 | `#!python width`:*`#!python float`*                                | Width of the gaussian.                                                                                          |
                 | `#!python mean_value`:*`#!python tuple(float, float)`*             | Mean value of the gaussian envelope.                                                                            |
                 | `#!python num_disorder`:*`#!python int`*                           | Number of different disorder realisations.                                                                      |
                 | `#!python operators`:*`#!python list[str]`*                       | Labels of operators registered via [`#!python add_orbital_coupling()`][calculation-add_orbital_coupling], whose expectation value is tracked at every timestep (e.g. `#!python ['l0', 'l1', 'l2']` for a 3-component spin, orbital-angular-momentum, or quadrupole operator set). |
-                | `#!python probing_point`:*`#!python int` or `#!python array_like`* | Forward probing point, defined with x, y coordinate were the wavepacket will be checked at different timesteps. |
 
             **Tracked operators**
 

@@ -97,7 +97,33 @@ calculation.gaussian_wave_packet(
 ```
 
 The `#!python spinor=[[1.0, 0.0]]` seeds the wave packet purely in the "up" orbital — the
-$S_z=+\tfrac12$ eigenstate. As with `#!python custom_one()`/`#!python custom_two()`, this
+$S_z=+\tfrac12$ eigenstate.
+
+!!! warning "The spinor is an orbital amplitude, not a band amplitude"
+
+    `#!python spinor` gives the amplitude on each **orbital** of the unit cell, in the
+    order the sublattices were added. KITE seeds that vector directly — it does not
+    project onto the eigenstates of $H(\mathbf{k})$ — so unless what you pass happens to
+    be an eigenvector, the packet starts with weight in several bands and its evolution
+    carries each of their frequencies.
+
+    That is what happens here, and it is the mechanism of the example rather than a flaw
+    in it. The orbitals *are* `up` and `down`, so the orbital basis is the $S_z$ basis, and
+    $H(\mathbf{k}) = \varepsilon(\mathbf{k})\hat I + B\hat\sigma_x$ has eigenstates
+    $(1,\pm 1)/\sqrt2$ at energies $\varepsilon(\mathbf{k}) \pm B$. The seeded $(1,0)$
+    therefore puts exactly half its weight in each, and the $\tfrac12\cos(2Bt)$ you see is
+    the beat between the two.
+
+    To seed an eigenstate instead, pass one: $(1,1)/\sqrt2$ leaves
+    $\langle S_x\rangle$ at $+\tfrac12$ and nothing precesses. Starting from
+    $(1,\mathrm{i})/\sqrt2$ gives the same precession in the $y$–$z$ plane,
+    $\langle S_y\rangle = \tfrac12\cos(2Bt)$ and $\langle S_z\rangle = \tfrac12\sin(2Bt)$.
+
+    On a lattice whose orbitals are not spin — honeycomb's $A$ and $B$ sublattices, say —
+    the same $(1,0)$ means "all weight on $A$", which is again an equal superposition of
+    the two bands, but of nothing you would call a spin state.
+
+As with `#!python custom_one()`/`#!python custom_two()`, this
 mechanism has one hard restriction worth knowing up front: a tracked operator must be a single
 on-site matrix, identical at every site — it cannot represent a quantity that couples different
 lattice sites (see the warning under

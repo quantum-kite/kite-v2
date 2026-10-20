@@ -870,11 +870,19 @@ class Calculation:
         num_moments : int
             Number of polynomials in the Chebyshev expansion.
         timestep : float
-            Timestep for calculation of time evolution.
+            Timestep, in the same rescaled units as the energy. KITE propagates
+            the rescaled Hamiltonian, so this is the argument of the Bessel
+            expansion of exp(-i H t) and is conjugate to that rescaled energy:
+            a step of `dt` in physical time is `dt * energy_scale` here. To put
+            the output back on a physical axis, divide by `EnergyScale` from the
+            output file.
         k_vector : np.array
             Different wave vectors, components corresponding to vectors b0 and b1.
         spinor : np.array
-            Spinors for each of the k vectors.
+            Amplitude on each orbital of the unit cell, one spinor per k vector,
+            in the order the sublattices were added. It is seeded as given and is
+            not projected onto the eigenstates of H(k), so unless it happens to be
+            an eigenvector of H(k) the packet starts with weight in several bands.
         width : float
             Width of the gaussian.
         mean_value : [float, float]
@@ -890,11 +898,9 @@ class Calculation:
             in the output file. As with custom_one/custom_two, labels are positional, not
             arbitrary names -- see add_orbital_coupling's documentation.
 
-            Optional parameters, forward probing point, defined with x, y coordinate were the wavepacket will be checked
             at different timesteps.
 
         """
-        probing_point = kwargs.get('probing_point', 0)
         operators = operators or []
         for label in operators:
             if label not in self._custom_operator_collection:
@@ -905,7 +911,7 @@ class Calculation:
         self._gaussian_wave_packet.append(
             {'num_points': num_points, 'num_moments': num_moments,
              'timestep': timestep, 'num_disorder': num_disorder, 'spinor': spinor, 'width': width, 'k_vector': k_vector,
-             'mean_value': mean_value, 'probing_point': probing_point, 'operators': operators})
+             'mean_value': mean_value, 'operators': operators})
 
     def localized_wave_packet(self,
                               time,
@@ -2258,8 +2264,8 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
     if calculation.get_gaussian_wave_packet:
         grpc_p = grpc.create_group('gaussian_wave_packet')
 
-        num_moments, num_points, num_disorder, spinor, width, k_vector, mean_value, \
-                                                                        probing_points = [], [], [], [], [], [], [], []
+        num_moments, num_points, num_disorder, spinor, width, k_vector, \
+            mean_value = [], [], [], [], [], [], []
         timestep = []
         for single_gauss_wavepacket in calculation.get_gaussian_wave_packet:
             num_moments.append(single_gauss_wavepacket['num_moments'])
@@ -2270,7 +2276,6 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
             k_vector.append(single_gauss_wavepacket['k_vector'])
             mean_value.append(single_gauss_wavepacket['mean_value'])
             timestep.append(single_gauss_wavepacket['timestep'])
-            probing_points.append(single_gauss_wavepacket['probing_point'])
         if len(calculation.get_gaussian_wave_packet) > 1:
             raise SystemExit('Only a single function request of each type is currently allowed. Please use another '
                              'configuration file for the same functionality.')
@@ -2278,7 +2283,6 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
         grpc_p.create_dataset('NumPoints', data=num_points, dtype=np.int32)
         grpc_p.create_dataset('NumDisorder', data=num_disorder, dtype=np.int32)
         grpc_p.create_dataset('mean_value', data=mean_value, dtype=np.int32)
-        grpc_p.create_dataset('ProbingPoint', data=np.asmatrix(np.asarray(probing_points)).astype(np.float32))
         grpc_p.create_dataset('width', data=width, dtype=np.float32)
         # The seeded state carries one amplitude per orbital of the unit cell. A
         # shorter or longer spinor is not caught downstream: KITEx reads a fixed
