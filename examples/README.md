@@ -49,7 +49,7 @@ These are pure-KITE scripts (using `kite.lattice.Lattice`, `python/kite/lattice.
 | `dos_vacancies.py` | Honeycomb lattice with structural vacancy disorder (`kite.StructuralDisorder`) at two different concentrations, one per sublattice. |
 | `dos_dccond_square_lattice.py` | DOS and Hall (`xy`) DC conductivity of a square lattice threaded by a real, Peierls-substituted magnetic field (`kite.Modification(magnetic_field=...)`) — a lattice Landau-level / Hofstadter-type calculation, not a zero-field demo. |
 | `dos_dccond_haldane.py` | DOS and DC (xy) conductivity of the Haldane model, with uniform on-site disorder on both sublattices. |
-| `dccond_graphene_magnetic_field.py` | DOS and Hall (`xy`) DC conductivity of graphene in a perpendicular, Peierls-substituted magnetic field: σ<sub>xy</sub> comes out as a staircase of Landau-level plateaus, odd in the Fermi energy. Roughly ten flux quanta thread a 128×128 sample, with weak uniform on-site disorder to smooth the plateaus. Written in dimensionless units (a = t = 1), so the field is set by the flux per cell rather than in tesla. |
+| `dccond_graphene_magnetic_field.py` | DOS and Hall (`xy`) DC conductivity of graphene in a strong Peierls-substituted magnetic field — 5/64 of a flux quantum per hexagon, so the magnetic length is 1.33 lattice constants and the spectrum is Hofstadter's rather than a Dirac Landau fan. σ<sub>xy</sub> shows a single plateau at ±1 e²/h per spin. Dimensionless units (a = t = 1). |
 
 **Optical / DC conductivity**
 

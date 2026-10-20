@@ -1,4 +1,4 @@
-""" Graphene in a perpendicular magnetic field: quantum Hall conductivity plateaus
+""" Graphene in a strong magnetic field: quantum Hall conductivity
 
     ##########################################################################
     #                         Copyright 2020/2026, KITE                      #
@@ -6,46 +6,21 @@
     ##########################################################################
 
     Units: Energy in units of hopping |t| = 1, length in units of lattice parameter |a| = 1
-           (dimensionless -- see note below on why real nm/eV units cannot be used here)
-    Lattice: Honeycomb (same lattice/hoppings as dos_graphene.py, just dimensionless a=t=1)
+    Lattice: Honeycomb (same lattice/hoppings as dos_graphene.py, with a = t = 1)
     Configuration: Periodic boundary conditions, size of the system 128x128 (nx=ny=2),
-                   real Peierls-substituted magnetic field via kite.Modification
-    Disorder: Small uniform on-site disorder on both sublattices (helps KPM convergence;
-              kept well below the expected Landau-level gaps so plateaus stay flat)
+                   Peierls-substituted magnetic field via kite.Modification
+    Disorder: Small uniform on-site disorder on both sublattices
     Calculation type: DOS and DC (xy) Hall conductivity
-    Last updated: 22/07/2026
+    Last updated: 15/10/2026
 
-    Why dimensionless units, not real nm/eV (like dos_graphene.py)
-    ---------------------------------------------------------------
-    kite.Modification(magnetic_field=...) quantizes the requested field to the nearest
-    integer multiple of a minimum field set by the sample's real physical area
-    (Src/kite/__init__.py's config_system: B_min = Phi_0 / (ly * unit_cell_area)). With
-    graphene's REAL lattice constant (~0.246 nm) at lx=ly=128, B_min alone is already
-    several hundred Tesla -- physically absurd, and no laptop-scale sample can do better.
-    Using dimensionless a=1 instead (same convention as dos_dccond_square_lattice.py,
-    which uses magnetic_field=40 on exactly this basis) makes B_min an O(10-100) number
-    in the code's internal units, so a modest-looking "magnetic_field" argument can
-    correspond to a physically sensible number of flux quanta. The physics (dispersion
-    shape, plateau existence) is governed by dimensionless ratios (flux quanta count,
-    hopping-to-disorder ratio), so the choice of length/energy unit is immaterial here.
-
-    Parameter choices (fixed, not auto-tuned -- see docstring of main())
-    ---------------------------------------------------------------------
-    lx=ly=128 (fixed by explicit request, not chosen for convenience). With this size,
-    B_min = Phi_0 / (128 * unit_cell_area) ~= 37.3 (internal units); magnetic_field is
-    chosen close to 10 * B_min, i.e. ~10 flux quanta threading the sample -- enough
-    states per Landau level for reasonably converged statistics while keeping the level
-    spacing coarse enough that only a handful of levels sit inside a modest energy window
-    (the goal here is 5-7 resolved levels total, not a large Landau fan).
-
-    num_moments=512 is deliberately modest -- this example is not trying to resolve fine
-    structure between closely-spaced high-index Landau levels, just the first few on each
-    side of the Dirac point. The harder convergence problem for a stochastic-trace
-    quantity like conductivity_dc is NOT moment count but random-vector sampling noise:
-    following the precedent in dos_dccond_haldane.py (whose conductivity_dc call uses
-    num_random=10 while its DOS call only needs num_random=1), this example uses
-    num_random=15 for conductivity_dc specifically.
-"""
+    The field is quantized to an integer multiple m of the smallest one commensurate
+    with the sample, and the simulation sees the flux per unit cell, f = m / L_y. Here
+    m = 10 and L_y = 128, so f = 5/64 of a flux quantum per hexagon and the magnetic
+    length is 1.33 a -- the lattice (Hofstadter) regime rather than the continuum Dirac
+    one. The DOS shows an isolated zeroth Landau level at E = 0 with a gap out to
+    |E| = 0.83 t, and sigma_xy a single plateau at +-1 e^2/h per spin before the band
+    breaks into Hofstadter subbands.
+    """
 
 __all__ = ["graphene_lattice", "main"]
 

@@ -98,8 +98,10 @@ def test_graphene_in_a_field_gives_an_antisymmetric_hall_staircase():
 
     sigma_xy(mu) must be odd in mu: reversing the Fermi level reverses the Hall
     response. This is a symmetry of the response rather than a fitted value, so
-    it holds regardless of how well the Landau levels are resolved -- which
-    makes it the right thing to pin for an example whose point is the staircase.
+    it holds regardless of how well the levels are resolved -- which matters
+    here, because at 5/64 of a flux quantum per hexagon only the zeroth Landau
+    level is resolved and the structure above the gap is Hofstadter subbands
+    that this moment count does not converge. The symmetry survives all of it.
     """
     data = _data("dccond_graphene_magnetic_field", "condDC.dat")
     mu, sigma = data[:, 0], data[:, 1]

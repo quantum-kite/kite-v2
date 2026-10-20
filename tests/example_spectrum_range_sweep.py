@@ -75,14 +75,46 @@ def _capture(path):
     return captured or None
 
 
+#: Library modules, and scripts that post-process somebody else's output.
+HELPERS = {"myaux.py", "kite_style.py"}
+
+
+def _is_processor(name):
+    return name.endswith("_process.py") or name.startswith("process_")
+
+
+#: Producers the capture cannot reach, and why. The accounting test below
+#: pins this exactly: a script that stops being capturable lands here as a
+#: failure instead of quietly dropping out of the sweep.
+NOT_CAPTURED = {
+    # No KITE calculation at all -- these draw a band structure or a lattice
+    # and never reach config_system, so there is no declared range to check.
+    "afm_zigzag_bands.py": "plots bands; makes no KITE calculation",
+    "band_structure_graphene.py": "plots bands; makes no KITE calculation",
+    "lattice_visualization_demo.py": "draws the lattice; makes no KITE calculation",
+    # main() takes a required argument, so the capture cannot call it. Both of
+    # these DO declare a spectrum_range, and nothing checks it.
+    "afm_zigzag_dos.py": "main(spin) requires an argument",
+    "kane_mele_spin_hall_disorder.py": "main(W) requires an argument",
+}
+
+#: Filled by the single capture pass below, for the accounting test.
+UNREACHED = []
+AUTOMATIC = []
+
+
 def _cases():
     for path in EXAMPLES:
+        if path.name in HELPERS or _is_processor(path.name):
+            continue
         captured = _capture(path)
         if not captured:
+            UNREACHED.append(path.name)
             continue
         configuration = captured["configuration"]
         if not configuration.energy_scale:
-            continue                       # automatic scaling is computed, not declared
+            AUTOMATIC.append(path.name)    # automatic scaling is computed, not declared
+            continue
         yield pytest.param(captured, id=path.name)
 
 
@@ -112,6 +144,34 @@ def test_declared_range_contains_the_spectrum(captured):
 def test_the_sweep_actually_covers_the_examples():
     """A sweep that silently captures nothing would pass forever."""
     assert len(CASES) >= 20, f"only {len(CASES)} examples captured; the sweep is not working"
+
+
+def test_every_producer_is_accounted_for():
+    """Each producer is swept, uses automatic scaling, or is a known exception.
+
+    The capture swallows whatever an example raises, which is what lets one
+    script's breakage not take the whole sweep down -- and also what would let
+    a script drop out of the sweep without anyone noticing. This closes that:
+    the set it could not reach must be exactly the documented one.
+    """
+    unreached = set(UNREACHED)
+    known = set(NOT_CAPTURED)
+
+    new_gaps = sorted(unreached - known)
+    assert not new_gaps, (
+        f"these examples are no longer reachable by the sweep, so their declared "
+        f"spectrum_range is checked by nothing: {new_gaps}")
+
+    fixed = sorted(known - unreached)
+    assert not fixed, (
+        f"these are now reachable and should be removed from NOT_CAPTURED: {fixed}")
+
+    total = len(CASES) + len(AUTOMATIC) + len(unreached)
+    producers = [p.name for p in EXAMPLES
+                 if p.name not in HELPERS and not _is_processor(p.name)]
+    assert total == len(producers), (
+        f"accounting does not close: {len(CASES)} swept + {len(AUTOMATIC)} automatic "
+        f"+ {len(unreached)} unreached != {len(producers)} producers")
 
 
 def test_the_sweep_catches_a_range_that_is_too_narrow():
