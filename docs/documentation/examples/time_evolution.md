@@ -123,6 +123,37 @@ $S_z=+\tfrac12$ eigenstate.
     the same $(1,0)$ means "all weight on $A$", which is again an equal superposition of
     the two bands, but of nothing you would call a spin state.
 
+!!! warning "The spinor is held fixed across the packet's momentum spread"
+
+    `#!python width` is a real-space length in the same units as the lattice vectors, so
+    the packet covers a momentum range $\Delta k\approx 1/\texttt{width}$ around each $k$
+    you list, and the spinor you gave for that $k$ is applied unchanged across the whole
+    range. Seeding an eigenvector of $H(\mathbf{k})$ therefore gives a single-band packet
+    only where that eigenvector varies little over $\Delta k$; near a band touching or an
+    avoided crossing it does not, and part of the weight sits in the other band.
+    `#!python spinor` takes one row per $k$-vector, so you can follow the eigenvector
+    across the packet where that matters.
+
+    It does not arise in the example above: $H(\mathbf{k})=\varepsilon(\mathbf{k})\hat I+B\hat\sigma_x$
+    has $k$-independent eigenvectors, so any width is safe.
+
+!!! note "`#!python k_vector` is fractional, `#!python hamiltonian_k()` is Cartesian"
+
+    `#!python k_vector` is given in fractional coordinates — components along the
+    reciprocal lattice vectors — so graphene's $K$ point is `#!python [1/3, -1/3]`, not its
+    Cartesian value. [`#!python kite.visualize.hamiltonian_k()`][visualize-hamiltonian_k]
+    takes Cartesian $k$, so if you diagonalize $H(\mathbf{k})$ to choose a spinor, convert
+    before seeding:
+
+    ``` python
+    vectors = np.asarray(lattice.vectors)
+    vectors = vectors[:, :vectors.shape[0]]
+    k_frac = k_cart @ vectors.T / (2 * np.pi)
+    ```
+
+    Passing a Cartesian $k$ straight to `#!python gaussian_wave_packet()` seeds a different
+    momentum, with no error.
+
 As with `#!python custom_one()`/`#!python custom_two()`, this
 mechanism has one hard restriction worth knowing up front: a tracked operator must be a single
 on-site matrix, identical at every site — it cannot represent a quantity that couples different
@@ -152,4 +183,5 @@ for both the propagator and the operator-registration mechanism.
 [calculation-gaussian_wave_packet]: ../../api/kite.md#calculation-gaussian_wave_packet
 [calculation-custom_one]: ../../api/kite.md#calculation-custom_one
 [calculation-add_orbital_coupling]: ../../api/kite.md#calculation-add_orbital_coupling
+[visualize-hamiltonian_k]: ../../api/kite.md#visualize-hamiltonian_k
 [precession-example]: https://github.com/quantum-kite/kite-v2/tree/master/examples/spin_precession_simple.py
