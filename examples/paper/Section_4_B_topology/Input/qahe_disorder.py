@@ -16,6 +16,8 @@
 import numpy as np
 from kite import lattice as latt
 import matplotlib.pyplot as plt
+import sys
+
 import kite
 from kite.repository import graphene
 
@@ -137,12 +139,13 @@ disorder.add_disorder(['Bup', 'Bdown'], 'Uniform', +0.0, 0.1)
 # Simulation for a small system ~ 10^7 orbitals
 
 # number of decomposition parts in each direction of matrix.
-nx = 4
-ny = 4 # Assumes nx * ny = 16 cores
+# Size and decomposition are parameters; the defaults are the published values.
+nx = int(sys.argv[2]) if len(sys.argv) > 2 else 4
+ny = int(sys.argv[3]) if len(sys.argv) > 3 else 4  # assumes nx * ny = 16 cores
 
 # number of unit cells in each direction.
-lx = 2048
-ly = 2048
+lx = int(sys.argv[1]) if len(sys.argv) > 1 else 2048
+ly = int(sys.argv[1]) if len(sys.argv) > 1 else 2048
 
 #
 # make config object which caries info about

@@ -14,6 +14,8 @@
     Calculation : DOS
     Last updated: 08/05/2025
 """
+import sys
+
 import kite
 from kite import lattice as latt
 from math import pi, sin, cos
@@ -83,10 +85,11 @@ def monolayer_4band(num_hoppings=4):
 lattice = monolayer_4band(num_hoppings=5)
 # number of decomposition parts in each direction of matrix.
 # This divides the lattice into various sections, each of which is calculated in parallel
-nx = 7
-ny = 4
+# Size and decomposition are parameters; the defaults are the published values.
+nx = int(sys.argv[2]) if len(sys.argv) > 2 else 7
+ny = int(sys.argv[3]) if len(sys.argv) > 3 else 4
 # number of unit cells in each direction.
-lx = ly = 7168 * 2
+lx = ly = int(sys.argv[1]) if len(sys.argv) > 1 else 7168 * 2
 # make config object which caries info about
 # - the number of decomposition parts [nx, ny],
 # - lengths of structure [lx, ly]

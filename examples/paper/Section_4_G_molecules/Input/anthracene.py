@@ -13,6 +13,8 @@
     Calculation type: DoS
     Last updated: 08/05/2025
 """
+import sys
+
 import kite
 from kite import lattice as latt
 from math import pi, sqrt
@@ -101,9 +103,10 @@ disorder.add_disorder('C14', 'Uniform', 0, delta)
 
 # number of decomposition parts in each direction of matrix.
 # This divides the lattice into various sections, each of which is calculated in parallel
-nx = ny = 1
+# Size and decomposition are parameters; the defaults are the published values.
+nx = ny = int(sys.argv[2]) if len(sys.argv) > 2 else 1
 # number of unit cells in each direction.
-lx = ly = 128
+lx = ly = int(sys.argv[1]) if len(sys.argv) > 1 else 128
 # make config object which caries info about
 # - the number of decomposition parts [nx, ny],
 # - lengths of structure [lx, ly]
