@@ -10,9 +10,15 @@ to process the output of a spectral function calculation.
 
 ## 2. `process_single_shot.py`
 to extract the output data from a single-shot calculation of the longitudinal DC-conductivity.
-This tool is a simple python script that outputs a data file that contains three columns of data that
-are read out of the processed HDF5, namely:
+This tool is a simple python script that outputs a data file with three columns read out of
+the processed HDF5, namely:
 
-| Column 1       | Column 2                      | Column 3                           |
-|----------------|-------------------------------|------------------------------------|
-| Fermi Energies | Real Part of the Conductivity | Imaginary Part of the Conductivity |
+| Column 1       | Column 2                       | Column 3         |
+|----------------|--------------------------------|------------------|
+| Fermi Energies | `preserve_disorder` flag (0/1) | The conductivity |
+
+KITE-tools extracts the same result:
+
+``` bash
+./build/KITE-tools output.h5 --SingleShot
+```

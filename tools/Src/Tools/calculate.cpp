@@ -23,6 +23,7 @@
 #include "../Spectral/ldos.hpp"
 #include "../Spectral/arpes.hpp"
 #include "../CondDC/conductivity_dc.hpp"
+#include "../CondDC/singleshot.hpp"
 #include "../OptCond_1order/conductivity_optical.hpp"
 #include "../OptCond_2order/conductivity_2order.hpp"
 #include "../Custom/customone.hpp"
@@ -49,6 +50,7 @@ void calculate(char *name, shell_input & variables){
   ldos<U, DIM>                    lDOS(info, variables); 
   dos<U, DIM>                     DOS(info, variables); 
   conductivity_dc<U, DIM>         condDC(info, variables);
+  singleshot<U, DIM>              singleShot(info, variables);
   conductivity_optical<U, DIM>    condOpt(info, variables);
   conductivity_nonlinear<U, DIM>  condOpt2(info, variables);
   customone<U, DIM>               customOne(info, variables);

@@ -108,9 +108,13 @@ void shell_input::printHelp(){
     std::cout << "--CondOpt    Optical conductivity\n";
     std::cout << "--CondOpt2   Second-order optical conductivity (photoconductivity)\n";
     std::cout << "--CustomOne  Single-vertex custom operator trace (generalized DOS)\n";
-    std::cout << "--CustomTwo  Double-vertex custom operator trace (generalized Kubo-Bastin)\n\n";
+    std::cout << "--CustomTwo  Double-vertex custom operator trace (generalized Kubo-Bastin)\n";
+    std::cout << "--SingleShot Longitudinal DC conductivity from the single-shot method\n\n";
 
     std::cout << "After each of these keywords, the program will be expecting the subparameters associated with that word (always separated by spaces):\n\n";
+
+    std::cout << "--SingleShot -N            Name of the output file\n";
+    std::cout << "             -X            Exclusive. Only calculate this quantity\n\n";
 
     std::cout << "--LDOS     -N              Name of the output file\n";
     std::cout << "           -M              Number of Chebyshev moments\n";
@@ -213,7 +217,7 @@ shell_input::shell_input(int argc, char *argv[]){
 	// Processes the input that this program recieves from the command line	
 
     // First, find the position of each of the following functions:
-    valid_keys = std::vector<std::string>{"--DOS", "--CondOpt","--CondDC", "--CondOpt2", "--LDOS", "--ARPES", "--CustomOne", "--CustomTwo"};
+    valid_keys = std::vector<std::string>{"--DOS", "--CondOpt","--CondDC", "--CondOpt2", "--LDOS", "--ARPES", "--CustomOne", "--CustomTwo", "--SingleShot"};
     len = valid_keys.size();   // length of valid_keys?
     keys_pos = std::vector<int>(len, -1);
     keys_len = std::vector<int>(len, -1);
@@ -256,6 +260,7 @@ shell_input::shell_input(int argc, char *argv[]){
     parse_CondOpt2(argc, argv);
     parse_CustomOne(argc, argv);
     parse_CustomTwo(argc, argv);
+    parse_SingleShot(argc, argv);
 
     // Process the exclusive flag. If there are no exclusive functions,
     // all will be calculated. If there's only one, that's the only one
@@ -269,6 +274,7 @@ shell_input::shell_input(int argc, char *argv[]){
     ARPES_is_required = false;
     CustomOne_is_required = false;
     CustomTwo_is_required = false;
+    SingleShot_is_required = false;
 
     int num_exclusives = get_num_exclusives();
     if(num_exclusives > 1){
@@ -284,6 +290,7 @@ shell_input::shell_input(int argc, char *argv[]){
             if(ARPES_Exclusive) ARPES_is_required = true;
             if(CustomOne_Exclusive) CustomOne_is_required = true;
             if(CustomTwo_Exclusive) CustomTwo_is_required = true;
+            if(SingleShot_Exclusive) SingleShot_is_required = true;
 
         } else {
             CondDC_is_required = true;
@@ -294,6 +301,7 @@ shell_input::shell_input(int argc, char *argv[]){
             ARPES_is_required = true;
             CustomOne_is_required = true;
             CustomTwo_is_required = true;
+            SingleShot_is_required = true;
             }
     }
 
@@ -306,8 +314,10 @@ int shell_input::get_num_exclusives(){
     if(CondOpt2_Exclusive)    N_exclusives++;
     if(DOS_Exclusive)         N_exclusives++;
     if(lDOS_Exclusive)        N_exclusives++;
+    if(ARPES_Exclusive)       N_exclusives++;
     if(CustomOne_Exclusive)   N_exclusives++;
     if(CustomTwo_Exclusive)   N_exclusives++;
+    if(SingleShot_Exclusive)  N_exclusives++;
 
     return N_exclusives;
 }
@@ -853,6 +863,46 @@ void shell_input::parse_ARPES(int argc, char* argv[]){
 
             }
         }
+        // A lone flag after the keyword never enters the loop above, whose
+        // bound is the number of arguments that follow. parse_lDOS and
+        // parse_CustomTwo carry the same trailing check.
+        if(keys_len.at(j) == 1){
+            std::string name = argv[1 + pos];
+            if(name == "-X")
+                ARPES_Exclusive = true;
+        }
     }
     debug_message("Left parse_ARPES\n");
+}
+
+
+void shell_input::parse_SingleShot(int argc, char* argv[]){
+    // The single-shot conductivity is computed by KITEx itself, so there is
+    // nothing here to re-run at a different temperature, broadening or energy
+    // grid: those were fixed when the calculation was set up. The only thing
+    // left to choose is where the result is written.
+
+    SingleShot_Name = "";
+    SingleShot_Exclusive = false;
+    int pos = keys_pos.at(8);
+    if(pos != -1){
+        for(int k = 1; k < keys_len.at(8); k++){
+            std::string name = argv[k + pos];
+            std::string n1 = argv[k + pos + 1];
+            if(name == "-N")
+                SingleShot_Name = n1;
+            if(name == "-X" or n1 == "-X")
+                SingleShot_Exclusive = true;
+        }
+        if(keys_len.at(8) == 1){
+            std::string name = argv[1 + pos];
+            if(name == "-X")
+                SingleShot_Exclusive = true;
+        }
+    }
+}
+
+void shell_input::printSingleShot(){
+    if(SingleShot_Name != "")
+        std::cout << "    name of the output file: " << SingleShot_Name << "\n";
 }

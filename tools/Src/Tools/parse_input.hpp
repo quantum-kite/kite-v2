@@ -71,6 +71,11 @@ class shell_input{
         bool CustomTwo_Exclusive;
         bool CustomTwo_is_required;
 
+        // Single-shot longitudinal DC conductivity
+        std::string SingleShot_Name;
+        bool SingleShot_Exclusive;
+        bool SingleShot_is_required;
+
         // Local density of states
         std::string lDOS_Name;
         bool lDOS_Exclusive;
@@ -129,6 +134,7 @@ class shell_input{
         void printDOS();
         void printlDOS();
         void printARPES();
+        void printSingleShot();
 
         void parse_CondDC(int argc, char *argv[]);
         void parse_CondOpt(int argc, char *argv[]);
@@ -138,6 +144,7 @@ class shell_input{
         void parse_ARPES(int argc, char *argv[]);
         void parse_CustomOne(int argc, char *argv[]);
         void parse_CustomTwo(int argc, char *argv[]);
+        void parse_SingleShot(int argc, char *argv[]);
         int get_num_exclusives();
 
 };
