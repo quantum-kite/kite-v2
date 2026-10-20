@@ -99,12 +99,12 @@ jobs:
           python dos_graphene.py
           ../build/KITEx graphene_lattice-output.h5
 
-      # The two regression scripts that check custom_two against a real KITEx
-      # run need an example's output to compare with. Both examples are cheap
-      # (seconds), so the fixtures are generated here rather than leaving those
-      # two scripts to run nowhere, as they did while they were excluded for
-      # not being self-contained.
-      - name: Generate the fixtures the custom_two regressions compare against
+      # The regression scripts that check KITE-tools against a real KITEx run
+      # need stored output to compare with. All of these are cheap (seconds),
+      # so the fixtures are generated here rather than leaving those scripts to
+      # run nowhere, as they did while they were excluded for not being
+      # self-contained.
+      - name: Generate the fixtures the KITE-tools regressions compare against
         shell: bash -el {0}
         run: |
           (cd examples
@@ -112,7 +112,11 @@ jobs:
            ../build/KITEx kane_mele_spin_hall-output.h5)
           (cd tests/fixtures
            python graphene_custom_two_xx_check.py
-           ../../build/KITEx graphene_custom_two_xx_check-output.h5)
+           ../../build/KITEx graphene_custom_two_xx_check-output.h5
+           python graphene_singleshot_check.py
+           ../../build/KITEx graphene_singleshot_check-output.h5
+           python square_arpes_and_dos_check.py
+           ../../build/KITEx square_arpes_and_dos_check-output.h5)
 
       # One entry point for the whole suite. Collection patterns and the
       # sys.path pinning that keeps `import kite` on this checkout live in

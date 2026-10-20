@@ -19,8 +19,7 @@ where archive.h5 is the HDF file that stores the output of KITE. If KITE-tools d
   * Second-order optical conductivity (CondOpt2)
   * Custom rank-one spectral density (CustomOne) -- the energy-resolved density $\mathrm{Tr}[A\,\delta(E-H)]$ of a user-defined `#!python kite.custom.Vertex` operator $A$ from [`#!python calculation.custom_one()`][calculation-custom_one]
   * Custom rank-two Kubo-Bastin response (CustomTwo) -- the Fermi-energy-resolved response reconstructed from the double-Chebyshev moment matrix $\Gamma_{mn}=\mathrm{Tr}[T_m(\hat H)\,B\,T_n(\hat H)\,A]$ of a user-defined vertex pair $A,B$ from [`#!python calculation.custom_two()`][calculation-custom_two]
-
-The SingleShot DC conductivity does not require the post-processing through KITE-tools.
+  * Single-shot longitudinal DC conductivity (SingleShot) -- the conductivity [KITEx][kitex] solved for directly at each Fermi energy of [`#!python calculation.singleshot_conductivity_dc()`][calculation-singleshot_conductivity_dc]
 
 
 ### Advanced usage
@@ -90,6 +89,8 @@ Each function to compute is specified after the double hyphens — and the param
 | `#!bash --CustomTwo` | `#!bash -d` | Broadening parameter of the Dirac delta                                                             |
 | `#!bash --CustomTwo` | `#!bash -F` | min max num Range of Fermi energies. min and max may be omitted if only one is required              |
 | `#!bash --CustomTwo` | `#!bash -X` | Exclusive. Only calculate this quantity                                                             |
+| `#!bash --SingleShot` | `#!bash -N` | Name of the output file                                                                            |
+| `#!bash --SingleShot` | `#!bash -X` | Exclusive. Only calculate this quantity                                                             |
 
 All the values specified in this way are assumed to be in the same units as the ones used in the configuration file. All quantities are double-precision numbers except for the ones representing integers, such as the number of points. This list may be found in KITE-tools, run `KITE-tools --help`:
 
@@ -105,7 +106,7 @@ In the table below, we specify the name of the files that are created by KITE-to
 | Optical Conductivity              | `#!bash optical_cond.dat`    | Frequency         | Opt. Cond ($Re$) | Opt. Cond ($Im$) |
 | DC Conductivity                   | `#!bash condDC.dat`          | Fermi energy      | Cond ($Re$)      | Cond ($Im$)      |
 | Second-order optical conductivity | `#!bash nonlinear_cond.dat`  | Frequency         | NL Cond ($Re$)   | NL Cond ($Im$)   |
-| Single-shot DC Conductivity       | `#!bash [HDF5-filename].dat` | Fermi energy      | Cond ($Re$)      | Cond ($Im$)      |
+| Single-shot DC Conductivity       | `#!bash singleshot_condDC.dat` | Fermi energy    | Cond ($Re$)      |                  |
 | Custom rank-one spectral density   | `#!bash custom_one.dat`      | energy            | $\mathrm{Tr}[A\,\delta(E-H)]$ ($Re$) |      |
 | Custom rank-two Kubo-Bastin response | `#!bash custom_two.dat`    | Fermi energy      | response ($Re$)  |                  |
 
@@ -166,16 +167,12 @@ For more details on the type of calculations performed during post-processing, c
     $e^2/h$, same as `#!bash --CondDC`. For `#!python NumVelocities != 2`, an additional factor
     of `#!bash EnergyScale`$^{N_v-2}$ is applied automatically.
 
-!!! info "Processing the single-shot DC conductivity"
+!!! info "The single-shot DC conductivity"
 
-    The single shot DC conductivity does not need any post-processing as it is an energy dependent calculation where the conductivity is calculated on the fly.
-    In this particular case, the data is extracted directly from the hdf file with the following python script in the `#!bash kite/tools/`-folder:
-    
-    ``` bash
-    python3 process_single_shot.py output.h5
-    ```
-    
-    The output of this script will be a data-file with name `#!bash output.dat` or similar, structured as given in the table above.
+    `#!bash --SingleShot` has no parameters beyond the output file because there is nothing
+    to reconstruct: the conductivity is computed energy by energy during the [KITEx][kitex]
+    run, and the temperature, broadening and Fermi energies were fixed then. KITE-tools
+    only writes it out, as `#!bash singleshot_condDC.dat`.
 
 ## Examples
 
@@ -245,6 +242,8 @@ equidistant points in `#!python [-2, 2]`, at temperature `#!bash 0.01`.
 [ground_rules]: ../documentation/optimization.md
 [calculation-custom_one]: kite.md#calculation-custom_one
 [calculation-custom_two]: kite.md#calculation-custom_two
+[calculation-singleshot_conductivity_dc]: kite.md#calculation-singleshot_conductivity_dc
+[kitex]: kitex.md
 [custom-vertex-example]: ../documentation/examples/custom_vertex_operators.md
 [ree-example]: ../documentation/examples/rashba_edelstein.md
  

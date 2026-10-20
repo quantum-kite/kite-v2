@@ -629,14 +629,15 @@ The KITE package for pre-processing is split up in various subclasses and contai
                 As such, the results are already available in the [HDF5]-file. You can extract the results from the
                 [HDF5]-file [as explained in the tutorial][tutorial-hdf5].
 
-                There is also [a script][kitetools-output] that automates this process with, `#!python "output.h5"`
-                the name of the [HDF5]-file processed by [KITEx][kitex]:
-                
+                [KITE-tools][kitetools] will also write it out for you, which saves reading the
+                [HDF5]-file by hand and reports the Fermi energies in the same convention as every
+                other quantity:
+
                 ``` bash
-                python3 process_single_shot.py output.h5
+                ./build/KITE-tools output.h5 --SingleShot
                 ``` 
                 
-                this will result in a data-file `#!python "output.dat"`, as explained in the
+                this will result in a data-file `#!python "singleshot_condDC.dat"`, as explained in the
                 [API of KITE-tools][kitetools-output].                
 
             **Parameters**

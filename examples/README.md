@@ -57,7 +57,7 @@ These are pure-KITE scripts (using `kite.lattice.Lattice`, `python/kite/lattice.
 | --- | --- |
 | `hbn_optcond2_vacancies.py` | **Second-order (nonlinear)** optical conductivity σ<sub>xxy</sub> of hexagonal boron nitride with vacancy disorder — not the ordinary linear σ<sub>ab</sub>(ω) computed elsewhere in this table. The gapped honeycomb (hBN) lattice is essential, not incidental: its onsite A/B potential breaks inversion symmetry, which is required for this third-rank response to be nonzero at all. See the docstring in the script itself for what its `special=1` flag actually skips in the C++ core. |
 | `optcond_t_symmetric_cubic_weyl_sm.py` | Linear optical conductivity (\(\sigma_{xx}\)) of the T-symmetric cubic Weyl semimetal; a heavily-parallelized example. See also the [Optical Conductivity write-up][optical-conductivity-example]. |
-| `dccond_phosphorene.py` | Single-shot DC conductivity (`xx`/`yy`) of bilayer phosphorene. See the [in-depth Phosphorene write-up][phosphorene-example]. Single-shot needs no KITE-tools reconstruction; extract the result with `process_single_shot.py`. |
+| `dccond_phosphorene.py` | Single-shot DC conductivity (`xx`/`yy`) of bilayer phosphorene. See the [in-depth Phosphorene write-up][phosphorene-example]. Single-shot needs no reconstruction; extract the result with `KITE-tools phxx-output.h5 --SingleShot`. |
 | `weyl_lt.py` | The same Weyl-semimetal optical-conductivity calculation as `optcond_t_symmetric_cubic_weyl_sm.py`, built using KITE's own `kite.lattice.Lattice` API rather than pybinding — compare directly against `pybinding/weyl_pb.py`. |
 
 **Local density of states (LDOS) and spectral function (ARPES)**
