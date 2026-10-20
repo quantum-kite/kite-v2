@@ -12,7 +12,8 @@ environment does not have.
 Post-processing scripts are paired to their producer by the HDF5 filename they
 open, not by their own name, so the pairing cannot drift out of date silently.
 
-Exit status is 1 if any stage failed or any output contains a non-finite value.
+Exit status is 1 if any stage failed, any output contains a non-finite value,
+or a processor became unpaired that is not in KNOWN_UNPAIRED.
 """
 
 import argparse
@@ -35,6 +36,35 @@ TOOLS = REPO / "build" / "KITE-tools"
 
 # Scripts that are library helpers, not runnable examples.
 HELPERS = {"myaux.py", "kite_style.py"}
+
+# Processors this runner cannot pair to a producer, and why. Pairing is by the
+# HDF5 filename a script mentions in its source, so a processor that takes the
+# name as an argument, or uses a generic one, has nothing to match against.
+# These are a limitation of the pairing, not examples that are broken, so they
+# are reported but do not fail the run. A processor that becomes unpaired
+# without being listed here does fail it -- that is a real loss of coverage.
+KNOWN_UNPAIRED = {
+    "process_arpes.py": "imported by the arpes_* scripts; takes its filename as an argument",
+    "process_single_shot.py": "takes its filename as an argument",
+    "process_altermagnet_arpes.py": "reads the two spin-resolved files by argument",
+    "afm_zigzag_dos_process.py": "names no HDF5 file in its source",
+}
+
+def verdict(results):
+    """Split a report into (failures, unpaired, unexpectedly unpaired).
+
+    The exit status is non-zero when either the first or the third is
+    non-empty. An unpaired processor was never run and so was never checked,
+    which is a limitation of the filename pairing rather than a defect -- but
+    only for the ones already known. A new one is a silent loss of coverage.
+    """
+    ok = ("ok", "ok (no KITEx stage)")
+    unpaired = {k: v for k, v in results.items() if v.get("status") == "unpaired"}
+    bad = {k: v for k, v in results.items()
+           if v.get("status") not in ok and k not in unpaired}
+    surprises = {k: v for k, v in unpaired.items() if k not in KNOWN_UNPAIRED}
+    return bad, unpaired, surprises
+
 
 H5_IN_SOURCE = re.compile(r"""['"]([A-Za-z0-9_./-]+\.h5)['"]""")
 
@@ -204,12 +234,20 @@ def main():
     report = out_root / "sweep-report.json"
     report.write_text(json.dumps(results, indent=2, sort_keys=True))
 
-    bad = {k: v for k, v in results.items()
-           if v.get("status") not in ("ok", "ok (no KITEx stage)")}
-    print(f"\n{len(results) - len(bad)}/{len(results)} clean; report at {report}")
+    bad, unpaired, surprises = verdict(results)
+
+    print(f"\n{len(results) - len(bad) - len(unpaired)}/{len(results)} clean; "
+          f"report at {report}")
     for name, entry in sorted(bad.items()):
         print(f"  {entry['status']:<16} {name}  {entry.get('error','')}")
-    return 1 if bad else 0
+    for name in sorted(unpaired):
+        note = KNOWN_UNPAIRED.get(name, "NOT A KNOWN EXCEPTION")
+        print(f"  {'unpaired':<16} {name}  ({note})")
+    for name in sorted(KNOWN_UNPAIRED):
+        if name in results and name not in unpaired:
+            print(f"  {'now paired':<16} {name}  (remove it from KNOWN_UNPAIRED)")
+
+    return 1 if (bad or surprises) else 0
 
 
 if __name__ == "__main__":
