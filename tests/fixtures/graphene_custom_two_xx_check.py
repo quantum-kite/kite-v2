@@ -9,10 +9,10 @@ conductivity come from the identical Hamiltonian/energy scale. Small and
 cheap on purpose -- this exists only to check the two methods agree in SIGN,
 not to produce a publication-quality conductivity curve.
 
-Run:
+Run from this directory:
     python graphene_custom_two_xx_check.py
-    ../build/KITEx graphene_custom_two_xx_check-output.h5
-    python ../tests/custom_two_same_vertex_sign_regression.py
+    ../../build/KITEx graphene_custom_two_xx_check-output.h5
+    python ../custom_two_same_vertex_sign_regression.py
 """
 import kite
 import numpy as np

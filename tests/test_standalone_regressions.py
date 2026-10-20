@@ -29,8 +29,9 @@ SELF_CONTAINED = [
 
 # Need an example's HDF5 output, which means a prior KITEx run.
 NEEDS_KITEX_OUTPUT = {
-    "custom_two_mod4_regression.py": "kane_mele_spin_hall-output.h5",
-    "custom_two_same_vertex_sign_regression.py": "graphene_custom_two_xx_check-output.h5",
+    "custom_two_mod4_regression.py": "examples/kane_mele_spin_hall-output.h5",
+    "custom_two_same_vertex_sign_regression.py":
+        "tests/fixtures/graphene_custom_two_xx_check-output.h5",
 }
 
 
@@ -50,7 +51,7 @@ def test_standalone_regression(script):
 
 @pytest.mark.parametrize("script,required", sorted(NEEDS_KITEX_OUTPUT.items()))
 def test_regression_against_example_output(script, required):
-    if not (REPO / "examples" / required).exists():
-        pytest.skip(f"needs examples/{required} -- run the example and KITEx first")
+    if not (REPO / required).exists():
+        pytest.skip(f"needs {required} -- run the generating script and KITEx first")
     proc = _run(script)
     assert proc.returncode == 0, f"{script} failed:\n{proc.stdout}\n{proc.stderr}"

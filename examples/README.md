@@ -49,6 +49,7 @@ These are pure-KITE scripts (using `kite.lattice.Lattice`, `python/kite/lattice.
 | `dos_vacancies.py` | Honeycomb lattice with structural vacancy disorder (`kite.StructuralDisorder`) at two different concentrations, one per sublattice. |
 | `dos_dccond_square_lattice.py` | DOS and Hall (`xy`) DC conductivity of a square lattice threaded by a real, Peierls-substituted magnetic field (`kite.Modification(magnetic_field=...)`) — a lattice Landau-level / Hofstadter-type calculation, not a zero-field demo. |
 | `dos_dccond_haldane.py` | DOS and DC (xy) conductivity of the Haldane model, with uniform on-site disorder on both sublattices. |
+| `dccond_graphene_magnetic_field.py` | DOS and Hall (`xy`) DC conductivity of graphene in a perpendicular, Peierls-substituted magnetic field: σ<sub>xy</sub> comes out as a staircase of Landau-level plateaus, odd in the Fermi energy. Roughly ten flux quanta thread a 128×128 sample, with weak uniform on-site disorder to smooth the plateaus. Written in dimensionless units (a = t = 1), so the field is set by the flux per cell rather than in tesla. |
 
 **Optical / DC conductivity**
 
@@ -56,7 +57,7 @@ These are pure-KITE scripts (using `kite.lattice.Lattice`, `python/kite/lattice.
 | --- | --- |
 | `hbn_optcond2_vacancies.py` | **Second-order (nonlinear)** optical conductivity σ<sub>xxy</sub> of hexagonal boron nitride with vacancy disorder — not the ordinary linear σ<sub>ab</sub>(ω) computed elsewhere in this table. The gapped honeycomb (hBN) lattice is essential, not incidental: its onsite A/B potential breaks inversion symmetry, which is required for this third-rank response to be nonzero at all. See the docstring in the script itself for what its `special=1` flag actually skips in the C++ core. |
 | `optcond_t_symmetric_cubic_weyl_sm.py` | Linear optical conductivity (\(\sigma_{xx}\)) of the T-symmetric cubic Weyl semimetal; a heavily-parallelized example. See also the [Optical Conductivity write-up][optical-conductivity-example]. |
-| `dccond_phosphorene.py` | Single-shot DC conductivity (`xx`/`yy`) of bilayer phosphorene. See the [in-depth Phosphorene write-up][phosphorene-example]. |
+| `dccond_phosphorene.py` | Single-shot DC conductivity (`xx`/`yy`) of bilayer phosphorene. See the [in-depth Phosphorene write-up][phosphorene-example]. Single-shot needs no KITE-tools reconstruction; extract the result with `process_single_shot.py`. |
 | `weyl_lt.py` | The same Weyl-semimetal optical-conductivity calculation as `optcond_t_symmetric_cubic_weyl_sm.py`, built using KITE's own `kite.lattice.Lattice` API rather than pybinding — compare directly against `pybinding/weyl_pb.py`. |
 
 **Local density of states (LDOS) and spectral function (ARPES)**
@@ -94,7 +95,7 @@ These are pure-KITE scripts (using `kite.lattice.Lattice`, `python/kite/lattice.
 
 | Script | What it demonstrates |
 | --- | --- |
-| `spin_precession_simple.py` | The simplest possible introduction to `calculation.gaussian_wave_packet()`: textbook Larmor precession of a spin-1/2 in a uniform transverse field (a toy on-site coupling, not a simulated electromagnetic field — see the script's docstring), on a plain square lattice with no other physics. Matches the exact analytic solution to machine precision (~1e-13) over more than one full period, with zero dephasing (the coupling is k-independent). See the [in-depth write-up][time-evolution-example]. |
+| `spin_precession_simple.py` | The simplest possible introduction to `calculation.gaussian_wave_packet()`: textbook Larmor precession of a spin-1/2 in a uniform transverse field (a toy on-site coupling, not a simulated electromagnetic field — see the script's docstring), on a plain square lattice with no other physics. Matches the exact analytic solution to machine precision (~1e-13) over more than one full period, with zero dephasing (the coupling is k-independent). See the [in-depth write-up][time-evolution-example]. Post-process with `spin_precession_simple_process.py`. |
 
 **Custom local potential**
 
@@ -106,7 +107,8 @@ These are pure-KITE scripts (using `kite.lattice.Lattice`, `python/kite/lattice.
 
 The folder also contains a few shared helpers that are not examples in their own right:
 `process_arpes.py` (a symlink to `tools/process_arpes.py`, imported by the `arpes_*.py` scripts),
-`myaux.py`, `kite_style.py`, and `kite.mplstyle` (shared plotting/style helpers).
+`process_single_shot.py` (a symlink to `tools/process_single_shot.py`), `myaux.py`,
+`kite_style.py`, and `kite.mplstyle` (shared plotting/style helpers).
 
 ## `examples/pybinding/*.py`
 

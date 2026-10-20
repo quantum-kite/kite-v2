@@ -104,6 +104,7 @@ Src/GRTAGS
 tools/tests/test6/*.dat
 examples/*.dat
 tests/*_regression_check.dat
+tests/fixtures/*.dat
 
 # log files
 tools/tests/test*/log*

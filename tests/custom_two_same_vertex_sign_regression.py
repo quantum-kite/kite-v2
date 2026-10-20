@@ -23,8 +23,8 @@ checks relative consistency across a single already-computed Gamma, never
 compares against an independent reference).
 
 Usage:
-    python examples/graphene_custom_two_xx_check.py
-    ../build/KITEx examples/graphene_custom_two_xx_check-output.h5
+    python tests/fixtures/graphene_custom_two_xx_check.py
+    build/KITEx tests/fixtures/graphene_custom_two_xx_check-output.h5
     python tests/custom_two_same_vertex_sign_regression.py
 """
 import os
@@ -35,7 +35,7 @@ import h5py
 import numpy as np
 
 HERE = os.path.dirname(__file__)
-H5_PATH = os.path.join(HERE, "..", "examples", "graphene_custom_two_xx_check-output.h5")
+H5_PATH = os.path.join(HERE, "fixtures", "graphene_custom_two_xx_check-output.h5")
 KITE_TOOLS = os.path.join(HERE, "..", "build", "KITE-tools")
 
 
@@ -51,7 +51,7 @@ def _run_reconstruction(flag, extra_args, out_name):
 def main():
     if not os.path.exists(H5_PATH):
         raise SystemExit(
-            f"Missing {H5_PATH} -- run examples/graphene_custom_two_xx_check.py "
+            f"Missing {H5_PATH} -- run tests/fixtures/graphene_custom_two_xx_check.py "
             f"+ KITEx first."
         )
     if not os.path.exists(KITE_TOOLS):

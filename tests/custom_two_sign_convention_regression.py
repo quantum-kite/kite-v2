@@ -18,6 +18,7 @@ but it was an L1 ratio against a 0.5 threshold measured on stochastic data, and
 several shipped Gammas are neither.
 """
 
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -54,15 +55,23 @@ needs_sweep = pytest.mark.skipif(
 # Magnitude, which the existing correlation check cannot see.
 # --------------------------------------------------------------------------
 
-GRAPHENE = SWEEP / "graphene_custom_two_xx_check" / "graphene_custom_two_xx_check-output.h5"
+GRAPHENE = (Path(__file__).resolve().parent / "fixtures" /
+            "graphene_custom_two_xx_check-output.h5")
 
 
 def _run_tools(flag, tmp_path):
-    """Run KITE-tools for one calculation and return its (mu, sigma) columns."""
-    subprocess.run([str(KITE_TOOLS), GRAPHENE.name, flag, "-F", "-1", "1", "100"],
-                   cwd=str(GRAPHENE.parent), capture_output=True, text=True, check=True)
+    """Run KITE-tools for one calculation and return its (mu, sigma) columns.
+
+    The run happens on a copy in tmp_path: KITE-tools writes its `.dat` beside
+    the file it reads, and the fixture directory is tracked.
+    """
+    local = tmp_path / GRAPHENE.name
+    if not local.exists():
+        shutil.copy(GRAPHENE, local)
+    subprocess.run([str(KITE_TOOLS), local.name, flag, "-F", "-1", "1", "100"],
+                   cwd=str(tmp_path), capture_output=True, text=True, check=True)
     name = {"--CustomTwo": "custom_two.dat", "--CondDC": "condDC.dat"}[flag]
-    data = np.loadtxt(GRAPHENE.parent / name)
+    data = np.loadtxt(tmp_path / name)
     return data[:, 0], data[:, 1]
 
 

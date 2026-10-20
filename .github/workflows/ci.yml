@@ -107,11 +107,12 @@ jobs:
       - name: Generate the fixtures the custom_two regressions compare against
         shell: bash -el {0}
         run: |
-          cd examples
-          python kane_mele_spin_hall.py
-          ../build/KITEx kane_mele_spin_hall-output.h5
-          python graphene_custom_two_xx_check.py
-          ../build/KITEx graphene_custom_two_xx_check-output.h5
+          (cd examples
+           python kane_mele_spin_hall.py
+           ../build/KITEx kane_mele_spin_hall-output.h5)
+          (cd tests/fixtures
+           python graphene_custom_two_xx_check.py
+           ../../build/KITEx graphene_custom_two_xx_check-output.h5)
 
       # One entry point for the whole suite. Collection patterns and the
       # sys.path pinning that keeps `import kite` on this checkout live in
