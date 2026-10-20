@@ -7,7 +7,7 @@ import compare
 # Parameters
 file1 = "config.h5"
 file2 = "configREF.h5"
-dset1 = dset2 = "/Calculation/dos/MU"
+dset1 = dset2 = "/Calculation/arpes/kMU"
 tol = 1e-8
 
 result = subprocess.run(["SEED=ones ${KITEX:-../../build/KITEx} config.h5"], capture_output=True, shell=True)

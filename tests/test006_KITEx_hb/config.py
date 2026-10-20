@@ -3,7 +3,11 @@ import numpy as np
 from kite import lattice as latt
 import kite
 
-energy_scale = 3.1
+# The gapped model has half-bandwidth sqrt((3t)^2 + Delta^2) = 3.4354, which
+# 3.1 does not contain: the rescaled spectrum reached 1.108 and the Chebyshev
+# recursion grew 1.586 per moment. kite.estimate_bounds gives 3.7789 with its
+# default margin.
+energy_scale = 3.8
 
 def graphene_initial(onsite=(1.673819, -1.673819)):
 
