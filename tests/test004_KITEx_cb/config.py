@@ -1,14 +1,14 @@
 import numpy as np
-import pybinding as pb
+from kite import lattice as latt
 import kite
 
 def cubic():
     a1 = np.array([1,0,0]) 
     a2 = np.array([0,1,0]) 
     a3 = np.array([0,0,1]) 
-    lat = pb.Lattice( a1=a1, a2=a2, a3=a3)
+    lat = latt.Lattice( a1=a1, a2=a2, a3=a3)
 
-    lat.add_sublattices( ('A', [0, 0], 0))
+    lat.add_sublattices( ('A', [0, 0, 0], 0))
 
     lat.add_hoppings(
         ([0,0,1], 'A', 'A', 1),

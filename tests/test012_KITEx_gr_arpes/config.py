@@ -1,7 +1,8 @@
 import kite
 import matplotlib.pyplot as plt
 import numpy as np
-import pybinding as pb
+from kite import lattice as latt
+from kite import visualize
 
 def graphene_initial(onsite=(0,0)):
 
@@ -10,7 +11,7 @@ def graphene_initial(onsite=(0,0)):
     a2 = np.array([np.sin(theta), 1 + np.cos(theta)])
 
     # create a lattice with 2 primitive vectors
-    lat = pb.Lattice(
+    lat = latt.Lattice(
     a1=a1,
     a2=a2
     )
@@ -46,7 +47,7 @@ K = [4*np.pi/np.sqrt(27), 0.0]
 moments = 32
 points = [Gamma, M, K, Gamma]
 
-k_path = pb.results.make_path(*points, step=0.2)
+k_path = visualize.make_path(*points, step=0.2)[0]
 
 calculation_arpes = kite.Calculation(configuration)
 calculation_arpes.arpes(k_vector=k_path, weight=[0.5,1.5], num_moments=moments, num_disorder=1)

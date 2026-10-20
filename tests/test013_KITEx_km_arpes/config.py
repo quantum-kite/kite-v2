@@ -2,19 +2,20 @@
 """
 import kite
 import numpy as np
-import pybinding as pb
+from kite import lattice as latt
+from kite import visualize
 import sys
 import h5py
 
-from pybinding.repository.graphene import a_cc, a
-from pybinding.constants import hbar
+from kite.repository import graphene
+
+a, a_cc = graphene.a, graphene.a_cc
 from math import sqrt, pi
 from scipy.spatial import cKDTree
 
 el_charge = 1.602 * 10 ** -19  #: [C] electron charge
 t = -2.507  #: [eV] graphene nearest neighbor hopping
 delta = 0.54e-3   #: [eV] onsite mass term, Phys. Rev. B 93, 155104
-vf = 1.5 * a_cc * np.abs(t) / hbar * 10e-9  #: [m/s] Fermi velocity
 
 lambda_R = 0.56e-3  #: [eV] Rashba SOC, Phys. Rev. B 93, 155104
 lambda_I_A = -1.22e-3  #: [eV] intrisic sublattice A SOC, Phys. Rev. B 93, 155104
@@ -36,7 +37,7 @@ a2 = [a / 2 * sqrt(3), -a / 2, 0]
 
 
 def honeycomb_lattice_with_SO(onsite=(0, 0)):
-    lat = pb.Lattice(
+    lat = latt.Lattice(
         a1=a1, a2=a2
     )
 
@@ -139,7 +140,7 @@ K = [4*np.pi/np.sqrt(27), 0.0]
 moments = 16
 points = [Gamma, M, K, Gamma]
 
-k_path = pb.results.make_path(*points, step=0.3)
+k_path = visualize.make_path(*points, step=0.3)[0]
 
 calculation_arpes = kite.Calculation(configuration)
 calculation_arpes.arpes(k_vector=k_path, weight=[1.5, 0.5, 1.3, 0.3], num_moments=moments, num_disorder=1)

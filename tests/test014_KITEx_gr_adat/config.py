@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import kite
 import numpy as np
-import pybinding as pb
+from kite import lattice as latt
 
 
 # define lattice of monolayer graphene with 1[nm] interatomic distance and t=1/3[eV] hopping
@@ -23,7 +23,7 @@ def graphene_initial(onsite=(0, 0)):
     a2 = np.array([0, 2 * np.sin(theta)])
 
     # create a lattice with 2 primitive vectors
-    lat = pb.Lattice(
+    lat = latt.Lattice(
         a1=a1,
         a2=a2
     )

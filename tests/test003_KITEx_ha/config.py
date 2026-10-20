@@ -1,6 +1,6 @@
 import kite
 import numpy as np
-import pybinding as pb
+from kite import lattice as latt
 
 def haldane(onsite=(0, 0), t=1):
     a = 0.24595  # [nm] unit cell length
@@ -10,7 +10,7 @@ def haldane(onsite=(0, 0), t=1):
     a1 = a * np.array([a, 0])
     a2 = a * np.array([1 / 2, 1 / 2 * np.sqrt(3)])
 
-    lat = pb.Lattice(a1=a1, a2=a2)
+    lat = latt.Lattice(a1=a1, a2=a2)
     lat.add_sublattices(
         ('A', [0, -a_cc/2], onsite[0]),
         ('B', [0,  a_cc/2], onsite[1])

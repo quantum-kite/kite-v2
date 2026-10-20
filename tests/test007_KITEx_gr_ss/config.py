@@ -4,7 +4,7 @@ R=1
 W=0.1
 
 import numpy as np
-import pybinding as pb
+from kite import lattice as latt
 import kite
 
 energy_scale = 4.0
@@ -16,7 +16,7 @@ def graphene_initial(onsite=(0.0, 0.0)):
     a2 = np.array([np.sin(theta), 1 + np.cos(theta)])
 
     # create a lattice with 2 primitive vectors
-    lat = pb.Lattice(
+    lat = latt.Lattice(
     a1=a1,
     a2=a2
     )

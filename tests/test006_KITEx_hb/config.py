@@ -1,6 +1,6 @@
 import sys
 import numpy as np
-import pybinding as pb
+from kite import lattice as latt
 import kite
 
 energy_scale = 3.1
@@ -11,7 +11,7 @@ def graphene_initial(onsite=(1.673819, -1.673819)):
     a1 = np.array([2 * np.sin(theta), 0])
     a2 = np.array([np.sin(theta), 1 + np.cos(theta)])
 
-    lat = pb.Lattice( a1=a1, a2=a2)
+    lat = latt.Lattice( a1=a1, a2=a2)
 
     lat.add_sublattices(
     ('A', [0, 0], onsite[0]),

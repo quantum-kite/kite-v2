@@ -16,6 +16,7 @@ fi
 
 
 if [[ "$1" == "quick" ]]; then
+    cp configORIG.h5 config.h5
     python test.py
 
 fi

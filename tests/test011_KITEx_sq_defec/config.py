@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import kite
 import numpy as np
-import pybinding as pb
+from kite import lattice as latt
 
 timp = -0.0
 limp = -1.0
@@ -12,7 +12,7 @@ def graphene_initial(onsite=(0, 0)):
     a1 = np.array([1 + np.cos(theta), np.sin(theta)])
     a2 = np.array([0, 2 * np.sin(theta)])
 
-    lat = pb.Lattice(
+    lat = latt.Lattice(
         a1=a1,
         a2=a2
     )

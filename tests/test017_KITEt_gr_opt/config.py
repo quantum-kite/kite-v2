@@ -1,5 +1,5 @@
 import numpy as np
-import pybinding as pb
+from kite import lattice as latt
 import kite
 
 
@@ -8,7 +8,7 @@ def graphene(onsite=(0, 0)):
     t = 1  # eV
     a1 = np.array([1 + np.cos(theta), np.sin(theta)])
     a2 = np.array([0, 2 * np.sin(theta)])
-    lat = pb.Lattice(
+    lat = latt.Lattice(
         a1=a1, a2=a2
     )
     lat.add_sublattices(
