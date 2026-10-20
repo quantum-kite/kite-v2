@@ -133,6 +133,60 @@ jobs:
       # requires /Seed0 and /Seed1 fields. Fixing the test suite itself is
       # separate, follow-up work.
 
+  # Every shipped example, end to end: python example.py -> KITEx -> KITE-tools,
+  # with the output scanned for non-finite values. The static half of the sweep
+  # (each example's declared spectrum_range against the spectrum its own lattice
+  # produces) needs no execution and rides along in the test suite above; this
+  # job is the behavioural half, which does.
+  #
+  # It is slow -- roughly 40 minutes of compute for the 50 scripts, most of it in
+  # three long examples -- so it runs as its own job rather than inside
+  # build-and-test, and supersedes itself when a newer commit arrives on the same
+  # ref. A check nobody remembers to run is how a diverged example survived in the
+  # first place, so it runs on every push rather than nightly.
+  example-sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    concurrency:
+      group: example-sweep-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up conda environment
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          environment-file: environment.yml
+          activate-environment: kite
+          miniforge-version: latest
+
+      - name: Install kite (editable)
+        shell: bash -el {0}
+        run: pip install -e .
+
+      - name: Build KITEx + KITE-tools
+        shell: bash -el {0}
+        run: |
+          mkdir -p build
+          cd build
+          cmake -DCMAKE_PREFIX_PATH=$CONDA_PREFIX -DCMAKE_BUILD_TYPE=Release ..
+          cmake --build . --config Release -j 4
+
+      - name: Run every example end to end
+        shell: bash -el {0}
+        run: python tests/run_all_examples.py --outdir sweep-data
+
+      # The report says which stage failed and how long each took, which the job
+      # log alone does not make easy to read. Uploaded on failure too -- that is
+      # when it is worth having.
+      - name: Upload the sweep report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: example-sweep-report
+          path: sweep-data/sweep-report.json
+          if-no-files-found: warn
+
   docker-build:
     runs-on: ubuntu-latest
     steps:
