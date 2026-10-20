@@ -1837,7 +1837,7 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
     # space dimension of the lattice 1D, 2D, 3D
     f.create_dataset('DIM', data=space_size, dtype='u4')
     # lattice vectors. Size is same as DIM
-    f.create_dataset('LattVectors', data=vectors, dtype=np.float64)
+    f.create_dataset('LattVectors', data=vectors, dtype=np.float32)
     # position for each atom
     f.create_dataset('OrbPositions', data=position, dtype=np.float64)
     # total number of orbitals
