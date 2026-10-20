@@ -30,7 +30,12 @@ Hamiltonian<T, D>::Hamiltonian(
   Global(gg),
   hr(name, r),
   cross_mozaic(r.NStr),
-  hV(name, rr, rnd)
+  hV(name, rr, rnd),
+  // Read from /Hamiltonian/CustomLocalPotential below, inside a try whose catch
+  // is empty: a file written before that dataset existed leaves this holding
+  // whatever was on the stack, and a non-zero value adds the custom potential
+  // to every Anderson on-site entry. Default to "no custom potential".
+  check_local_potential(0)
 {
 #pragma omp critical
   {
