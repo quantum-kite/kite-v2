@@ -202,8 +202,7 @@ four `.dat` files (clean/vacancy × up/down) and plots them together.
 
 ``` bash
 # 1. Real-space Sz map: clean vs. 5% vacancy
-python afm_zigzag_ribbon.py 0.0   # -> afm_zigzag_ribbon_clean-output.h5
-python afm_zigzag_ribbon.py 0.05  # -> afm_zigzag_ribbon_vac5-output.h5
+python afm_zigzag_ribbon.py       # -> both: ..._clean-output.h5 and ..._vac5-output.h5
 ../build/KITEx afm_zigzag_ribbon_clean-output.h5
 ../build/KITEx afm_zigzag_ribbon_vac5-output.h5
 python afm_zigzag_ribbon_process.py afm_zigzag_ribbon_clean-output.h5 afm_zigzag_ribbon_vac5-output.h5

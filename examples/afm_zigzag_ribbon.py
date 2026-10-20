@@ -53,7 +53,6 @@
     Last updated: 27/07/2026
 """
 
-import sys
 import os
 
 import kite
@@ -153,8 +152,9 @@ def main(t=T, delta=DELTA, lx=8, ly=24, vacancy_concentration=0.0,
 
 
 if __name__ == "__main__":
-    conc = float(sys.argv[1]) if len(sys.argv) > 1 else 0.0
-    fname = main(vacancy_concentration=conc)
-    print(f"Wrote {fname}")
-    print("Run:   ../build/KITEx", fname)
-    print("Then:  python afm_zigzag_ribbon_process.py")
+    clean = main(vacancy_concentration=0.0)
+    vac = main(vacancy_concentration=0.05)
+    print(f"Wrote {clean} and {vac}")
+    print("Run:   ../build/KITEx", clean)
+    print("       ../build/KITEx", vac)
+    print(f"Then:  python afm_zigzag_ribbon_process.py {clean} {vac}")
