@@ -20,6 +20,11 @@
     one. The DOS shows an isolated zeroth Landau level at E = 0 with a gap out to
     |E| = 0.83 t, and sigma_xy a single plateau at +-1 e^2/h per spin before the band
     breaks into Hofstadter subbands.
+
+    Deliberately under-converged, as examples here are: num_moments=512 resolves
+    the zeroth level and the gap around it, which is what the example is for. The
+    structure above |E| ~ 0.7 t would sharpen on a longer run and should not be
+    read as physics at these parameters.
     """
 
 __all__ = ["graphene_lattice", "main"]
