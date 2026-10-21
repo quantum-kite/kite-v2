@@ -1573,6 +1573,37 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
     space_size = vectors.shape[0]
     vectors = vectors[:, 0:space_size]
 
+    # KITEx implements D=2 and D=3 as explicit template specializations of
+    # KPM_Vector; D=1 resolves to the primary template, whose methods are empty
+    # stubs. It compiles, runs and reports success, and every moment comes back
+    # zero -- including mu_0, which is 1 by normalisation. Stop here instead,
+    # where the message can say what to do about it.
+    if space_size == 1:
+        raise SystemExit(
+            'One-dimensional lattices are not implemented in KITEx.\n'
+            '  KITEx specializes its Chebyshev vector for 2D and 3D only. A 1D\n'
+            '  system would run to completion and return identically zero moments\n'
+            '  with no error, so it is rejected here instead.\n'
+            '\n'
+            '  Build it as a 2D lattice that leaves the second direction\n'
+            '  uncoupled. KITE then holds many independent copies at once and the\n'
+            '  stochastic trace averages over all of them, which is cheaper than\n'
+            '  one chain, not dearer. For a chain, hop along x only:\n'
+            '\n'
+            '      lattice = kite.lattice.Lattice(a1=[1, 0], a2=[0, 1])\n'
+            '      lattice.add_sublattices([\'A\', [0, 0], 0.0])\n'
+            '      lattice.add_hoppings([[-1, 0], \'A\', \'A\', -t])   # x only\n'
+            '      configuration = kite.Configuration(..., length=[8192, 16], ...)\n'
+            '\n'
+            '  The same construction carries a zero-dimensional system: put every\n'
+            '  site in the unit cell and give it only [0, 0] hoppings, as the\n'
+            '  molecule examples under examples/paper/Section_4_G_molecules do.\n'
+            '\n'
+            '  Keep the repeated direction short, make the chains long, and keep\n'
+            '  num_moments modest: the energy resolution must stay coarser than\n'
+            '  the level spacing of a finite chain, or KPM resolves the individual\n'
+            '  levels instead of the band.')
+
     # iterate through all the sublattices and add onsite energies to hoppings list
     # count num of orbitals and read the atom positions.
     hoppings = []
