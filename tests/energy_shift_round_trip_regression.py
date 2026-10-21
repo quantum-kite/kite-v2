@@ -85,50 +85,56 @@ def test_two_spectrum_ranges_of_equal_width_put_the_feature_at_the_same_energy(t
         f"shift of 1.0 means the shift is being applied to one and not the other")
 
 
-def test_every_driver_that_reads_the_scale_also_reads_the_shift(tmp_path):
-    """The static half, stated as a rule rather than a pattern match.
+def test_kitex_does_not_rescale_user_supplied_energies(tmp_path):
+    """Python owns the rescaling. KITEx reads the shift in exactly one place.
 
-    A first attempt here searched for an energy-named variable divided by
-    `energy_scale`, and missed BUG-010 entirely -- the broken line read
-    `const value_type en = vv / energy_scale;` and `vv` is not energy-named. So
-    the rule is structural instead: a driver that reads `/EnergyScale` to rescale
-    a user-supplied *energy* must also read `/EnergyShift`.
+    After T-073 every user-supplied energy and width is rescaled in
+    `config_system` before export, so no driver needs `/EnergyShift` to
+    interpret its input. One file still reads it, for a reason that is physics
+    rather than unit conversion:
 
-    The exemptions are explicit and each is a quantity that is a difference, for
-    which no shift applies: `Hamiltonian.cpp` rescales an additive on-site
-    correction, `GlobalSimulation.cpp` only reads the value, and
-    `SimulationSingleShot.cpp` carries it through for KITE-tools to apply on
-    output. `SimulationLCM` and `SimulationSLCM` are genuine omissions of the
-    same kind as BUG-010, kept here because they are experimental, have no Python
-    entry point, and would otherwise be forgotten.
+      `SimulationLocalizedWavePacket.cpp:464` forms `exp(-i * energy_shift * t)`,
+      the global phase the shift contributes to time evolution. That cannot move
+      to Python -- it is evaluated per timestep inside the propagator.
+
+      The same file also rescales its `energy_window` at `:66,71`. That one was
+      deliberately left in C++: the "no filter" sentinel is `(0, 0)` in physical
+      units, so pre-rescaling would turn it into `(-shift/scale, -shift/scale)`
+      and silently switch filtering on for any asymmetric `spectrum_range`.
+      Moving it means changing the sentinel too.
+
+    Anything else reading `/EnergyShift` is a driver re-doing work Python has
+    already done -- the double-rescale half of T-073, as opposed to BUG-010's
+    dropped-shift half.
+    """
+    allowed = {"SimulationLocalizedWavePacket.cpp"}
+    readers = {f.name for f in (REPO / "Src").rglob("*.cpp")
+               if '"/EnergyShift"' in f.read_text(errors="ignore")}
+
+    unexpected = sorted(readers - allowed)
+    assert not unexpected, (
+        f"{unexpected} read /EnergyShift. Since T-073 the shift is applied in "
+        "python/kite/__init__.py before export, so a driver that reads it is "
+        "either rescaling twice or disagreeing with the exporter")
+
+    assert "SimulationLocalizedWavePacket.cpp" in readers, (
+        "SimulationLocalizedWavePacket no longer reads /EnergyShift. If its "
+        "time-evolution phase has moved to Python, drop it from `allowed`")
+
+
+def test_the_exporter_rescales_every_energy_it_writes():
+    """The other side of the same invariant, checked at the source.
+
+    Every dataset `config_system` writes that holds a user-supplied *absolute*
+    energy must carry `- config.energy_shift`. A width carries only the scale.
     """
     import re
 
-    exempt_difference_only = {
-        "Hamiltonian.cpp", "GlobalSimulation.cpp", "SimulationSingleShot.cpp",
-    }
-    known_omissions = {"SimulationLCM.cpp", "SimulationSLCM.cpp"}
-
-    missing = []
-    for source in list((REPO / "Src").rglob("*.cpp")):
-        text = "\n".join(re.sub(r"//.*$", "", line)
-                          for line in source.read_text(errors="ignore").splitlines())
-        if '"/EnergyScale"' not in text:
-            continue
-        if source.name in exempt_difference_only:
-            continue
-        if '"/EnergyShift"' not in text:
-            missing.append(source.name)
-
-    unexpected = sorted(set(missing) - known_omissions)
-    assert not unexpected, (
-        f"{unexpected} read /EnergyScale to rescale an energy but never read "
-        "/EnergyShift. That evaluates at E + shift and is invisible whenever "
-        "spectrum_range is symmetric about zero -- BUG-010's exact failure mode")
-
-    # And the converse: if one of the known omissions is ever fixed, say so, so
-    # that this list does not quietly outlive the problem.
-    fixed = sorted(n for n in known_omissions
-                   if '"/EnergyShift"' in (REPO / "Src" / "Simulation" / n).read_text())
-    assert not fixed, (
-        f"{fixed} now read /EnergyShift; remove them from known_omissions")
+    text = (REPO / "python" / "kite" / "__init__.py").read_text()
+    pattern = re.compile(r"create_dataset\('(Energy|Energies)'[^\n]*", re.M)
+    absolute = list(pattern.finditer(text))
+    assert absolute, "config_system no longer writes an Energy dataset"
+    for m in absolute:
+        assert "energy_shift" in m.group(0), (
+            "an Energy/Energies dataset is written without subtracting "
+            f"config.energy_shift: {m.group(0)[:110]!r}")

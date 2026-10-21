@@ -103,19 +103,21 @@ void Simulation<T, D>::ldos_operators(
     const unsigned NOperators = static_cast<unsigned>(operator_labels.size());
 
     value_type energy_scale;
-    value_type energy_shift;
 #pragma omp critical
     {
       H5::H5File *file = new H5::H5File(name, H5F_ACC_RDONLY);
       get_hdf5<value_type>(&energy_scale, file, (char *) "/EnergyScale");
-      get_hdf5<value_type>(&energy_shift, file, (char *) "/EnergyShift");
       file->close();
       delete file;
     }
 #pragma omp barrier
 
-    const value_type target = (energy_ - energy_shift) / energy_scale;
-    const value_type sigma = sigma_ / energy_scale;
+    // Energy and Sigma arrive already rescaled: Python applies the shift and the
+    // scale at export (see config_system). KITEx does not rescale user input --
+    // energy_scale is still read below, but only for the density normalisation
+    // `factor`, which is a units conversion of the RESULT, not of the input.
+    const value_type target = energy_;
+    const value_type sigma = sigma_;
     const value_type size = r.Sizet - r.SizetVacancies;
     const value_type factor =
       (coef_id_) ? 1.0 : std::sqrt(8 * M_PI) * sigma / energy_scale;

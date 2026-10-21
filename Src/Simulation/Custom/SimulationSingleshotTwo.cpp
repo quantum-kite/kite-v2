@@ -130,33 +130,27 @@ void Simulation<T, D>::custom_ss_two(
   if constexpr (is_tt<std::complex, T>::value) {
     constexpr T I{0.0, 1.0};
     value_type energy_scale;
-    value_type energy_shift;
 #pragma omp critical
     {
       H5::H5File file(name, H5F_ACC_RDONLY);
       std::string path = "/EnergyScale";
       get_hdf5<value_type>(&energy_scale, &file, path);
-      path = "/EnergyShift";
-      get_hdf5<value_type>(&energy_shift, &file, path);
       file.close();
     }
 #pragma omp barrier
     const unsigned num_en = energies_.size();
+    // sigma_, gamma_ and energies_ arrive already rescaled from Python.
+    // energy_scale is retained only for norm_0/norm_1, which scale the
+    // coefficient arrays, not the user's input.
     const value_type norm_0 = 1 / energy_scale;
-    const value_type sigma = sigma_ * norm_0;
-    const value_type gamma = gamma_ * norm_0;
+    const value_type sigma = sigma_;
+    const value_type gamma = gamma_;
     const value_type norm_1 = norm_0 * norm_0;
 
     std::array<Eigen::Array<T, -1, -1>, 2> coefs;
     unsigned count = 0;
     for (const auto &vv : energies_) {
-      // Energies arrive in real (unscaled) units, as for ldos_map and
-      // spectral_map, so both the shift and the scale are applied here. Omitting
-      // energy_shift silently evaluates at vv + energy_shift and is invisible
-      // whenever spectrum_range is symmetric about zero -- the same defect
-      // SimulationLDoS.cpp:90-99 records as having shipped once before. sigma and
-      // gamma above are widths and correctly take the scale only.
-      const value_type en = (vv - energy_shift) / energy_scale;
+      const value_type en = vv;
       const T z = en + I * gamma;
       const Eigen::Array<T, -1, 1> dgreen_tmp =
         Coefficients::build_dgreen<value_type>(z) * norm_1;
