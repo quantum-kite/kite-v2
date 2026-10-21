@@ -66,10 +66,21 @@
     ---------------------------------------------------
     Honeycomb lattice, two sublattices A/B. Nearest-neighbour hopping -t is
     spin-diagonal charge hopping; the next-nearest-neighbour hopping carries the
-    complex Haldane phase, +phi on the A-A bonds and -phi on the B-B bonds. We
-    use t2 = t/3 and the canonical flux phi = pi/2, kept EXPLICIT here because it
-    is a genuine tunable of the Haldane construction (unlike kane_mele_spin_hall.py,
-    which hardcodes the equivalent +/- i on the NNN bonds, i.e. phi = pi/2 too).
+    complex Haldane phase. We write that amplitude as t2 * exp(i*phi) -- with NO
+    leading minus -- and use t2 = t/3 with phi = +pi/2 on A-A and -pi/2 on B-B,
+    i.e. +i*t2 on A-A. phi is kept EXPLICIT here because it is a genuine tunable
+    of the Haldane construction. With this assignment the filled band has Chern
+    number C = -1.
+
+    dos_dccond_haldane.py and the up-spin block of kane_mele_spin_hall.py
+    hardcode the COMPLEX-CONJUGATE assignment, -i*t2 on A-A, which is phi =
+    -pi/2 in this same convention and gives C = +1. The two are mirror images:
+    identical spectrum and DOS, opposite sign of C, of sigma_xy and of the
+    orbital magnetization -- not equivalent, which matters here because the sign
+    of M_orb is the point of this example.
+
+    The sign of phi is meaningful only once the term is written as above; with
+    the minus absorbed (-t2 * exp(i*phi)) the two labels swap.
 
     The two Dirac points acquire opposite-sign Haldane masses of magnitude
     3*sqrt(3)*t2*sin(phi); a sublattice on-site asymmetry delta (onsite=(delta,-delta))

@@ -12,6 +12,16 @@
     Disorder: Disorder class Uniform at different sublattices
     Calculation type: Average DOS and DC conductivity (xy)
     Last updated: 06/05/2025
+
+    Haldane phase
+    -------------
+    The next-nearest-neighbour amplitude as coded is -i*t2 on A-A and +i*t2 on
+    B-B, with t2 = t/10. The filled band then has Chern number C = +1, which is
+    the sign of the sigma_xy = +1 e^2/h plateau this example computes. A Chern
+    sign is only meaningful alongside the convention that fixes it: KITE stores `add_one_hopping(R, from_sub, to_sub, v)` as `H[row=from_sub, col=to_sub]` and uses `exp(+i k.r)`.
+
+    haldane_orbital_magnetization.py uses the complex-conjugate assignment,
+    +i*t2 on A-A, and so has C = -1.
 """
 
 __all__ = ["main"]

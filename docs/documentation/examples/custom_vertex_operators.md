@@ -101,9 +101,11 @@ The Kubo-Bastin trace machinery never changes — only the operators you feed it
 The Kane-Mele model[^2] is the honeycomb-lattice $\mathbb Z_2$ topological insulator: two **time-reversed
 copies of the Haldane model**, one per spin, with the intrinsic (next-nearest-neighbor, complex) spin-orbit
 hopping carrying **opposite phase** for the two spins. `#!python examples/kane_mele_spin_hall.py` builds the
-lattice with four sublattices — `Aup, Bup, Adn, Bdn` — where the up-spin block reproduces the
-[documented Haldane example][haldane-example] exactly (NNN phase $+i$ on A–A) and the down-spin block is its
-complex conjugate ($-i$ on A–A). Nearest-neighbor charge hopping is $-t$ and spin-diagonal, with no spin-flip
+lattice with four sublattices — `Aup, Bup, Adn, Bdn` — where the up-spin block uses the same
+bond-phase assignment as the [documented Haldane example][haldane-example], at $t_2=0.15$: the
+next-nearest-neighbour amplitude as coded is $-i\,t_2$ on A–A and $+i\,t_2$ on B–B, giving
+$C_\uparrow=+1$. The down-spin block is its complex conjugate, $+i\,t_2$ on A–A, so
+$C_\downarrow=-1$. Nearest-neighbor charge hopping is $-t$ and spin-diagonal, with no spin-flip
 term. Parameters: $t=1$, $t_2=0.15$, on a $64\times64$ lattice with 256 moments.
 
 The opposite SOC sign per spin is what distinguishes Kane-Mele (a $\mathbb Z_2$ insulator with quantized *spin*

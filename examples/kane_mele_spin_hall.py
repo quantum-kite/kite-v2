@@ -29,11 +29,17 @@
     sublattices (Aup, Bup) and -1/2 on the spin-down sublattices (Adn, Bdn),
     i.e. s_z = (1/2) sigma_z (hbar = 1). The OVERALL SIGN of the computed spin
     Hall response is fixed by this choice: flipping the sign of every l0 matrix
-    element flips the sign of the plateau. The Haldane phase for spin up is
-    +i (t2 * (-1j) on A-A bonds, following the reference Haldane example),
-    and spin down carries the opposite phase -- this opposite SOC sign between
-    spins is what makes this Kane-Mele (a Z2 insulator with a spin Hall
-    plateau) rather than two stacked Haldane copies (a charge Chern insulator).
+    element flips the sign of the plateau.
+
+    Spin up carries the next-nearest-neighbour amplitude -i*t2 on A-A and
+    +i*t2 on B-B, exactly as coded below -- the same assignment as
+    dos_dccond_haldane.py, at t2 = 0.15 -- so its filled band has Chern number
+    C_up = +1. Spin down is the complex conjugate, +i*t2 on A-A, so C_dn = -1.
+    (A Chern sign is only meaningful alongside the convention that fixes it:
+    KITE stores `add_one_hopping(R, from_sub, to_sub, v)` as `H[row=from_sub, col=to_sub]` and uses `exp(+i k.r)`.)
+    This opposite SOC sign between spins is what makes this Kane-Mele, a Z2
+    insulator with a spin Hall plateau, rather than two stacked Haldane copies,
+    which would be a charge Chern insulator.
 
     Operator-string convention
     ---------------------------
