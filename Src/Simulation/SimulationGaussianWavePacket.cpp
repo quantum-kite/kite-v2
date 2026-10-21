@@ -89,6 +89,8 @@ void Simulation<T,D>::Gaussian_Wave_Packet(){
   op_ket.initiate_phases();
 
   float timestep;
+  double energy_scale;
+  double energy_shift;
   double width;
   Eigen::Array<T, -1, -1> avg_results;
   Eigen::Array<T, -1, -1> results(2*D, 1);
@@ -117,6 +119,8 @@ void Simulation<T,D>::Gaussian_Wave_Packet(){
     get_hdf5    <int>(&NumPoints,      file, (char *) "/Calculation/gaussian_wave_packet/NumPoints"  );
     get_hdf5  <float>(&timestep,       file, (char *) "/Calculation/gaussian_wave_packet/timestep"   );
     get_hdf5 <double>(&width,          file, (char *) "/Calculation/gaussian_wave_packet/width"      );
+    get_hdf5 <double>(&energy_scale,   file, (char *) "/EnergyScale");
+    get_hdf5 <double>(&energy_shift,   file, (char *) "/EnergyShift");
     get_hdf5      <T>(spinor.data(),   file, (char *) "/Calculation/gaussian_wave_packet/spinor");
     get_hdf5     <double>(vb.data(),   file, (char *) "/Calculation/gaussian_wave_packet/mean_value");
     get_hdf5 <double>(k_vector.data(), file, (char *) "/Calculation/gaussian_wave_packet/k_vector");
@@ -159,6 +163,23 @@ void Simulation<T,D>::Gaussian_Wave_Packet(){
     cyl_bessel_j_series(unsigned(NumMoments - 1), double(timestep), besselj.data());
   for(unsigned n = 0; n < unsigned(NumMoments); n++)
     m(n) = value_type((n == 0 ? 1 : 2 )*besselj[n]) * T(pow(-II,n));
+
+  // exp(-iHt) = exp(-i*shift*t) * exp(-i*Htilde*ttilde): the Bessel series above
+  // is the second factor, and this is the first. timestep is in rescaled units,
+  // so the physical step is timestep/energy_scale. Same construction as
+  // SimulationLocalizedWavePacket.cpp:464, which starts from physical time and
+  // so converts twice where this converts once.
+  //
+  // The shift is a global phase, so it cancels in everything this driver reports
+  // today -- every one of those is a bilinear in the same state at the same time.
+  // Do NOT read that as "optional": it is the whole difference between
+  // propagating H and propagating Htilde. A cross-time correlator, an overlap
+  // with a fixed reference state, or a Fourier transform in t would all see it,
+  // and so does the bare amplitude in Id.
+  if(NumMoments > 0){
+    const double theta = energy_shift * (double(timestep) / energy_scale);
+    m *= CT.assign_value(std::cos(theta), -std::sin(theta));
+  }
     
   for(int id = 0; id < NumDisorder; id++)
     {

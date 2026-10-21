@@ -249,3 +249,92 @@ def test_the_example_says_the_timestep_is_not_physical_time():
     assert "divides by\n    EnergyScale" in source, (
         "the docstring no longer points at the processor's conversion back to "
         "physical time")
+
+
+# --- the energy shift in the propagator --------------------------------------
+
+def test_the_propagator_carries_the_shift_phase():
+    """exp(-iHt) = exp(-i*eps0*t) * exp(-i*Htilde*ttilde); both factors must be there.
+
+    The Bessel series supplies the second. The first is a global phase, so it
+    cancels in every expectation value the driver reports -- which is why its
+    absence went unnoticed. It is not unobservable in principle: it is the whole
+    difference between propagating H and propagating Htilde, and anything that
+    uses the amplitude rather than a bilinear in it would see it.
+
+    Asserted structurally rather than by a run, because the behavioural
+    consequence is confined to `Id`, which AC-WAVE-06 removes from the user's
+    view. The phase was verified numerically when it was added: with
+    spectrum_range=[-4,6] (shift 1, physical step 0.1), Id picked up exactly
+    exp(-i*n*0.1) to 2e-12 while <Sz> moved by 1.5e-14 and |Id| by 6e-16.
+    """
+    source = (REPO / "Src" / "Simulation" / "SimulationGaussianWavePacket.cpp").read_text()
+    assert '"/EnergyShift"' in source, (
+        "SimulationGaussianWavePacket no longer reads /EnergyShift, so it "
+        "propagates exp(-i*Htilde*ttilde) rather than exp(-i*H*t)")
+    assert re.search(r"assign_value\(std::cos\(theta\),\s*-std::sin\(theta\)\)", source), (
+        "the shift phase exp(-i*eps0*t) is no longer applied to the Bessel "
+        "coefficients")
+
+
+#: Built as a string so the two runs differ only in `spectrum_range`.
+BUILD_TEMPLATE = """
+import sys
+sys.path.insert(0, %(examples)r)
+import kite
+from spin_precession_simple import simple_square_lattice_with_field
+lo, hi, out = float(sys.argv[1]), float(sys.argv[2]), sys.argv[3]
+lattice = simple_square_lattice_with_field(t=1.0, B=0.1)
+configuration = kite.Configuration(
+    divisions=[1, 1], length=[64, 64], boundaries=["periodic"] * 2,
+    is_complex=True, precision=1, spectrum_range=[lo, hi])
+calculation = kite.Calculation(configuration)
+calculation.gaussian_wave_packet(
+    num_points=120, num_moments=256, num_disorder=1,
+    k_vector=[[0.0, 0.0]], spinor=[[1.0, 0.0]], width=4.0, timestep=0.5,
+    mean_value=[32, 32])
+kite.config_system(lattice, configuration, calculation, filename=out)
+"""
+
+def test_the_shift_phase_has_the_right_sign(tmp_path):
+    """Two spectrum_ranges of equal width must give the SAME propagated amplitude.
+
+    This is the test that catches a sign error, and the reason the obvious one
+    does not. Expectation values are blind to a global phase whatever its sign,
+    so asserting `<Sz>` is shift-independent proves nothing about it -- that held
+    just as well before the phase existed at all.
+
+    `Id` is a bare complex amplitude, so it does see the phase. The physical
+    Hamiltonian is identical in both runs (only the rescaling differs), so once
+    `exp(-i*eps0*t)` is applied with the correct sign the two must agree. With
+    the sign flipped the residual is ~0.25 against a signal of ~0.14 -- larger
+    than the quantity itself.
+    """
+    import subprocess
+    import sys
+
+    import h5py
+
+    kitex = REPO / "build" / "KITEx"
+    if not kitex.exists():
+        pytest.skip("needs a built KITEx")
+
+    build = BUILD_TEMPLATE % {"examples": str(REPO / "examples")}
+
+    amplitudes = {}
+    for lo, hi, name in ((-5, 5, "sym.h5"), (-4, 6, "asym.h5")):
+        subprocess.run([sys.executable, "-c", build, str(lo), str(hi), name],
+                       cwd=str(tmp_path), capture_output=True, check=True)
+        subprocess.run([str(kitex), name], cwd=str(tmp_path),
+                       capture_output=True, check=True)
+        with h5py.File(tmp_path / name, "r") as handle:
+            amplitudes[name] = np.asarray(
+                handle["/Calculation/gaussian_wave_packet/Id"]).ravel()
+
+    scale = np.abs(amplitudes["sym.h5"]).max()
+    residual = np.abs(amplitudes["asym.h5"] - amplitudes["sym.h5"]).max()
+    assert residual < 1e-9 * scale, (
+        "the propagated amplitude differs by %.3e between spectrum_range=[-5,5] "
+        "and [-4,6], against a signal of %.3e. Both describe the same "
+        "Hamiltonian, so exp(-i*eps0*t) is missing, has the wrong sign, or is "
+        "scaled wrongly" % (residual, scale))

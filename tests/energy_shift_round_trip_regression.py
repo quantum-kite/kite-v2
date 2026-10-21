@@ -93,9 +93,11 @@ def test_kitex_does_not_rescale_user_supplied_energies(tmp_path):
     interpret its input. One file still reads it, for a reason that is physics
     rather than unit conversion:
 
-      `SimulationLocalizedWavePacket.cpp:464` forms `exp(-i * energy_shift * t)`,
-      the global phase the shift contributes to time evolution. That cannot move
-      to Python -- it is evaluated per timestep inside the propagator.
+      Both wave-packet drivers form `exp(-i * energy_shift * t)`, the global phase
+      the shift contributes to time evolution:
+      `SimulationLocalizedWavePacket.cpp:464` and the Bessel-coefficient block of
+      `SimulationGaussianWavePacket.cpp`. That cannot move to Python -- it is a
+      phase applied per timestep inside the propagator, not a rescaling of input.
 
       The same file also rescales its `energy_window` at `:66,71`. That one was
       deliberately left in C++: the "no filter" sentinel is `(0, 0)` in physical
@@ -107,7 +109,8 @@ def test_kitex_does_not_rescale_user_supplied_energies(tmp_path):
     already done -- the double-rescale half of T-073, as opposed to BUG-010's
     dropped-shift half.
     """
-    allowed = {"SimulationLocalizedWavePacket.cpp"}
+    allowed = {"SimulationLocalizedWavePacket.cpp",
+               "SimulationGaussianWavePacket.cpp"}
     readers = {f.name for f in (REPO / "Src").rglob("*.cpp")
                if '"/EnergyShift"' in f.read_text(errors="ignore")}
 
@@ -117,9 +120,11 @@ def test_kitex_does_not_rescale_user_supplied_energies(tmp_path):
         "python/kite/__init__.py before export, so a driver that reads it is "
         "either rescaling twice or disagreeing with the exporter")
 
-    assert "SimulationLocalizedWavePacket.cpp" in readers, (
-        "SimulationLocalizedWavePacket no longer reads /EnergyShift. If its "
-        "time-evolution phase has moved to Python, drop it from `allowed`")
+    for driver in allowed:
+        assert driver in readers, (
+            f"{driver} no longer reads /EnergyShift. Its propagator then computes "
+            "exp(-i*Htilde*ttilde) instead of exp(-i*H*t): unobservable in any "
+            "expectation value, but the state itself is wrong")
 
 
 def test_the_exporter_rescales_every_energy_it_writes():
