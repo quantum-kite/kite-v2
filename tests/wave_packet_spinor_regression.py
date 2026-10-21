@@ -208,3 +208,44 @@ def test_the_page_states_the_k_convention_and_the_spread(must_say):
     end = page.index("### Validation", start)
     assert must_say in page[start:end], (
         f"time_evolution.md's wave-packet admonitions no longer say {must_say!r}")
+
+
+# --- the timestep convention the example documents ---------------------------
+
+def _example_source():
+    return (REPO / "examples" / "spin_precession_simple.py").read_text()
+
+
+def test_the_documented_physical_step_matches_the_example_it_describes():
+    """The docstring quotes a physical step; derive it and check.
+
+    `timestep` is in rescaled units, so the physical step is
+    `timestep / EnergyScale`. The example states 0.1. If anyone edits
+    `spectrum_range` or the default `timestep`, that sentence silently becomes
+    wrong -- which is exactly the kind of drift a reader cannot detect.
+    """
+    source = _example_source()
+
+    lo, hi = (float(x) for x in re.search(
+        r"spectrum_range=\[([-\d.]+),\s*([-\d.]+)\]", source).groups())
+    timestep = float(re.search(r"timestep=([\d.]+)", source).group(1))
+
+    energy_scale = (hi - lo) / 2
+    physical_step = timestep / energy_scale
+
+    assert f"{timestep}/{energy_scale:.0f} = {physical_step}" in source, (
+        f"the docstring's arithmetic no longer matches the code: timestep="
+        f"{timestep}, EnergyScale={energy_scale}, so the physical step is "
+        f"{physical_step}")
+
+
+def test_the_example_says_the_timestep_is_not_physical_time():
+    """The single sentence a user must read before setting `timestep`."""
+    source = _example_source()
+    assert "rescaled units KITEx propagates in, not in physical" in source, (
+        "spin_precession_simple.py no longer warns that timestep is in rescaled "
+        "units; a user who reads it as physical time gets a time axis wrong by "
+        "a factor of EnergyScale")
+    assert "divides by\n    EnergyScale" in source, (
+        "the docstring no longer points at the processor's conversion back to "
+        "physical time")

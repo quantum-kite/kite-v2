@@ -27,6 +27,23 @@
     momentum-dependent coupling -- see the orbital-angular-momentum example
     for a case where the coupling itself depends on k).
 
+    Time units
+    ----------
+    timestep is given in the rescaled units KITEx propagates in, not in physical
+    time: t_rescaled = t * EnergyScale, with hbar = 1. Here spectrum_range is
+    [-5, 5], so EnergyScale = 5 and the default timestep=0.5 is a physical step
+    of 0.5/5 = 0.1. The 400 points therefore span t = 0 to 39.9, about 1.3
+    Larmor periods at 2B = 0.2.
+
+    Put another way, timestep=1 is one inverse EnergyScale, which is the natural
+    time of the rescaled Hamiltonian: its spectrum lies in [-1, 1], so the fastest
+    state advances its phase by exactly one radian per unit of timestep.
+
+    The practical consequence: the same timestep means a different physical step
+    under a different spectrum_range. spin_precession_simple_process.py divides by
+    EnergyScale to put the axis back in physical time, and so must any other
+    post-processing.
+
     Operators: Sx, Sy, Sz are registered as on-site 2x2 matrices via
     add_orbital_coupling(), the same mechanism used throughout KITE's custom
     operators (custom_one, custom_two, and this generalized
