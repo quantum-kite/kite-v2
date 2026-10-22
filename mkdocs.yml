@@ -154,6 +154,10 @@ markdown_extensions:
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
 
 extra:
+  # Single source for the documented release. VERSION.md, README.md and
+  # docs/background/index.md must agree with it; see
+  # tests/documentation_version_regression.py
+  version: "1.1"
   news:
     - title: KITE Spring Workshop @ York
       # link: york.ac.uk
