@@ -78,3 +78,25 @@ def test_the_page_states_the_energy_dependence(phrase):
     assert phrase in PAGE.read_text(), (
         f"optimization.md no longer says {phrase!r}; a reader choosing "
         "num_moments from it would take the band-centre width as uniform")
+
+
+def test_the_page_scopes_the_energy_dependence_to_the_kernel_route():
+    """The Jackson width varies across the band; the CPGF broadening does not.
+
+    KITE offers both. `-K jackson` damps a truncated expansion, and because a
+    kernel of uniform width in `theta = arccos(x)` maps to `sqrt(1-x^2)` in
+    energy, its resolution is energy-dependent. `-K green` is not a kernel: it
+    is an analytic resolvent at finite `eta`, whose broadening is `eta`
+    everywhere. Measured at M=256: Jackson gives sigma = 0.0122, 0.0106, 0.0054
+    at Etilde = 0, 0.5, 0.9 -- a factor 2.3 across the band -- while the CPGF
+    width is `eta` by construction.
+
+    Stating the first without the second would leave a reader thinking every
+    KITE broadening narrows at the edges.
+    """
+    text = PAGE.read_text()
+    assert "belongs to the kernel route, not to KITE's broadening in" in text, (
+        "optimization.md no longer scopes the energy dependence to the kernel "
+        "route; the Green's-function route broadens uniformly")
+    assert "uniform across the band" in text, (
+        "the page no longer says the Green's-function broadening is uniform")

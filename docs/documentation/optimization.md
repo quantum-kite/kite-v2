@@ -72,6 +72,14 @@ $$
 $$
 
 so the expansion is **coarsest at the band centre**, where it takes the familiar value $\sigma_{\lambda}\approx\pi\,\delta\varepsilon/M$, and sharpens towards the band edges — at $\tilde\lambda=0.9$ it is already a factor $\approx\!2.3$ finer. $\sigma_\lambda$ is a standard deviation, not a full width at half maximum. 
+
+    This energy dependence belongs to the kernel route, not to KITE's broadening in
+    general. It comes from the Chebyshev measure: a kernel of uniform width in
+    $\theta=\arccos\tilde\lambda$ maps to a width $\propto\sqrt{1-\tilde\lambda^{2}}$ in
+    energy. The [Green's-function route](#single-particle-greens-functions) below is not a
+    kernel at all — it broadens by a user-set $\eta$ that is **uniform across the band** —
+    so the two routes are not interchangeable when the quantity of interest sits near a
+    band edge. 
 The choice of $M$ then fixes the effective spectral width, $\sigma_{\lambda}$, which must be sufficiently narrow to accurately describe all relevant features of the calculated property. 
 However, if $\sigma_{\lambda}$ becomes too narrow ($M$ too high), the discrete eigenvalues of the SPH are well-resolved and the obtained data suffers from large (finite-size) fluctuations. For information on other available kernels see Weisse *et al.*[^2].
 
