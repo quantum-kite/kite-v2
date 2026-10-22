@@ -1118,6 +1118,9 @@ The KITE package for pre-processing is split up in various subclasses and contai
 [custom-vertex-example]: ../documentation/examples/custom_vertex_operators.md
 [rashba-edelstein-example]: ../documentation/examples/rashba_edelstein.md
 [spectral-function-example]: ../documentation/examples/spectral_function.md
+[markov_maps_example]: ../documentation/examples/markov_local_maps.md
+[visualize-plot_unit_cell]: #visualize-plot_unit_cell
+[visualize-hamiltonian_k]: #visualize-hamiltonian_k
 
 [^1]: A. Weiße, G. Wellein, A. Alvermann, and H. Fehske, [Rev. Mod. Phys. 78, 275 (2006)](https://doi.org/10.1103/RevModPhys.78.275).
 [^2]: S. M. João, M. Anđelković, L. Covaci, T. G. Rappoport, João M. Viana Parente Lopes, and A. Ferreira, [R. Soc. open sci. 7, 191809 (2020)](https://royalsocietypublishing.org/doi/10.1098/rsos.191809).

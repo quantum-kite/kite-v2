@@ -81,7 +81,7 @@ length of `#!python weight` must equal the total number of orbitals in the latti
 The example below computes $A(\mathbf{k},E)$ along $K \to \Gamma \to K'$ for a monolayer MoS₂, using the
 nearest-neighbor 3-band tight-binding model (three $d$-orbitals per metal site: $d_{z^2}$, $d_{xy}$,
 $d_{x^2-y^2}$) of Liu *et al.*[^1] The full script is available
-[here](https://github.com/tgrappoport/kite/blob/master/examples/arpes_tmd.py).
+[here](https://github.com/quantum-kite/kite-v2/blob/master/examples/arpes_tmd.py).
 
 ### Lattice
 

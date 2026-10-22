@@ -289,3 +289,4 @@ python plot_dos.py                # display the data
 [modification-modification-par-magnetic_field]: ../api/kite.md#modification-par-magnetic_field
 
 [config_system]: ../api/kite.md#config_system
+[Workflow]: workflow.md
