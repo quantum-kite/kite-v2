@@ -157,7 +157,7 @@ extra:
   # Single source for the documented release. VERSION.md, README.md and
   # docs/background/index.md must agree with it; see
   # tests/documentation_version_regression.py
-  version: "1.1"
+  version: "2.0"
   news:
     - title: KITE Spring Workshop @ York
       # link: york.ac.uk

@@ -52,6 +52,48 @@ def test_all_the_declarations_agree():
           "listed beneath it")
 
 
+#: Every calculation a user can request, as `Calculation` exposes it. The
+#: capability lists in README.md and docs/background/index.md describe these in
+#: prose, so the prose and this set drift apart silently -- which is how the
+#: lists came to omit five of them.
+ENTRY_POINTS = {
+    "dos", "ldos", "ldos_map", "spectral_map", "arpes",
+    "gaussian_wave_packet", "conductivity_dc", "conductivity_optical",
+    "conductivity_optical_nonlinear", "singleshot_conductivity_dc",
+    "custom_one", "custom_one_local", "custom_two", "custom_two_local",
+    "custom_singleshot_two",
+}
+
+#: Methods of `Calculation` that are not advertised capabilities:
+#: `add_orbital_*` build a custom operator rather than request a calculation,
+#: and `localized_wave_packet` is descoped this release
+#: (see `descoped_capability_regression.py`).
+NOT_ADVERTISED = {"__init__", "add_orbital_coupling", "add_orbital_index",
+                  "localized_wave_packet"}
+
+
+def test_the_capability_lists_still_describe_every_entry_point():
+    """Not a wording check -- a prompt to revisit the prose when the set grows.
+
+    There is no mechanical link between a method name and the sentence that
+    advertises it, so this pins the set instead. A new entry point fails here,
+    and whoever adds it decides how the two lists should say so.
+    """
+    source = (REPO / "python" / "kite" / "__init__.py").read_text()
+    body = source[source.index("class Calculation:"):source.index("class Configuration:")]
+    found = set(re.findall(r"^    def (\w+)\(self,", body, re.M))
+    found = {name for name in found if not name.startswith("_")}
+
+    added = sorted(found - ENTRY_POINTS - NOT_ADVERTISED)
+    removed = sorted(ENTRY_POINTS - found)
+    assert not added, (
+        f"Calculation gained {added}. README.md and docs/background/index.md "
+        "list what KITE can do; add it there, then add it here")
+    assert not removed, (
+        f"Calculation no longer offers {removed}, but the capability lists in "
+        "README.md and docs/background/index.md still advertise it")
+
+
 def test_the_site_config_carries_the_version():
     """So the marker travels with the built site, not only with the prose."""
     text = (REPO / "mkdocs.yml").read_text()
