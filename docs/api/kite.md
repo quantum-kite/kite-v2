@@ -284,7 +284,6 @@ The KITE package for pre-processing is split up in various subclasses and contai
         | <span id="calculation-get_spectral_map">`#!python get_spectral_map`:*`#!python dict`*</span>                                     | Returns the requested spectral-map functions.                                                                               |
         | <span id="calculation-get_arpes">`#!python get_arpes`:*`#!python dict`*</span>                                                   | Returns the requested ARPES functions.                                                                                      |
         | <span id="calculation-get_gaussian_wave_packet">`#!python get_gaussian_wave_packet`:*`#!python dict`*</span>                     | Returns the requested wave packet time evolution function, with a gaussian wavepacket mutiplied with different plane waves. |
-        | <span id="calculation-get_localized_wave_packet">`#!python get_localized_wave_packet`:*`#!python dict`*</span>                   | Returns the requested localized wave packet time evolution function, with spectral filtering.                              |
         | <span id="calculation-get_conductivity_dc">`#!python get_conductivity_dc`:*`#!python dict`*</span>                               | Returns the requested DC conductivity functions.                                                                            |
         | <span id="calculation-get_conductivity_optical">`#!python get_conductivity_optical`:*`#!python dict`*</span>                     | Returns the requested optical conductivity functions.                                                                       |
         | <span id="calculation-get_conductivity_optical_nonlinear">`#!python get_conductivity_optical_nonlinear`:*`#!python dict`*</span> | Returns the requested nonlinear optical conductivity functions.                                                             |
@@ -305,7 +304,6 @@ The KITE package for pre-processing is split up in various subclasses and contai
         | [`#!python spectral_map(energy_, sigma_, vectors_ [, ...])`][calculation-spectral_map]          | Calculate a momentum-space (k-resolved) map of the spectral function at one energy. |
         | [`#!python arpes(k_vector, weight [, ...])`][calculation-arpes]                                | Calculate the spectral contribution for given k-points and weights.         |
         | [`#!python gaussian_wave_packet(num_points [, ...])`][calculation-gaussian_wave_packet]        | Calculate the time evolution function of a wave packet.                     |
-        | [`#!python localized_wave_packet(time, num_measures, initial_pos [, ...])`][calculation-localized_wave_packet] | Calculate the time evolution of a localized/gaussian wave packet with spectral filtering. |
         | [`#!python conductivity_dc(direction, [, ...])`][calculation-conductivity_dc]                  | Calculate the DC conductivity for a given direction.                        |
         | [`#!python conductivity_optical(direction, [, ...])`][calculation-conductivity_optical]        | Calculate optical conductivity for a given direction.                       |
         | [`#!python conductivity_optical_nonlinear([...])`][calculation-conductivity_optical_nonlinear] | Calculate nonlinear optical conductivity for a given direction.             |
@@ -514,38 +512,6 @@ The KITE package for pre-processing is split up in various subclasses and contai
                 back by an explicit ordered list, not the
                 single-digit `#!python "l0"`–`#!python "l9"` scheme described in the warning above — so this path
                 does not share that 10-operator limit.
-
-    :   !!! declaration-function "<span id="calculation-localized_wave_packet">*function*`#!python localized_wave_packet(time, num_measures, initial_pos, num_moments=0, width=-1., energy_window=[0.,0.], initial_wavevector=None, probes=None, sample_start=-1, sample_L=-1)`</span>"
-
-
-        :   Calculate the time evolution of a localized (point-like) or Gaussian-envelope wave packet, with optional
-            spectral filtering. This is distinct from [`#!python gaussian_wave_packet()`][calculation-gaussian_wave_packet]:
-            the initial state is dispatched between a point-like or a Gaussian-envelope wave packet depending on
-            whether `#!python width > 0`, it can be band/energy-filtered to `#!python energy_window` before propagation,
-            and it reports richer observables (spatial spread statistics, return probability, propagator amplitude,
-            spectral moments, and transmission weights at chosen probe positions) than the plain spin expectation
-            values returned by `#!python gaussian_wave_packet()`.
-
-            **Parameters**
-
-            :   | Parameter                                              | Description                                                                                                                          |
-                |----------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------|
-                | `#!python time`:*`#!python float`*                       | Total dimensionless time over which the wave packet is evolved. Together with `#!python num_measures`, this sets the time step between measurements. |
-                | `#!python num_measures`:*`#!python int`*                 | Number of times the evolved state is probed.                                                                                          |
-                | `#!python initial_pos`:*`#!python array_like`*           | Initial position of the localized wave packet in lattice coordinates, `#!python [n_x, n_y[, n_z], n_orbital]`.                       |
-                | `#!python num_moments`:*`#!python int`*                  | Number of Chebyshev moments to calculate for the spectral function of the propagated state.                                          |
-                | `#!python width`:*`#!python float`*                      | Width of the Gaussian envelope in real space. If `#!python width <= 0` a point-like (not Gaussian-enveloped) wave packet is used.     |
-                | `#!python energy_window`:*`#!python array_like`*         | The localized packet is filtered to keep only eigenstates with energy inside this window.                                            |
-                | `#!python initial_wavevector`:*`#!python array_like`*    | Wavevector the Gaussian envelope is centered around, in reciprocal lattice coordinates.                                               |
-                | `#!python probes`:*`#!python array_like`*                | List of positions, in lattice coordinates, where the propagator/transmission weights are evaluated.                                  |
-                | `#!python sample_start`:*`#!python int`*                 | Start (in the x-direction) of a disordered sample region embedded between clean leads, for transport/localization-length studies.     |
-                | `#!python sample_L`:*`#!python int`*                     | Length of the disordered sample region described by `#!python sample_start`.                                                          |
-
-            !!! Note "No worked example yet"
-
-                There is currently no example script in `#!bash examples/` that uses `#!python localized_wave_packet()`.
-                See the C++ implementation (`Src/Simulation/SimulationLocalizedWavePacket.cpp`) and the parameter reference
-                above for now.
 
     :   !!! declaration-function "<span id="calculation-conductivity_dc">*function*`#!python conductivity_dc(direction, num_points, num_moments, num_random, num_disorder=1, temperature=0)`</span>"
             
@@ -1081,7 +1047,6 @@ The KITE package for pre-processing is split up in various subclasses and contai
 [calculation-get_spectral_map]: #calculation-get_spectral_map
 [calculation-get_arpes]: #calculation-get_arpes
 [calculation-get_gaussian_wave_packet]: #calculation-get_gaussian_wave_packet
-[calculation-get_localized_wave_packet]: #calculation-get_localized_wave_packet
 [calculation-get_conductivity_dc]: #calculation-get_conductivity_dc
 [calculation-get_conductivity_optical]: #calculation-get_conductivity_optical
 [calculation-get_conductivity_optical_nonlinear]: #calculation-get_conductivity_optical_nonlinear
@@ -1098,7 +1063,6 @@ The KITE package for pre-processing is split up in various subclasses and contai
 [calculation-spectral_map]: #calculation-spectral_map
 [calculation-arpes]: #calculation-arpes
 [calculation-gaussian_wave_packet]: #calculation-gaussian_wave_packet
-[calculation-localized_wave_packet]: #calculation-localized_wave_packet
 [calculation-conductivity_dc]: #calculation-conductivity_dc
 [calculation-conductivity_optical]: #calculation-conductivity_optical
 [calculation-conductivity_optical_nonlinear]: #calculation-conductivity_optical_nonlinear

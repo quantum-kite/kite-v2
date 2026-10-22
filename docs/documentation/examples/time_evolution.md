@@ -3,8 +3,7 @@
 Most calculations on this site are static, energy-resolved spectral properties -- a density of
 states, a local density of states, a spectral function -- computed once and for all from the
 Hamiltonian's spectrum, not a response to any perturbation. Others (conductivity, spin Hall
-response) genuinely are linear-response coefficients. `#!python calculation.localized_wave_packet()`
-is also a real-time propagation, elsewhere on this site.
+response) genuinely are linear-response coefficients.
 [`#!python calculation.gaussian_wave_packet()`][calculation-gaussian_wave_packet] is the member of
 this family introduced here: it builds a Gaussian-enveloped wave packet and propagates it **in real
 time**, using a Chebyshev expansion of $e^{-iHt}$, then reports the expectation value of whatever

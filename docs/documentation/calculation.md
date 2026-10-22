@@ -18,8 +18,6 @@ The target functions currently available are:
   : Calculates a full momentum-resolved (k-space) map of the spectral function at one target energy.
 * [`#!python gaussian_wave_packet`][calculation-gaussian_wave_packet]
   : Simulates the propagation of a gaussian wave-packet.
-* [`#!python localized_wave_packet`][calculation-localized_wave_packet]
-  : Simulates the propagation of a localized or gaussian wave-packet with optional spectral filtering.
 * [`#!python conductivity_dc`][calculation-conductivity_dc]
   : Calculates a given component of the DC conductivity tensor.
 * [`#!python conductivity_optical`][calculation-conductivity_optical]
@@ -153,16 +151,6 @@ calculation.spectral_map(0.0, 0.1, 10)  # energy, sigma, vectors
 See the [full reference][calculation-ldos_map] for parameters and an important caveat about boundary conditions
 when using `#!python spectral_map`.
 
-### Localized wave packets
-
-[`#!python localized_wave_packet`][calculation-localized_wave_packet] simulates the propagation of a point-like
-or Gaussian-enveloped wave packet, optionally filtered to a chosen energy window before propagation. Unlike
-[`#!python gaussian_wave_packet`][calculation-gaussian_wave_packet], it reports spatial spread statistics, return
-probability, propagator amplitude, spectral moments, and transmission weights at chosen probe positions — useful
-for wave-packet-spreading/transport studies in a disordered channel embedded between clean leads. See the
-[full reference][calculation-localized_wave_packet] for the complete parameter list; there is no worked example
-script for it yet.
-
 ### Custom operators: `custom_one`, `custom_two`, and their local/single-shot variants
 
 KITE also supports generalized KPM traces of user-defined operators, built from a
@@ -285,7 +273,6 @@ python plot_dos.py                # display the data
 [calculation-spectral_map]: ../api/kite.md#calculation-spectral_map
 [calculation-arpes]: ../api/kite.md#calculation-arpes
 [calculation-gaussian_wave_packet]: ../api/kite.md#calculation-gaussian_wave_packet
-[calculation-localized_wave_packet]: ../api/kite.md#calculation-localized_wave_packet
 [calculation-conductivity_dc]: ../api/kite.md#calculation-conductivity_dc
 [calculation-conductivity_optical]: ../api/kite.md#calculation-conductivity_optical
 [calculation-conductivity_optical_nonlinear]: ../api/kite.md#calculation-conductivity_optical_nonlinear
