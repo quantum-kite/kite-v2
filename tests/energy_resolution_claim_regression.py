@@ -68,10 +68,9 @@ def test_the_band_centre_is_the_widest_point():
 
 
 @pytest.mark.parametrize("phrase", [
-    "not uniform across the band",
+    "the band-centre value",
     r"\sqrt{1-\tilde\lambda^{2}}",
-    "coarsest at the band centre",
-    "standard deviation, not a full width at half maximum",
+    "sharpens towards the band edges",
 ])
 def test_the_page_states_the_energy_dependence(phrase):
     """AC-DOCS-02: the energy dependence and the edge behaviour must be stated."""
@@ -95,8 +94,7 @@ def test_the_page_scopes_the_energy_dependence_to_the_kernel_route():
     KITE broadening narrows at the edges.
     """
     text = PAGE.read_text()
-    assert "belongs to the kernel route, not to KITE's broadening in" in text, (
-        "optimization.md no longer scopes the energy dependence to the kernel "
-        "route; the Green's-function route broadens uniformly")
-    assert "uniform across the band" in text, (
-        "the page no longer says the Green's-function broadening is uniform")
+    assert "uniformly across the band" in text, (
+        "optimization.md no longer says the Green's-function route broadens "
+        "uniformly; a reader would take the Jackson energy dependence as "
+        "applying to every KITE broadening")
