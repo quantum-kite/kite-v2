@@ -20,8 +20,8 @@
     the sign of the sigma_xy = +1 e^2/h plateau this example computes. A Chern
     sign is only meaningful alongside the convention that fixes it: KITE stores `add_one_hopping(R, from_sub, to_sub, v)` as `H[row=from_sub, col=to_sub]` and uses `exp(+i k.r)`.
 
-    haldane_orbital_magnetization.py uses the complex-conjugate assignment,
-    +i*t2 on A-A, and so has C = -1.
+    haldane_orbital_magnetization.py and kane_mele_spin_hall.py's up-spin
+    block use the same assignment.
 """
 
 __all__ = ["main"]

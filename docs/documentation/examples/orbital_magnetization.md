@@ -104,7 +104,7 @@ running integral $M(E_F)=\int_{-\infty}^{E_F}S(E)\,dE$ is the orbital magnetizat
 The example uses the Haldane model[^3] — a **single-spin** Chern insulator — not the spin-doubled Kane-Mele
 construction of the [spin Hall page][custom-vertex-example]. On the honeycomb lattice with two sublattices A/B,
 nearest-neighbour hopping is $-t$ and the next-nearest-neighbour hopping carries a complex Haldane phase, $+\phi$
-on the A–A bonds and $-\phi$ on the B–B bonds, with $t_2=t/3$, $\phi=\pi/2$, $\delta=0$ (no Semenoff mass).
+on the A–A bonds and $-\phi$ on the B–B bonds, with $t_2=t/3$, $\phi=-\pi/2$, $\delta=0$ (no Semenoff mass).
 
 **The bulk gap is $|E|<1$, not $\sqrt3$.** The local Dirac-point mass is $3\sqrt3\,t_2\sin\phi=\sqrt3\approx1.73$,
 but the lattice model's actual (smaller) *indirect* band gap — verified numerically to 10 significant figures
@@ -112,7 +112,7 @@ via [`#!python kite.visualize.hamiltonian_k`][kite-visualize] and independently 
 Fukui-Hatsugai-Suzuki lattice Chern-number calculation (converged, gap never closes from a $20\times20$ to
 $120\times120$ k-mesh) — is exactly $|E|<1$ (the gap magnitude is an eigenvalue-only quantity, unaffected
 by the convention correction below). Both calculations agree the filled/valence band has **Chern
-number $C=-1$** for this bond-phase assignment and KITE's row=`#!python from_sub`/col=`#!python to_sub`,
+number $C=+1$** for this bond-phase assignment and KITE's row=`#!python from_sub`/col=`#!python to_sub`,
 $e^{+i\mathbf k\cdot\mathbf r}$ hopping convention (see
 [`#!python hamiltonian_k`][kite-visualize]'s own docstring for that convention).
 
@@ -147,8 +147,8 @@ curvature and orbital moment of each band, integrated over the Brillouin zone) e
 the full spectrum — not restricted to the gap. The two agree closely across the entire range, including the
 bulk-band region and the resonance features near the gap edges: the root-mean-square deviation between the two
 curves is **~1% of the peak magnetization**. Inside the gap, $M(E_F)$ rises **linearly**; a fit restricted to
-$|E|<0.8$ gives $\left.dM/dE_F\right|_{\rm fit}=0.157$, compared to the exact topological (Streda-relation)
-prediction $-C/(2\pi)=0.1592$ for $C=-1$ — agreement to **~1%**.
+$|E|<0.8$ gives $\left.dM/dE_F\right|_{\rm fit}=-0.157$, compared to the exact topological (Streda-relation)
+prediction $-C/(2\pi)=-0.1592$ for $C=+1$ — agreement to **~1%**.
 
 !!! example
 

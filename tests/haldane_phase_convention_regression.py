@@ -1,14 +1,13 @@
-"""The Haldane phase convention, as the examples code it and the pages state it.
+"""Every shipped Haldane example must carry the SAME phase, giving C = +1.
 
-Three shipped examples build a Haldane next-nearest-neighbour term, and two of
-them use the complex-conjugate assignment of the third. That is legitimate --
-both are Haldane models -- but it means every page that quotes a sign has to say
-which assignment it is describing, which is what T-064 is about.
+Three examples build a Haldane next-nearest-neighbour term. They used to
+disagree: `haldane_orbital_magnetization.py` carried phi = +pi/2 (C = -1) while
+`dos_dccond_haldane.py` and the up-spin block of `kane_mele_spin_hall.py`
+carried phi = -pi/2 (C = +1). Both are legitimate Haldane models, but one
+convention across the examples is worth more than prose explaining two, so the
+orbital-magnetization example was flipped to match.
 
-The relative claim needs no numerics: with every other amplitude real, the two
-lattices have complex-conjugate Hamiltonians, so their Chern numbers must be
-opposite. The absolute signs do depend on conventions that have been wrong
-before -- `kite.visualize.hamiltonian_k`'s `exp(+i k.r)` was a bug until
+The absolute sign depends on conventions that have been wrong before -- `kite.visualize.hamiltonian_k`'s `exp(+i k.r)` was a bug until
 2026-07-26 per its own docstring -- and nothing pinned them, because the
 existing plateau test goes through KITEx and would not see a change in
 `hamiltonian_k`. This does.
@@ -64,35 +63,39 @@ def test_the_reference_example_has_chern_number_plus_one():
         "silently inverts every Chern sign stated in docs/")
 
 
-def test_the_orbital_magnetization_example_has_the_opposite_sign():
-    """It codes +i*t2 on A-A, the complex conjugate, so C = -1."""
-    lattice = _load("orb", "examples/haldane_orbital_magnetization.py").haldane()
-    assert _chern(lattice) == pytest.approx(-1.0, abs=1e-6), (
-        "haldane_orbital_magnetization no longer has C = -1; its docstring and "
-        "docs/documentation/examples/orbital_magnetization.md both state it")
+def test_the_orbital_magnetization_example_matches_the_others():
+    """Flipped to phi = -pi/2 so all three examples agree at C = +1."""
+    module = _load("orb", "examples/haldane_orbital_magnetization.py")
+    assert _chern(module.haldane()) == pytest.approx(1.0, abs=1e-6), (
+        "haldane_orbital_magnetization no longer has C = +1; its processor "
+        "hardcodes CHERN_NUMBER = +1 and orbital_magnetization.md states it")
+
+    import inspect
+    for name in ("haldane", "main"):
+        phi = inspect.signature(getattr(module, name)).parameters["phi"].default
+        assert phi == pytest.approx(-np.pi / 2), (
+            f"{name}()'s default phi is {phi}, not -pi/2. main() is what runs, "
+            "so a stale default there silently rebuilds the old lattice")
 
 
-def test_the_two_assignments_are_genuinely_opposite():
-    """The convention-free half of the claim.
-
-    Complex conjugation of a real-basis Hamiltonian is spinless time reversal,
-    so it must flip C whatever the row/col and Fourier conventions are. If this
-    ever fails, the two lattices are no longer conjugates and the pages that
-    call them mirror images are wrong.
-    """
+def test_all_the_haldane_examples_agree():
+    """One convention across the examples, which is the point of T-064."""
     ref = _chern(_load("ref2", "examples/dos_dccond_haldane.py").haldane())
     orb = _chern(_load("orb2", "examples/haldane_orbital_magnetization.py").haldane())
-    assert ref == pytest.approx(-orb, abs=1e-6), (
-        f"the two Haldane examples give C = {ref:.3f} and {orb:.3f}, which are "
-        "not opposite; they are supposed to be complex conjugates")
+    assert ref == pytest.approx(orb, abs=1e-6), (
+        f"the Haldane examples give C = {ref:.3f} and {orb:.3f}. They are meant "
+        "to carry the same phase; a page quoting one sign is then wrong about "
+        "the other")
 
 
 @pytest.mark.parametrize("path,must_say", [
     ("examples/kane_mele_spin_hall.py", "-i*t2 on A-A"),
     ("examples/dos_dccond_haldane.py", "-i*t2 on A-A"),
-    ("examples/haldane_orbital_magnetization.py", "+i*t2 on A-A"),
+    ("examples/haldane_orbital_magnetization.py", "-i*t2 on A-A"),
     ("docs/documentation/examples/custom_vertex_operators.md", r"-i\,t_2$ on A–A"),
     ("docs/documentation/examples/haldane.md", r"$-i\,t_2$ on A–A"),
+    ("examples/process_haldane_orbital_magnetization.py", "CHERN_NUMBER = +1"),
+    ("docs/documentation/examples/orbital_magnetization.md", r"$C=+1$"),
 ])
 def test_every_page_states_the_amplitude_it_actually_codes(path, must_say):
     """T-064: one convention, stated as the amplitude rather than as a bare phi.
