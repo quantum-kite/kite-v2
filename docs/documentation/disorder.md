@@ -228,6 +228,10 @@ node5 = [[-1, +1], 'B']
 
 After defining a parent  [`#!python kite.StructuralDisorder`][structural_disorder] object, we can construct the desired pattern:
 
+Both values below are energies in the same units as the hoppings and onsite terms, and
+both are **increments added to the clean lattice**, not replacements: a bond value of
+$-t$ cancels a hopping of $+t$, and a value of $0$ changes nothing.
+
 ``` python
  # define an object based on the lattice with a certain concentration
 struc_disorder = kite.StructuralDisorder(lattice, concentration=0.2)
