@@ -59,6 +59,13 @@ class shell_input{
         bool CustomOne_Exclusive;
         bool CustomOne_is_required;
 
+        int CustomOneLocal_NumEnergies;
+        double CustomOneLocal_Emin;
+        double CustomOneLocal_Emax;
+        std::string CustomOneLocal_Name;
+        bool CustomOneLocal_Exclusive;
+        bool CustomOneLocal_is_required;
+
         // Custom rank-two (custom_two()) Kubo-Bastin response
         double CustomTwo_Temp;
         int CustomTwo_NumEnergies;
@@ -143,6 +150,7 @@ class shell_input{
         void parse_lDOS(int argc, char *argv[]);
         void parse_ARPES(int argc, char *argv[]);
         void parse_CustomOne(int argc, char *argv[]);
+        void parse_CustomOneLocal(int argc, char *argv[]);
         void parse_CustomTwo(int argc, char *argv[]);
         void parse_SingleShot(int argc, char *argv[]);
         int get_num_exclusives();

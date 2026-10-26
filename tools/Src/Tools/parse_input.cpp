@@ -108,6 +108,7 @@ void shell_input::printHelp(){
     std::cout << "--CondOpt    Optical conductivity\n";
     std::cout << "--CondOpt2   Second-order optical conductivity (photoconductivity)\n";
     std::cout << "--CustomOne  Single-vertex custom operator trace (generalized DOS)\n";
+    std::cout << "--CustomOneLocal  Single-vertex custom operator, resolved at each probed orbital\n";
     std::cout << "--CustomTwo  Double-vertex custom operator trace (generalized Kubo-Bastin)\n";
     std::cout << "--SingleShot Longitudinal DC conductivity from the single-shot method\n\n";
 
@@ -137,6 +138,7 @@ void shell_input::printHelp(){
     std::cout << "           -K              Kernel to use (jackson/green). green requires broadening parameter. Example: -K green 0.01\n";
     std::cout << "           -X              Exclusive. Only calculate this quantity\n\n";
 
+    std::cout << "--CustomOneLocal -E min max num  Energy range and number of points for the\n";
     std::cout << "--CustomOne -E min max num  Energy range and number of points for the\n";
     std::cout << "                            reconstructed calculation.custom_one() spectral\n";
     std::cout << "                            density, Tr[A * delta(E-H)] (jackson kernel only)\n";
@@ -217,7 +219,7 @@ shell_input::shell_input(int argc, char *argv[]){
 	// Processes the input that this program recieves from the command line	
 
     // First, find the position of each of the following functions:
-    valid_keys = std::vector<std::string>{"--DOS", "--CondOpt","--CondDC", "--CondOpt2", "--LDOS", "--ARPES", "--CustomOne", "--CustomTwo", "--SingleShot"};
+    valid_keys = std::vector<std::string>{"--DOS", "--CondOpt","--CondDC", "--CondOpt2", "--LDOS", "--ARPES", "--CustomOne", "--CustomTwo", "--SingleShot", "--CustomOneLocal"};
     len = valid_keys.size();   // length of valid_keys?
     keys_pos = std::vector<int>(len, -1);
     keys_len = std::vector<int>(len, -1);
@@ -259,6 +261,7 @@ shell_input::shell_input(int argc, char *argv[]){
     parse_CondOpt(argc, argv);
     parse_CondOpt2(argc, argv);
     parse_CustomOne(argc, argv);
+    parse_CustomOneLocal(argc, argv);
     parse_CustomTwo(argc, argv);
     parse_SingleShot(argc, argv);
 
@@ -273,6 +276,7 @@ shell_input::shell_input(int argc, char *argv[]){
     lDOS_is_required = false;
     ARPES_is_required = false;
     CustomOne_is_required = false;
+    CustomOneLocal_is_required = false;
     CustomTwo_is_required = false;
     SingleShot_is_required = false;
 
@@ -289,6 +293,7 @@ shell_input::shell_input(int argc, char *argv[]){
             if(lDOS_Exclusive) lDOS_is_required = true;
             if(ARPES_Exclusive) ARPES_is_required = true;
             if(CustomOne_Exclusive) CustomOne_is_required = true;
+            if(CustomOneLocal_Exclusive) CustomOneLocal_is_required = true;
             if(CustomTwo_Exclusive) CustomTwo_is_required = true;
             if(SingleShot_Exclusive) SingleShot_is_required = true;
 
@@ -300,6 +305,7 @@ shell_input::shell_input(int argc, char *argv[]){
             lDOS_is_required = true;
             ARPES_is_required = true;
             CustomOne_is_required = true;
+            CustomOneLocal_is_required = true;
             CustomTwo_is_required = true;
             SingleShot_is_required = true;
             }
@@ -316,6 +322,7 @@ int shell_input::get_num_exclusives(){
     if(lDOS_Exclusive)        N_exclusives++;
     if(ARPES_Exclusive)       N_exclusives++;
     if(CustomOne_Exclusive)   N_exclusives++;
+    if(CustomOneLocal_Exclusive) N_exclusives++;
     if(CustomTwo_Exclusive)   N_exclusives++;
     if(SingleShot_Exclusive)  N_exclusives++;
 
@@ -632,6 +639,54 @@ void shell_input::parse_CustomOne(int argc, char* argv[]){
           std::string name = argv[1 + pos];
           if(name == "-X")
             CustomOne_Exclusive = true;
+        }
+    }
+}
+
+void shell_input::parse_CustomOneLocal(int argc, char* argv[]){
+    // This function looks at the command-line input pertaining to the
+    // custom_one_local() spectral density reconstruction (--CustomOneLocal) and
+    // finds all the relevant parameters. Mirrors parse_CustomOne; there is no
+    // kernel choice (jackson only) and no site selection -- the probed orbitals
+    // are fixed when KITEx runs, not at post-processing time.
+
+    CustomOneLocal_NumEnergies = -1;
+    CustomOneLocal_Emin = 8888.8;
+    CustomOneLocal_Emax = -8888.8;
+    CustomOneLocal_Name = "";
+    CustomOneLocal_Exclusive = false;
+
+    int pos = keys_pos.at(9); // position of "--CustomOneLocal" in valid_keys
+    if(pos != -1){
+        for(int k = 1; k < keys_len.at(9); k++){
+            std::string name = argv[k + pos];
+            std::string n1 = argv[k + pos + 1];
+            if(name == "-N")
+                CustomOneLocal_Name = n1;
+
+            if(name == "-E"){
+                if(k == keys_len.at(9) - 1){
+                    CustomOneLocal_NumEnergies = atoi(n1.c_str());
+                    continue;
+                }
+                std::string n2 = argv[k + pos + 2];
+                if(n2 == "-N" or n2 == "-X"){
+                    CustomOneLocal_NumEnergies = atoi(n1.c_str());
+                    continue;
+                }
+                std::string n3 = argv[k + pos + 3];
+                CustomOneLocal_Emin = atof(n1.c_str());
+                CustomOneLocal_Emax = atof(n2.c_str());
+                CustomOneLocal_NumEnergies = atoi(n3.c_str());
+            }
+
+            if(name == "-X" or n1 == "-X")
+                CustomOneLocal_Exclusive = true;
+        }
+        if(keys_len.at(9) == 1){
+          std::string name = argv[1 + pos];
+          if(name == "-X")
+            CustomOneLocal_Exclusive = true;
         }
     }
 }
