@@ -177,9 +177,12 @@ reconstruction time with `#!bash --CustomOneLocal -E`.
 $S_z$ is on-site and diagonal, so $A|j\rangle=A_{jj}|j\rangle$ and the moments are exactly
 $A_{jj}$ times the orbital-resolved LDOS moments. That is what *local* means for a diagonal
 vertex, and it is what makes this leg checkable against `#!python calculation.ldos()` at the same
-orbitals — with an identity vertex the two agree digit for digit. A vertex that is *off*-diagonal
-in the orbital basis, such as an intra-cell A–B bond operator, gives
-$\langle A|\delta(E-H)|B\rangle$ instead, which no other KITE calculation produces.
+orbitals — with an identity vertex the two agree digit for digit.
+
+!!! warning "`#!python custom_one_local()` takes on-site Hermitian operators"
+
+    For off-diagonal or velocity vertices use [`#!python custom_one()`][calculation-custom_one]
+    or [`#!python custom_two()`][calculation-custom_two].
 
 <figure>
     <img src="../../../assets/images/afm_zigzag_ribbon/local_spin_spectra.png" style="width: 40em;" />
@@ -296,3 +299,5 @@ gap and edge-band energies before spending time on a full KPM run.
 
 [afm-ribbon-example]: https://github.com/quantum-kite/kite-v2/blob/master/examples/afm_zigzag_ribbon.py
 [configuration]: ../../api/kite.md#configuration
+[calculation-custom_one]: ../../api/kite.md#calculation-custom_one
+[calculation-custom_two]: ../../api/kite.md#calculation-custom_two

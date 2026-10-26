@@ -235,9 +235,10 @@ changed here; the output file names each column's cell and orbital in its header
 The units are those of the vertex operator $A$, per eV, per orbital. There is no
 $1/N$ and no volume factor: the seeding is a single basis ket, not a stochastic
 trace, so this is a quantity at one orbital rather than a density per unit area.
-For a vertex that is diagonal in the orbital basis -- the intended on-site use --
-$A|j\rangle = A_{jj}|j\rangle$, so the result is exactly $A_{jj}$ times the
-orbital-resolved local density of states.
+`#!python custom_one_local()`'s vertex is an on-site, Hermitian operator, hence
+diagonal in the orbital basis, so $A|j\rangle = A_{jj}|j\rangle$ and the result is
+exactly $A_{jj}$ times the orbital-resolved local density of states. For off-diagonal
+or velocity vertices use `#!bash --CustomOne` or `#!bash --CustomTwo`.
 
 ### Example 7
 

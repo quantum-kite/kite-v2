@@ -109,6 +109,27 @@ def test_the_sentinels_agree_with_the_defaults():
         "assigns, so those flags are ignored or the sentinel is used as a value")
 
 
+def test_both_pages_state_the_on_site_hermitian_restriction():
+    """This release supports an on-site Hermitian vertex and nothing else.
+
+    An off-diagonal vertex gives <A|delta(E-H)|B>, and an anti-Hermitian one is
+    discarded entirely by the Re projection in store_custom_one_local. Neither is
+    in scope, so neither page may imply otherwise -- advertising a capability the
+    release does not have is the failure this guards.
+    """
+    pages = ["docs/api/kite-tools.md",
+             "docs/documentation/examples/afm_zigzag_ribbon.md"]
+    for page in pages:
+        # collapsed, because the phrase wraps differently on the two pages
+        text = " ".join((REPO / page).read_text().split())
+        assert re.search(r"on-site,? Hermitian operators?", text), (
+            f"{page} no longer states that custom_one_local's vertex must be an "
+            "on-site Hermitian operator in this release")
+        assert "velocity vertices use" in text, (
+            f"{page} no longer points off-diagonal and velocity vertices at "
+            "custom_one/custom_two, so the restriction reads as a KITE limitation")
+
+
 # --------------------------------------------------------------------------
 # reconstruction
 # --------------------------------------------------------------------------
