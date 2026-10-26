@@ -27,6 +27,7 @@
 #include "../OptCond_1order/conductivity_optical.hpp"
 #include "../OptCond_2order/conductivity_2order.hpp"
 #include "../Custom/customone.hpp"
+#include "../Custom/customonelocal.hpp"
 #include "../Custom/customtwo.hpp"
 #include "calculate.hpp"
 
@@ -54,6 +55,7 @@ void calculate(char *name, shell_input & variables){
   conductivity_optical<U, DIM>    condOpt(info, variables);
   conductivity_nonlinear<U, DIM>  condOpt2(info, variables);
   customone<U, DIM>               customOne(info, variables);
+  customonelocal<U, DIM>          customOneLocal(info, variables);
   customtwo<U, DIM>               customTwo(info, variables);
   verbose_message("------------------------------------------------ \n\n");
 
