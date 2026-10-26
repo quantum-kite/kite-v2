@@ -141,6 +141,66 @@ band edge (the bulk gap closes at exactly $|E|=\Delta$ in this model) — so a G
 centered there also overlaps bulk states, making a single-disorder-realization comparison less
 visually selective.
 
+### Resolving it in energy: `custom_one_local()`
+
+The map above answers *where* the polarization sits at one energy. `#!python custom_one_local()`
+answers the complementary question — *at what energy* does a chosen atom polarize — by seeding a
+single basis ket $|j\rangle$ and returning the Chebyshev moments
+$\Gamma_n^{(j)}=\langle j|T_n(\tilde H)\,A|j\rangle$ of a vertex $A$ at that orbital.
+
+```python
+positions = [cell for cell in LOCAL_CELLS for _ in LOCAL_SUBLATTICES]
+sublattices = list(LOCAL_SUBLATTICES) * len(LOCAL_CELLS)
+vertex = custom.Vertex(LOCAL_MOMENTS, [[1.0, 'l0'], [1.0, 'l1']])
+calculation.custom_one_local(stream_=vertex, energy_=np.array([energy]),
+                             position_=positions, sublattice_=sublattices)
+```
+
+Three things about that call are worth stating plainly, because each is a trap.
+
+**The vertex carries both labels.** `l0` and `l1` are $S_z$ restricted to sublattice A and to
+sublattice B, so together they are the diagonal matrix
+$\mathrm{diag}(+\tfrac12,+\tfrac12,-\tfrac12,-\tfrac12)$. Both are needed here not for a physical
+reason but because KITEx reads one vertex and shares it across every probed orbital: a vertex
+carrying only `l0` would return identically zero on the B columns. This is the opposite of the
+`#!python ldos_map()` guidance above, where the two labels must stay separate — there the
+sublattice resolution comes from the operator, here it comes from the seed.
+
+**The columns are added, not subtracted.** The minus signs for the down channels are already
+inside the vertex, so $S_z^A = \mathrm{col(Aup)}+\mathrm{col(Adn)} = \tfrac12[\rho_{A\uparrow}-\rho_{A\downarrow}]$.
+Subtracting the two columns would give the charge density instead.
+
+**`energy_` is ignored.** It is required by the signature and written to the file, but KITEx never
+reads it: the output is moments over the whole band, and the energy grid is chosen at
+reconstruction time with `#!bash --CustomOneLocal -E`.
+
+$S_z$ is on-site and diagonal, so $A|j\rangle=A_{jj}|j\rangle$ and the moments are exactly
+$A_{jj}$ times the orbital-resolved LDOS moments. That is what *local* means for a diagonal
+vertex, and it is what makes this leg checkable against `#!python calculation.ldos()` at the same
+orbitals — with an identity vertex the two agree digit for digit. A vertex that is *off*-diagonal
+in the orbital basis, such as an intra-cell A–B bond operator, gives
+$\langle A|\delta(E-H)|B\rangle$ instead, which no other KITE calculation produces.
+
+<figure>
+    <img src="../../../assets/images/afm_zigzag_ribbon/local_spin_spectra.png" style="width: 40em;" />
+    <figcaption>Local spin spectral density at a ribbon-interior cell (left) and at the bearded edge
+    (right), clean (solid) and with 5% A-sublattice vacancies (dashed).</figcaption>
+</figure>
+
+The two panels say different things. In the **interior**, $S_z^A$ and $S_z^B$ are mirror images and
+the gap between $\pm\Delta$ is empty — the Néel picture people expect. At the **bearded edge** that
+antisymmetry is gone: the coordination-1 A atom carries a sharp in-gap state at $E=\pm\Delta$ and its
+B neighbour carries essentially none. The A/B sign flip is a bulk statement, not a site-by-site one;
+the exact symmetry of this ribbon relates the two *edges* ($y \to L_y-1-y$ together with
+A$\leftrightarrow$B and $\uparrow\leftrightarrow\downarrow$), not A to B within a cell.
+
+Two cautions on reading the figure. The edge feature is a discrete bound state, so its reconstructed
+**height grows in proportion to the moment count** and never converges — read its position and its
+weight, not its amplitude. And the moment count must stay *coarser* than the ribbon's mean level
+spacing (768 states over a $\sim6t$ bandwidth, so $\sim0.008t$); at $M=256$ the Jackson resolution is
+$\sim0.05t$, fine enough to separate the in-gap state from the bulk band edge and coarse enough that
+the result is still a density rather than a comb of individual eigenstates.
+
 ### Mapping the global spin balance: `custom_one()` with spin projectors
 
 `#!python ldos_map` is a *local* probe (one value per site) — it doesn't by itself tell you
@@ -205,6 +265,10 @@ four `.dat` files (clean/vacancy × up/down) and plots them together.
 python afm_zigzag_ribbon.py       # -> both: ..._clean-output.h5 and ..._vac5-output.h5
 ../build/KITEx afm_zigzag_ribbon_clean-output.h5
 ../build/KITEx afm_zigzag_ribbon_vac5-output.h5
+../build/KITE-tools afm_zigzag_ribbon_clean-output.h5 \
+    --CustomOneLocal -E -3.9 3.9 800 -N afm_zigzag_local_clean.dat
+../build/KITE-tools afm_zigzag_ribbon_vac5-output.h5 \
+    --CustomOneLocal -E -3.9 3.9 800 -N afm_zigzag_local_vac5.dat
 python afm_zigzag_ribbon_process.py afm_zigzag_ribbon_clean-output.h5 afm_zigzag_ribbon_vac5-output.h5
 
 # 2. Spin-resolved total DOS: clean vs. 5% vacancy, up vs. down (4 runs)

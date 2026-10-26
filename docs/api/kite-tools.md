@@ -18,6 +18,7 @@ where archive.h5 is the HDF file that stores the output of KITE. If KITE-tools d
   * Optical conductivity (CondOpt)
   * Second-order optical conductivity (CondOpt2)
   * Custom rank-one spectral density (CustomOne) -- the energy-resolved density $\mathrm{Tr}[A\,\delta(E-H)]$ of a user-defined `#!python kite.custom.Vertex` operator $A$ from [`#!python calculation.custom_one()`][calculation-custom_one]
+  * Custom rank-one local spectral density (CustomOneLocal) -- the same density resolved at each probed orbital, $\tfrac12\langle j|\{\delta(E-H),A\}|j\rangle$, from [`#!python calculation.custom_one_local()`][calculation-custom_one_local]
   * Custom rank-two Kubo-Bastin response (CustomTwo) -- the Fermi-energy-resolved response reconstructed from the double-Chebyshev moment matrix $\Gamma_{mn}=\mathrm{Tr}[T_m(\hat H)\,B\,T_n(\hat H)\,A]$ of a user-defined vertex pair $A,B$ from [`#!python calculation.custom_two()`][calculation-custom_two]
   * Single-shot longitudinal DC conductivity (SingleShot) -- the conductivity [KITEx][kitex] solved for directly at each Fermi energy of [`#!python calculation.singleshot_conductivity_dc()`][calculation-singleshot_conductivity_dc]
 
@@ -82,6 +83,9 @@ Each function to compute is specified after the double hyphens — and the param
 | `#!bash --CustomOne` | `#!bash -N` | Name of the output file                                                                            |
 | `#!bash --CustomOne` | `#!bash -E` | min max num Number of energy points                                                                |
 | `#!bash --CustomOne` | `#!bash -X` | Exclusive. Only calculate this quantity                                                             |
+| `#!bash --CustomOneLocal` | `#!bash -N` | Name of the output file                                                                       |
+| `#!bash --CustomOneLocal` | `#!bash -E` | min max num Number of energy points                                                           |
+| `#!bash --CustomOneLocal` | `#!bash -X` | Exclusive. Only calculate this quantity                                                        |
 | `#!bash --CustomTwo` | `#!bash -N` | Name of the output file                                                                            |
 | `#!bash --CustomTwo` | `#!bash -E` | Number of energy points used in the integration                                                     |
 | `#!bash --CustomTwo` | `#!bash -T` | Temperature                                                                                          |
@@ -220,6 +224,24 @@ Reconstructs the `#!python custom_one()` spectral density $\mathrm{Tr}[A\,\delta
 ### Example 6
 
 ``` bash
+./KITE-tools h5_file.h5 --CustomOneLocal -E -3 3 400
+```
+
+Reconstructs the `#!python custom_one_local()` spectral density over 400 energy points in
+the range `#!python [-3, 3]`, writing one column per orbital probed when
+[KITEx][kitex] ran. The probed orbitals are fixed at that point and cannot be
+changed here; the output file names each column's cell and orbital in its header.
+
+The units are those of the vertex operator $A$, per eV, per orbital. There is no
+$1/N$ and no volume factor: the seeding is a single basis ket, not a stochastic
+trace, so this is a quantity at one orbital rather than a density per unit area.
+For a vertex that is diagonal in the orbital basis -- the intended on-site use --
+$A|j\rangle = A_{jj}|j\rangle$, so the result is exactly $A_{jj}$ times the
+orbital-resolved local density of states.
+
+### Example 7
+
+``` bash
 ./KITE-tools h5_file.h5 --CondOpt2 -R -1 -P 1 -O 0 2 200
 ```
 
@@ -227,7 +249,7 @@ Computes the **DC photocurrent / shift-current response** (the degenerate $\omeg
 second-order optical conductivity, selected via `#!bash -R -1`) over the frequency range `#!python [0, 2]`
 with 200 points, writing each Gamma-contribution to its own file (`#!bash -P 1`).
 
-### Example 7
+### Example 8
 
 ``` bash
 ./KITE-tools h5_file.h5 --CustomTwo -F -2 2 200 -T 0.01
@@ -241,6 +263,7 @@ equidistant points in `#!python [-2, 2]`, at temperature `#!bash 0.01`.
 [resources]: ../background/index.md
 [ground_rules]: ../documentation/optimization.md
 [calculation-custom_one]: kite.md#calculation-custom_one
+[calculation-custom_one_local]: kite.md#calculation-custom_one_local
 [calculation-custom_two]: kite.md#calculation-custom_two
 [calculation-singleshot_conductivity_dc]: kite.md#calculation-singleshot_conductivity_dc
 [kitex]: kitex.md

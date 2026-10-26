@@ -55,6 +55,7 @@
             afm_zigzag_ribbon_clean-output.h5 afm_zigzag_ribbon_vac5-output.h5
 """
 
+import os
 import sys
 
 import h5py
@@ -178,7 +179,80 @@ def plot_ribbon_comparison(clean_path, vac_path, lx=8, ly=24, n_tile=3,
     print(f"Saved {out_path}")
 
 
+def load_local_spin_spectra(dat_path):
+    """KITE-tools --CustomOneLocal output: column 0 is energy, then one column
+    per probed orbital in the order they were requested -- here (Aup, Bup, Adn,
+    Bdn) for each cell in afm_zigzag_ribbon.py's LOCAL_CELLS.
+
+    The minus signs for the down channels are already inside the vertex
+    (diag(+1/2, +1/2, -1/2, -1/2)), so the two spin columns of a sublattice are
+    ADDED, not subtracted: Sz_A = col(Aup) + col(Adn) = [rho_Aup - rho_Adn]/2.
+    Subtracting them would give the charge density instead."""
+    data = np.loadtxt(dat_path)
+    energy = data[:, 0]
+    columns = data[:, 1:]
+    cells = []
+    for start in range(0, columns.shape[1], 4):
+        block = columns[:, start:start + 4]
+        cells.append((block[:, 0] + block[:, 2], block[:, 1] + block[:, 3]))
+    return energy, cells
+
+
+def plot_local_spin_spectra(clean_dat, vac_dat, delta=0.3,
+                             labels=("ribbon interior", "bearded edge"),
+                             out_path="plots/afm_zigzag_local_spin_preview.png"):
+    """Energy-resolved counterpart of the real-space map above.
+
+    The map answers "where is the polarization at E = 0.05t"; this answers
+    "at what energy does a given atom polarize". The two panels make the point
+    that the A/B antisymmetry people expect from a Neel state is a bulk
+    statement: it holds in the interior and fails completely at the bearded
+    edge, where the coordination-1 A atom carries the in-gap state and its B
+    neighbour carries none.
+
+    Lines, not markers: unlike the real-space map this is a smooth function of
+    a continuous variable (the Jackson reconstruction is a polynomial in E),
+    so interpolation between samples is the honest representation here."""
+    energy, clean_cells = load_local_spin_spectra(clean_dat)
+    _, vac_cells = load_local_spin_spectra(vac_dat)
+
+    fig, axes = plt.subplots(1, len(clean_cells), figsize=(11.5, 4.6), sharex=True)
+    for ax, (sz_a, sz_b), (va, vb), label in zip(
+            axes, clean_cells, vac_cells, labels):
+        ax.plot(energy, sz_a, color="#B2182B", lw=1.6, label=r"$S_z^A$, clean")
+        ax.plot(energy, sz_b, color="#2166AC", lw=1.6, label=r"$S_z^B$, clean")
+        ax.plot(energy, va, color="#B2182B", lw=1.1, ls="--", label=r"$S_z^A$, 5% vac.")
+        ax.plot(energy, vb, color="#2166AC", lw=1.1, ls="--", label=r"$S_z^B$, 5% vac.")
+        for sign in (-1, 1):
+            ax.axvline(sign * delta, color="0.6", lw=0.8, ls=":", zorder=0)
+        ax.axhline(0.0, color="0.6", lw=0.8, zorder=0)
+        ax.set_title(label)
+        ax.set_xlabel(r"$E$ ($t$)")
+        ax.set_xlim(-1.5, 1.5)
+    axes[0].set_ylabel(r"$(1/2)\,\langle j|\{\delta(E-H),\,s_z\}|j\rangle$  (1/$t$)")
+    axes[0].legend(frameon=False, fontsize=8.5)
+
+    fig.suptitle(r"Energy-resolved local spin spectral density, Néel-gapped bearded/Klein ribbon ($\Delta = 0.3\,t$)",
+                 fontsize=13, fontweight="bold", y=0.99)
+    fig.text(0.5, 0.015,
+              r"Dotted lines mark $E = \pm\Delta$. $s_z = S_z/\hbar$ (eigenvalues $\pm 1/2$). "
+              "Not an equilibrium spin density: no occupation weighting, no energy integration.",
+              ha="center", fontsize=8.5, color="0.4", style="italic")
+    fig.tight_layout(rect=[0.0, 0.04, 1.0, 0.94])
+    plt.savefig(out_path, dpi=300)
+    plt.savefig(out_path.replace("_preview.png", ".pdf"))
+    plt.close(fig)
+    print(f"Saved {out_path}")
+
+
 if __name__ == "__main__":
     clean = sys.argv[1] if len(sys.argv) > 1 else "afm_zigzag_ribbon_clean-output.h5"
     vac = sys.argv[2] if len(sys.argv) > 2 else "afm_zigzag_ribbon_vac5-output.h5"
     plot_ribbon_comparison(clean, vac)
+    clean_dat = sys.argv[3] if len(sys.argv) > 3 else "afm_zigzag_local_clean.dat"
+    vac_dat = sys.argv[4] if len(sys.argv) > 4 else "afm_zigzag_local_vac5.dat"
+    if os.path.exists(clean_dat) and os.path.exists(vac_dat):
+        plot_local_spin_spectra(clean_dat, vac_dat)
+    else:
+        print(f"Skipping the local-spin figure: run KITE-tools --CustomOneLocal "
+              f"first (see afm_zigzag_ribbon.py's usage banner)")

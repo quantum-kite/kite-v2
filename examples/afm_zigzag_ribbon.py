@@ -57,12 +57,34 @@ import os
 
 import kite
 import numpy as np
+from kite import custom
 from kite import lattice as latt
 
 __all__ = ["afm_zigzag_lattice", "register_sz_operators", "main"]
 
 T = 1.0
 DELTA = 0.3
+
+# Orbitals probed by the custom_one_local() leg, in one unit cell each at the
+# ribbon interior and at the bottom (A-terminated) edge. Positions and
+# sublattices are paired element-wise and must therefore have equal length.
+LOCAL_CELLS = [[4, 12], [4, 0]]
+LOCAL_SUBLATTICES = ['Aup', 'Bup', 'Adn', 'Bdn']
+
+# Even by construction: the moment loop in
+# Src/Simulation/Custom/SimulationRankOneLocal.cpp steps by two, and
+# _check_num_moments() is not called for custom_one_local(), so an odd value is
+# accepted by both languages and overruns the buffer.
+#
+# 256 gives a Jackson resolution eta ~ pi*energy_scale/M ~ 0.05t, fine enough to
+# separate the in-gap edge state at E = Delta = 0.3t from the bulk band edge,
+# and deliberately COARSER than this ribbon's mean level spacing (768 states over
+# a ~6t bandwidth, so ~0.008t). Pushing M higher resolves the individual
+# eigenstates of a finite ribbon instead of a density, and the figure dissolves
+# into ringing. Note the edge peak is a discrete bound state: its reconstructed
+# height grows in proportion to M and never converges, so read its position and
+# its weight, not its amplitude.
+LOCAL_MOMENTS = 256
 
 A = 0.24595
 A_CC = 0.142
@@ -142,6 +164,28 @@ def main(t=T, delta=DELTA, lx=8, ly=24, vacancy_concentration=0.0,
     operators = register_sz_operators(calculation)
     calculation.ldos_map(energy_=energy, sigma_=sigma, vectors_=vectors, operators=operators)
 
+    # Energy-resolved counterpart of the same probe. ldos_map gives Sz(r) at one
+    # energy; custom_one_local gives the whole curve Sz(j,E) at a few chosen
+    # orbitals. The vertex is the diagonal matrix diag(+1/2, +1/2, -1/2, -1/2) --
+    # l0 and l1 are Sz restricted to sublattice A and to sublattice B, and both
+    # are needed here because KITEx reads a single vertex (Vertex0) and shares it
+    # across every probed orbital: a vertex carrying only l0 would return
+    # identically zero on the B columns.
+    #
+    # Sz is on-site and diagonal, so A|j> = A_jj|j> and the moments are exactly
+    # A_jj times the orbital-resolved LDoS moments. That is what "local" means
+    # for a diagonal vertex, and it is what makes this leg checkable against
+    # calculation.ldos() at the same orbitals.
+    #
+    # energy_ is required by the signature and written to the file, but KITEx
+    # never reads it: the output is moments over the whole band, and the energy
+    # grid is chosen at reconstruction time with KITE-tools' --CustomOneLocal -E.
+    positions = [cell for cell in LOCAL_CELLS for _ in LOCAL_SUBLATTICES]
+    sublattices = list(LOCAL_SUBLATTICES) * len(LOCAL_CELLS)
+    vertex = custom.Vertex(LOCAL_MOMENTS, [[1.0, 'l0'], [1.0, 'l1']])
+    calculation.custom_one_local(stream_=vertex, energy_=np.array([energy]),
+                                 position_=positions, sublattice_=sublattices)
+
     if output_file is None:
         tag = "clean" if vacancy_concentration == 0.0 else f"vac{int(round(vacancy_concentration * 100))}"
         output_file = f"afm_zigzag_ribbon_{tag}-output.h5"
@@ -157,4 +201,8 @@ if __name__ == "__main__":
     print(f"Wrote {clean} and {vac}")
     print("Run:   ../build/KITEx", clean)
     print("       ../build/KITEx", vac)
-    print(f"Then:  python afm_zigzag_ribbon_process.py {clean} {vac}")
+    print(f"Then:  ../build/KITE-tools {clean} --CustomOneLocal -E -3.9 3.9 800 "
+          f"-N afm_zigzag_local_clean.dat")
+    print(f"       ../build/KITE-tools {vac} --CustomOneLocal -E -3.9 3.9 800 "
+          f"-N afm_zigzag_local_vac5.dat")
+    print(f"       python afm_zigzag_ribbon_process.py {clean} {vac}")
