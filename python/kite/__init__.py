@@ -1604,6 +1604,29 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
             '  the level spacing of a finite chain, or KPM resolves the individual\n'
             '  levels instead of the band.')
 
+    # The real-space map drivers are compiled only for a complex Hamiltonian:
+    # SimulationLDoS.cpp:78 and SimulationSpectral.cpp:82 wrap their whole body
+    # in `if constexpr (is_tt<std::complex, T>::value)`. With is_complex=False
+    # KITEx prints "Calculating LDoS." and exits successfully having written no
+    # Map dataset at all. Stop here instead, where the message can say what to do.
+    complex_only = []
+    if calculation.get_ldos_map:
+        complex_only.append('ldos_map')
+    if calculation.get_spectral_map:
+        complex_only.append('spectral_map')
+    if complex_only and not config.comp:
+        raise SystemExit(
+            '{} {} a complex Hamiltonian.\n'
+            '  These drivers seed a random-PHASE vector, so KITEx compiles them\n'
+            '  only for a complex scalar type. With is_complex=False the run\n'
+            '  reports success and writes no map, so it is rejected here instead.\n'
+            '\n'
+            '  Pass is_complex=True to kite.Configuration(). The model itself may\n'
+            '  stay real; this only widens the scalar type KITEx is built with,\n'
+            '  at the cost of twice the memory for the Chebyshev vectors.'
+            .format(' and '.join(complex_only),
+                    'requires' if len(complex_only) == 1 else 'require'))
+
     # iterate through all the sublattices and add onsite energies to hoppings list
     # count num of orbitals and read the atom positions.
     hoppings = []

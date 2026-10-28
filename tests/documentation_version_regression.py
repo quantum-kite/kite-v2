@@ -60,8 +60,7 @@ ENTRY_POINTS = {
     "dos", "ldos", "ldos_map", "spectral_map", "arpes",
     "gaussian_wave_packet", "conductivity_dc", "conductivity_optical",
     "conductivity_optical_nonlinear", "singleshot_conductivity_dc",
-    "custom_one", "custom_one_local", "custom_two", "custom_two_local",
-    "custom_singleshot_two",
+    "custom_one", "custom_one_local", "custom_two",
 }
 
 #: Methods of `Calculation` that are not advertised capabilities:
@@ -69,7 +68,9 @@ ENTRY_POINTS = {
 #: and `localized_wave_packet` is descoped this release
 #: (see `descoped_capability_regression.py`).
 NOT_ADVERTISED = {"__init__", "add_orbital_coupling", "add_orbital_index",
-                  "localized_wave_packet"}
+                  "localized_wave_packet",
+                  # next version, so the capability lists must not name them
+                  "custom_two_local", "custom_singleshot_two"}
 
 
 def test_the_capability_lists_still_describe_every_entry_point():

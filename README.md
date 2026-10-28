@@ -20,7 +20,7 @@ New functionalities in v2.0:
 
 * Electronic Structure: real-space LDoS maps and k-space spectral maps (Markov estimator)
 * Custom Operators: expectation values of user-defined vertex operators, over the full spectrum or site-resolved
-* Custom Operators: two-operator correlators, over the full spectrum, site-resolved, or single-shot at fixed energy
+* Custom Operators: two-operator correlators over the full spectrum
 
 New functionalities in v1.1:
 

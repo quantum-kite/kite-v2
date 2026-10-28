@@ -12,7 +12,8 @@ KITE's latest release (version 2.0) contains the following functionalities:
 * First and second-order optical (AC) conductivities
 * Spin dynamics by time-evolution of gaussian wave-packets
 * Real-space LDOS maps and $\mathbf{k}$-space spectral maps
-* Expectation values and correlators of user-defined vertex operators, over the full spectrum or site-resolved
+* Expectation values of user-defined vertex operators, over the full spectrum or at a chosen site
+* Two-operator correlators of user-defined vertex operators, over the full spectrum
 
 These calculations can now be applied to arbitrary two- and three-dimensional tight-binding models that have:
 
