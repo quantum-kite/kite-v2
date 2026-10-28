@@ -18,6 +18,7 @@ where archive.h5 is the HDF file that stores the output of KITE. If KITE-tools d
   * Optical conductivity (CondOpt)
   * Second-order optical conductivity (CondOpt2)
   * Real-space LDoS map (LDOSmap) -- the per-site map from [`#!python calculation.ldos_map()`][calculation-ldos_map], written with its site coordinates decoded, plus one file per operator label when `#!python operators=` was used
+  * Momentum-space spectral map (SpectralMap) -- the map $A(\mathbf{k})$ from [`#!python calculation.spectral_map()`][calculation-spectral_map], written with its $\mathbf{k}$-point decoded
   * Custom rank-one spectral density (CustomOne) -- the energy-resolved density $\mathrm{Tr}[A\,\delta(E-H)]$ of a user-defined `#!python kite.custom.Vertex` operator $A$ from [`#!python calculation.custom_one()`][calculation-custom_one]
   * Custom rank-one local spectral density (CustomOneLocal) -- the same density resolved at each probed orbital, $\tfrac12\langle j|\{\delta(E-H),A\}|j\rangle$, from [`#!python calculation.custom_one_local()`][calculation-custom_one_local]
   * Custom rank-two Kubo-Bastin response (CustomTwo) -- the Fermi-energy-resolved response reconstructed from the double-Chebyshev moment matrix $\Gamma_{mn}=\mathrm{Tr}[T_m(\hat H)\,B\,T_n(\hat H)\,A]$ of a user-defined vertex pair $A,B$ from [`#!python calculation.custom_two()`][calculation-custom_two]
@@ -83,6 +84,8 @@ Each function to compute is specified after the double hyphens — and the param
 | `#!bash --CondOpt2` | `#!bash -X`  | Exclusive. Only calculate this quantity                                                             |
 | `#!bash --LDOSmap` | `#!bash -N` | Name of the output file                                                                         |
 | `#!bash --LDOSmap` | `#!bash -X` | Exclusive. Only calculate this quantity                                                          |
+| `#!bash --SpectralMap` | `#!bash -N` | Name of the output file                                                                     |
+| `#!bash --SpectralMap` | `#!bash -X` | Exclusive. Only calculate this quantity                                                      |
 | `#!bash --CustomOne` | `#!bash -N` | Name of the output file                                                                            |
 | `#!bash --CustomOne` | `#!bash -E` | min max num Number of energy points                                                                |
 | `#!bash --CustomOne` | `#!bash -X` | Exclusive. Only calculate this quantity                                                             |
@@ -291,6 +294,35 @@ When `#!python operators=` was used, each label also gets its own file, named af
 it, carrying one value per unit cell summed over orbitals.
 
 
+### Example 10
+
+``` bash
+./KITE-tools h5_file.h5 --SpectralMap -N spectral_map.dat
+```
+
+Writes the momentum-space map from `#!python calculation.spectral_map()` with its
+$\mathbf{k}$-index decoded: one row per orbital per $\mathbf{k}$-point, as
+`#!bash k1 [k2 [k3]] kx [ky [kz]] orbital value error`. The first group is
+$\mathbf{k}$ in fractional reciprocal-lattice coordinates $f_d$, each component in
+`#!bash [-1/2, 1/2)`, with $\mathbf{k}\cdot\mathbf{a}_d=2\pi f_d$; the second is the
+same point in Cartesian components, carrying the inverse of whatever length unit the
+lattice vectors were given in. That range covers one full Brillouin zone as a
+parallelepiped in the $\mathbf{b}_d$ basis, not the Wigner-Seitz zone -- on a honeycomb
+lattice the sampled region is a rhombus, not a hexagon. The last column is the standard
+error over the random vectors.
+
+The $\mathbf{k}$ grid is fixed by the simulation cell, so the labels are only meaningful
+under periodic or fixed-twist boundaries; with random twists each vector is drawn at a
+different twist and the average smears neighbouring $\mathbf{k}$ cells together.
+
+No energy range is accepted, for the same reason as `#!bash --LDOSmap`: KITEx
+stores a single map at the energy and width fixed when it ran, and the output
+header echoes both in eV. The units follow the coefficient set in the same way,
+and the header states which: with `#!python coef="gaussian"` the output is
+$A(\mathbf{k},\alpha;E)$ in 1/eV, diagonal in the orbital $\alpha$ and normalised so
+that $\int\mathrm{d}E\,A=1$ for each $(\mathbf{k},\alpha)$.
+
+[calculation-spectral_map]: kite.md#calculation-spectral_map
 [calculation-custom_one]: kite.md#calculation-custom_one
 [calculation-ldos_map]: kite.md#calculation-ldos_map
 [calculation-custom_one_local]: kite.md#calculation-custom_one_local
