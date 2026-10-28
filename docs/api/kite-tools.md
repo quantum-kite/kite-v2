@@ -17,6 +17,7 @@ where archive.h5 is the HDF file that stores the output of KITE. If KITE-tools d
   * DC conductivity (CondDC)
   * Optical conductivity (CondOpt)
   * Second-order optical conductivity (CondOpt2)
+  * Real-space LDoS map (LDOSmap) -- the per-site map from [`#!python calculation.ldos_map()`][calculation-ldos_map], written with its site coordinates decoded, plus one file per operator label when `#!python operators=` was used
   * Custom rank-one spectral density (CustomOne) -- the energy-resolved density $\mathrm{Tr}[A\,\delta(E-H)]$ of a user-defined `#!python kite.custom.Vertex` operator $A$ from [`#!python calculation.custom_one()`][calculation-custom_one]
   * Custom rank-one local spectral density (CustomOneLocal) -- the same density resolved at each probed orbital, $\tfrac12\langle j|\{\delta(E-H),A\}|j\rangle$, from [`#!python calculation.custom_one_local()`][calculation-custom_one_local]
   * Custom rank-two Kubo-Bastin response (CustomTwo) -- the Fermi-energy-resolved response reconstructed from the double-Chebyshev moment matrix $\Gamma_{mn}=\mathrm{Tr}[T_m(\hat H)\,B\,T_n(\hat H)\,A]$ of a user-defined vertex pair $A,B$ from [`#!python calculation.custom_two()`][calculation-custom_two]
@@ -80,6 +81,8 @@ Each function to compute is specified after the double hyphens — and the param
 | `#!bash --CondOpt2` | `#!bash -S`  | Broadening parameter of the Green’s function                                                        |
 | `#!bash --CondOpt2` | `#!bash -O`  | min max num Range of frequencies                                                                    |
 | `#!bash --CondOpt2` | `#!bash -X`  | Exclusive. Only calculate this quantity                                                             |
+| `#!bash --LDOSmap` | `#!bash -N` | Name of the output file                                                                         |
+| `#!bash --LDOSmap` | `#!bash -X` | Exclusive. Only calculate this quantity                                                          |
 | `#!bash --CustomOne` | `#!bash -N` | Name of the output file                                                                            |
 | `#!bash --CustomOne` | `#!bash -E` | min max num Number of energy points                                                                |
 | `#!bash --CustomOne` | `#!bash -X` | Exclusive. Only calculate this quantity                                                             |
@@ -263,7 +266,33 @@ equidistant points in `#!python [-2, 2]`, at temperature `#!bash 0.01`.
 
 [resources]: ../background/index.md
 [ground_rules]: ../documentation/optimization.md
+### Example 9
+
+``` bash
+./KITE-tools h5_file.h5 --LDOSmap -N ldos_map.dat
+```
+
+Writes the real-space map from `#!python calculation.ldos_map()` with its site
+index decoded into coordinates: one row per orbital per unit cell, as
+`#!bash x y [z] orbital value error`. The last column is the standard error over
+the random vectors, which KITEx stores alongside the value.
+
+No energy range is accepted. Unlike the other quantities here, KITEx finishes the
+energy resolution itself and stores a single map at the energy and width fixed
+when it ran; those are echoed in the output header, converted back to eV.
+
+The units depend on the coefficient set chosen at that point: `#!python coef="gaussian"`
+(the default) gives a density of states per site, in 1/eV, Gaussian-broadened with
+standard deviation `#!python sigma` in real energy units; `#!python coef="window"`
+gives the dimensionless spectral weight in a window of width `#!python sigma` about
+the target energy. The header states which.
+
+When `#!python operators=` was used, each label also gets its own file, named after
+it, carrying one value per unit cell summed over orbitals.
+
+
 [calculation-custom_one]: kite.md#calculation-custom_one
+[calculation-ldos_map]: kite.md#calculation-ldos_map
 [calculation-custom_one_local]: kite.md#calculation-custom_one_local
 [calculation-custom_two]: kite.md#calculation-custom_two
 [calculation-singleshot_conductivity_dc]: kite.md#calculation-singleshot_conductivity_dc

@@ -21,6 +21,7 @@
 #include "systemInfo.hpp"
 #include "../Spectral/dos.hpp"
 #include "../Spectral/ldos.hpp"
+#include "../Spectral/ldosmap.hpp"
 #include "../Spectral/arpes.hpp"
 #include "../CondDC/conductivity_dc.hpp"
 #include "../CondDC/singleshot.hpp"
@@ -49,6 +50,7 @@ void calculate(char *name, shell_input & variables){
   verbose_message("----------------- CALCULATIONS ----------------- \n");
   arpes<U, DIM>                   arpes(info, variables); 
   ldos<U, DIM>                    lDOS(info, variables); 
+  ldosmap<U, DIM>                 lDOSmap(info, variables);
   dos<U, DIM>                     DOS(info, variables); 
   conductivity_dc<U, DIM>         condDC(info, variables);
   singleshot<U, DIM>              singleShot(info, variables);
