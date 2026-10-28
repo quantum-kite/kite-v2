@@ -1,7 +1,9 @@
 """ Post-processing for weyl_spectral_map.py: momentum-space spectral map A(k,E).
 
-    spectral_map has no KITE-tools post-processing step -- the output HDF5's
-    /Calculation/spectral_map/Map dataset is read directly with h5py.
+    KITE-tools --SpectralMap writes the same map as a .dat with every k-point
+    decoded. This script instead reads the /Calculation/spectral_map/Map
+    dataset directly with h5py, which keeps the grid in array form for the
+    slice plot below.
 
     Dataset layout (confirmed against Src/Simulation/SimulationSpectral.cpp's
     store_spectral() -- which applies an fftshift-style (coord + N/2) % N

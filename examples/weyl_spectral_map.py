@@ -112,9 +112,11 @@ def main(t=1.0, m=2.0, output_file="weyl_spectral_map-output.h5"):
 
     # for generating the output, run:
     # ../build/KITEx weyl_spectral_map-output.h5
-    # There is no KITE-tools post-processing step for spectral_map -- read
-    # the /Calculation/spectral_map/Map dataset directly from the output
-    # HDF5 with h5py.
+    # then, for a .dat with every k-point decoded:
+    # ../build/KITE-tools weyl_spectral_map-output.h5 --SpectralMap
+    # process_weyl_spectral.py instead reads the /Calculation/spectral_map/Map
+    # dataset straight out of the HDF5, which keeps the grid in array form for
+    # the slice plot.
     return output_file
 
 
