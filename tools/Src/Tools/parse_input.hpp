@@ -66,6 +66,10 @@ class shell_input{
         bool CustomOneLocal_Exclusive;
         bool CustomOneLocal_is_required;
 
+        std::string LDOSmap_Name;
+        bool LDOSmap_Exclusive;
+        bool LDOSmap_is_required;
+
         // Custom rank-two (custom_two()) Kubo-Bastin response
         double CustomTwo_Temp;
         int CustomTwo_NumEnergies;
@@ -151,6 +155,7 @@ class shell_input{
         void parse_ARPES(int argc, char *argv[]);
         void parse_CustomOne(int argc, char *argv[]);
         void parse_CustomOneLocal(int argc, char *argv[]);
+        void parse_LDOSmap(int argc, char *argv[]);
         void parse_CustomTwo(int argc, char *argv[]);
         void parse_SingleShot(int argc, char *argv[]);
         int get_num_exclusives();
