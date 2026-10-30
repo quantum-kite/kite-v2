@@ -231,6 +231,14 @@ The KITE package for pre-processing is split up in various subclasses and contai
                 draw the same random disorder/probe-vector realization -- this is an
                 open follow-up.
 
+            !!! Note "What to record to reproduce a run"
+
+                `#!python seed_h`, `#!python seed_v` **and** `#!python divisions`. The same
+                seeds under a different decomposition give a different disorder realization and
+                different probe vectors, so a seed quoted on its own does not reproduce a figure.
+                `#!bash OMP_NUM_THREADS` is *not* part of the recipe: `KITEx` overrides it with
+                the product of `#!python divisions`.
+
     : <span id="configuration-angles">`#!python angles`: *`#!python float` or `#!python tuple(float, float)` or `#!python tuple(float, float, float)`*</span>
         : The angles used for the twisted boundary conditions when `#!python boundary="twist"` is selected.
           The values of `#!python angle`must be in the interval $[0, M \cdot 2 \pi]$.

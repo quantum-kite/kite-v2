@@ -1315,6 +1315,11 @@ class Configuration:
            map): the random probe vectors used to estimate the trace, unrelated to physical
            disorder. Default is 0 ("don't care", not reproducible), same as seed_h. Set any
            positive integer to make these stochastic estimates reproducible.
+
+           To reproduce a run, record seed_h, seed_v and divisions. The same seeds under a
+           different decomposition give a different realisation, so a seed quoted on its own
+           does not reproduce a figure. OMP_NUM_THREADS is not part of the recipe -- KITEx
+           overrides it with the product of divisions.
        """
 
         if spectrum_range:
