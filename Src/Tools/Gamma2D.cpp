@@ -65,9 +65,15 @@ void Simulation<T,D>::Gamma2D(int NRandomV, int NDisorder, std::vector<int> N_mo
   // initialize the local gamma matrix and set it to 0
   int size_gamma = 1;
   for(int i = 0; i < 2; i++){
-    if(N_moments.at(i) % 2 != 0){
-      std::cout << "The number of moments must be an even number, due to limitations of the program. Aborting\n";
-      exit(1);
+    // The accumulation below runs in blocks of MEMORY (see the n += MEMORY /
+    // m += MEMORY loops), and the inner loops run the full block whatever is
+    // left, so anything not divisible by MEMORY writes past gamma. Evenness is
+    // not sufficient: at 200 moments the index reaches 41415 on a 40000-element
+    // array. Checked against MEMORY, not 2.
+    if(N_moments.at(i) % MEMORY != 0){
+      std::cout << "The number of moments must be a multiple of " << MEMORY
+                << ", due to limitations of the program. Aborting\n";
+      fatal_exit();
     }
     size_gamma *= N_moments.at(i);
   }
@@ -194,7 +200,7 @@ void Simulation<T,D>::store_gamma(Eigen::Array<T, -1, -1> *gamma, std::vector<in
   }
   default:
     std::cout << "You're trying to store a matrix that is not expected by the program. Exiting.\n";
-    exit(1);
+    fatal_exit();
   }
     
 
