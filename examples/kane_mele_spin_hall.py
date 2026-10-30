@@ -160,8 +160,10 @@ def main(t=1.0, t2=0.15, moments=256, output_file="kane_mele_spin_hall-output.h5
     kite.config_system(lattice, configuration, calculation, filename=output_file)
 
     # Run:   ../build/KITEx kane_mele_spin_hall-output.h5
-    # There is NO KITE-tools step for custom_two -- the Kubo-Bastin energy
-    # integral is done in Python; see kane_mele_spin_hall_process.py.
+    # then, for the Kubo-Bastin energy integral:
+    # ../build/KITE-tools kane_mele_spin_hall-output.h5 --CustomTwo
+    # kane_mele_spin_hall_process.py does the same integral in Python, which is
+    # what the plots below are built from.
     return output_file
 
 
