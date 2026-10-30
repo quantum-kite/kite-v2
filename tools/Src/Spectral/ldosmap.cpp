@@ -178,7 +178,8 @@ void ldosmap<T, DIM>::write_one(const Eigen::Array<T, -1, -1> &data, long entrie
         myfile << "# Coefficients: gaussian. Units 1/eV -- a density of states per site,\n"
                   "# Gaussian-broadened with standard deviation sigma in real energy units.\n";
     myfile << "# Averaged over " << NumVectors << " random vectors; the last column is the\n"
-              "# standard error of that mean.\n";
+              "# standard error of that mean, over random vectors only. The disorder is\n"
+              "# drawn once, so it carries no realization-to-realization spread.\n";
     if(DIM == 2)
         myfile << "# col 1: x   col 2: y   col 3: orbital   col 4: value   col 5: error\n";
     else
