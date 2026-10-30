@@ -109,8 +109,14 @@ void Simulation<T, D>::custom_two_local(
 {
   int size_gamma = 1;
   for (const auto &m : number_moments_) {
-    if (m % 2 != 0) {
-      std::cout << "The number of moments must be even\n";
+    // The accumulation runs in blocks of MEMORY (the n += MEMORY / m += MEMORY
+    // loops below run a whole block whatever is left), so a count that is not a
+    // multiple of MEMORY writes past gamma. Evenness is not sufficient: at 200
+    // moments 1672 writes land past the end of a 40000-element array, the worst
+    // at index 41607.
+    if (m % MEMORY != 0) {
+      std::cout << "The number of moments must be a multiple of " << MEMORY
+                << "\n";
       fatal_exit();
     }
     size_gamma *= m;
