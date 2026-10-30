@@ -111,6 +111,7 @@ void shell_input::printHelp(){
     std::cout << "--CustomOneLocal  Single-vertex custom operator, resolved at each probed orbital\n";
     std::cout << "--LDOSmap  Real-space LDoS map, with site coordinates decoded\n";
     std::cout << "--SpectralMap  Momentum-space spectral map, with k decoded\n";
+    std::cout << "--WavePacket  Wave-packet time series, on a physical time axis\n";
     std::cout << "--CustomTwo  Double-vertex custom operator trace (generalized Kubo-Bastin)\n";
     std::cout << "--SingleShot Longitudinal DC conductivity from the single-shot method\n\n";
 
@@ -221,7 +222,7 @@ shell_input::shell_input(int argc, char *argv[]){
 	// Processes the input that this program recieves from the command line	
 
     // First, find the position of each of the following functions:
-    valid_keys = std::vector<std::string>{"--DOS", "--CondOpt","--CondDC", "--CondOpt2", "--LDOS", "--ARPES", "--CustomOne", "--CustomTwo", "--SingleShot", "--CustomOneLocal", "--LDOSmap", "--SpectralMap"};
+    valid_keys = std::vector<std::string>{"--DOS", "--CondOpt","--CondDC", "--CondOpt2", "--LDOS", "--ARPES", "--CustomOne", "--CustomTwo", "--SingleShot", "--CustomOneLocal", "--LDOSmap", "--SpectralMap", "--WavePacket"};
     len = valid_keys.size();   // length of valid_keys?
     keys_pos = std::vector<int>(len, -1);
     keys_len = std::vector<int>(len, -1);
@@ -266,6 +267,7 @@ shell_input::shell_input(int argc, char *argv[]){
     parse_CustomOneLocal(argc, argv);
     parse_LDOSmap(argc, argv);
     parse_SpectralMap(argc, argv);
+    parse_Wavepacket(argc, argv);
     parse_CustomTwo(argc, argv);
     parse_SingleShot(argc, argv);
 
@@ -283,6 +285,7 @@ shell_input::shell_input(int argc, char *argv[]){
     CustomOneLocal_is_required = false;
     LDOSmap_is_required = false;
     SpectralMap_is_required = false;
+    Wavepacket_is_required = false;
     CustomTwo_is_required = false;
     SingleShot_is_required = false;
 
@@ -302,6 +305,7 @@ shell_input::shell_input(int argc, char *argv[]){
             if(CustomOneLocal_Exclusive) CustomOneLocal_is_required = true;
             if(LDOSmap_Exclusive) LDOSmap_is_required = true;
             if(SpectralMap_Exclusive) SpectralMap_is_required = true;
+            if(Wavepacket_Exclusive) Wavepacket_is_required = true;
             if(CustomTwo_Exclusive) CustomTwo_is_required = true;
             if(SingleShot_Exclusive) SingleShot_is_required = true;
 
@@ -316,6 +320,7 @@ shell_input::shell_input(int argc, char *argv[]){
             CustomOneLocal_is_required = true;
             LDOSmap_is_required = true;
             SpectralMap_is_required = true;
+            Wavepacket_is_required = true;
             CustomTwo_is_required = true;
             SingleShot_is_required = true;
             }
@@ -335,6 +340,7 @@ int shell_input::get_num_exclusives(){
     if(CustomOneLocal_Exclusive) N_exclusives++;
     if(LDOSmap_Exclusive)     N_exclusives++;
     if(SpectralMap_Exclusive) N_exclusives++;
+    if(Wavepacket_Exclusive) N_exclusives++;
     if(CustomTwo_Exclusive)   N_exclusives++;
     if(SingleShot_Exclusive)  N_exclusives++;
 
@@ -756,6 +762,34 @@ void shell_input::parse_SpectralMap(int argc, char* argv[]){
           std::string name = argv[1 + pos];
           if(name == "-X")
             SpectralMap_Exclusive = true;
+        }
+    }
+}
+
+void shell_input::parse_Wavepacket(int argc, char* argv[]){
+    // This function looks at the command-line input pertaining to the
+    // gaussian_wave_packet() time series (--WavePacket). There is nothing to
+    // choose but the output name: the time axis, the number of points and the
+    // tracked operators were all fixed when KITEx ran.
+
+    Wavepacket_Name = "";
+    Wavepacket_Exclusive = false;
+
+    int pos = keys_pos.at(12); // position of "--WavePacket" in valid_keys
+    if(pos != -1){
+        for(int k = 1; k < keys_len.at(12); k++){
+            std::string name = argv[k + pos];
+            std::string n1 = argv[k + pos + 1];
+            if(name == "-N")
+                Wavepacket_Name = n1;
+
+            if(name == "-X" or n1 == "-X")
+                Wavepacket_Exclusive = true;
+        }
+        if(keys_len.at(12) == 1){
+          std::string name = argv[1 + pos];
+          if(name == "-X")
+            Wavepacket_Exclusive = true;
         }
     }
 }

@@ -23,6 +23,7 @@
 #include "../Spectral/ldos.hpp"
 #include "../Spectral/ldosmap.hpp"
 #include "../Spectral/spectralmap.hpp"
+#include "../Wavepacket/wavepacket.hpp"
 #include "../Spectral/arpes.hpp"
 #include "../CondDC/conductivity_dc.hpp"
 #include "../CondDC/singleshot.hpp"
@@ -53,6 +54,7 @@ void calculate(char *name, shell_input & variables){
   ldos<U, DIM>                    lDOS(info, variables); 
   ldosmap<U, DIM>                 lDOSmap(info, variables);
   spectralmap<U, DIM>             SpectralMap(info, variables);
+  wavepacket<U, DIM>              WavePacket(info, variables);
   dos<U, DIM>                     DOS(info, variables); 
   conductivity_dc<U, DIM>         condDC(info, variables);
   singleshot<U, DIM>              singleShot(info, variables);
