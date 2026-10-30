@@ -87,7 +87,7 @@ void Periodic_Operator<T,D>::Convert_Build (  LatticeStructure <D> & r )
         // such a hopping at export; this is only the backstop for files that
         // never went through it.
         if(b3.coord[D] >= static_cast<std::ptrdiff_t>(r.Orb)){
-          std::cout << "WARNING: hopping " << i << " from orbital " << io
+          std::cout << "Hopping " << i << " from orbital " << io
                     << " decodes to orbital " << b3.coord[D]
                     << ", but this lattice has only " << r.Orb << ".\n"
                        "  Its destination cell reaches beyond the "
@@ -95,7 +95,11 @@ void Periodic_Operator<T,D>::Convert_Build (  LatticeStructure <D> & r )
                        "represent, so the address has overflowed into the "
                        "orbital field.\n"
                        "  This file was not written by kite.config_system, "
-                       "which refuses such a hopping.\n";
+                       "which refuses such a hopping.\n"
+                       "  Aborting: continuing would read past the orbital "
+                       "table, so the run would be both wrong and unsafe "
+                       "(PM ruling, 2026-10-30, amending DEC-024 part 3).\n";
+          fatal_exit();
         }
 
         b3.coord[D] -= io;                                         // Obtain the difference in orbital coordinates
