@@ -1,6 +1,6 @@
 """
         ##############################################################################
-        #                        KITE | Release  1.1                                 #
+        #                        KITE | Release  2.0                                 #
         #                                                                            #
         #                        Kite home: quantum-kite.com                         #
         #                                                                            #
@@ -1477,7 +1477,7 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
     """
 
     print('##############################################################################')
-    print('#                        KITE | Release  1.1                                 #')
+    print('#                        KITE | Release  2.0                                 #')
     print('#                        Kite home: quantum-kite.com                         #')
     print('#                                                                            #')
     print('#                        Copyright 2022, KITE                                #')

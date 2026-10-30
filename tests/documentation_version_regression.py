@@ -8,6 +8,11 @@ claiming the previous version is exactly the failure this guards -- a reader
 cannot tell which KITE the page is about, and the capability list that follows
 it is the part they will act on.
 
+Four more places declare it at *runtime*, in the banner KITEx, KITE-tools and
+`kite.config_system()` print. Those are the ones a user actually sees, and they
+were left behind at the last bump while the documentation moved on -- the
+binary announced one release and the manual another.
+
 This deliberately does not assert *which* version. Bumping is a release
 decision, not a defect, so the test only requires that the four agree.
 """
@@ -22,6 +27,11 @@ REPO = Path(__file__).resolve().parents[1]
 #: (file, regex capturing the version it declares)
 DECLARATIONS = [
     ("VERSION.md", r"Version\s+(\d+\.\d+)"),
+    ("python/kite/__init__.py", r"KITE \| Release\s+(\d+\.\d+)"),
+    ("Src/Tools/messages.hpp", r"KITE \| Release\s+(\d+\.\d+)"),
+    ("tools/Src/Tools/messages.hpp", r"KITE \| Release\s+(\d+\.\d+)"),
+    ("tools/process_all_examples.py", r"KITE \| Release\s+(\d+\.\d+)"),
+    ("tools/process_arpes.py", r"KITE \| Release\s+(\d+\.\d+)"),
     ("README.md", r"KITE v(\d+\.\d+) \(this version\)"),
     ("docs/background/index.md", r"latest release \(version (\d+\.\d+)\)"),
     ("mkdocs.yml", r'^\s*version:\s*"(\d+\.\d+)"'),
@@ -49,7 +59,17 @@ def test_all_the_declarations_agree():
         "the documented version differs between files: "
         + ", ".join(f"{p} says {v}" for p, v in sorted(found.items()))
         + ". A page left on the previous version misdescribes the capabilities "
-          "listed beneath it")
+          "listed beneath it, and a banner left behind tells the user they are "
+          "running a release they are not")
+
+
+def test_the_banner_is_declared_the_same_way_everywhere_it_appears():
+    """One file prints it twice; both copies must move together."""
+    text = (REPO / "python/kite/__init__.py").read_text()
+    found = set(re.findall(r"KITE \| Release\s+(\d+\.\d+)", text))
+    assert len(found) == 1, (
+        f"python/kite/__init__.py declares {sorted(found)}; the module docstring "
+        "and the banner config_system() prints must agree")
 
 
 #: Every calculation a user can request, as `Calculation` exposes it. The
