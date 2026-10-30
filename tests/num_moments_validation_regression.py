@@ -88,3 +88,87 @@ def test_the_message_suggests_a_usable_value():
             direction="xy", num_points=100, num_moments=1000, num_random=1)
     message = str(e.value)
     assert "992" in message or "1008" in message, "suggest the nearest valid counts"
+
+# --- every entry point, not just the two that were wired up first -----------
+#
+# The check and its table existed from the start; only `dos`, `arpes` and
+# `conductivity_dc` ever called it, so the other seven exported a bad count
+# silently and overran in C++. These parametrisations are the guard against
+# that happening again one entry point at a time.
+
+def _spin_calculation():
+    """A Calculation with l0 registered, for the custom_* entry points."""
+    calc = kite.Calculation(_config())
+    calc.add_orbital_index("A", 0)
+    calc.add_orbital_coupling("A", "A", 1.0, "l0")
+    return calc
+
+
+def _call(name, moments):
+    """Invoke one entry point with this moment count."""
+    from kite import custom
+    calc = kite.Calculation(_config())
+    if name == "dos":
+        calc.dos(num_points=100, num_moments=moments, num_random=1)
+    elif name == "ldos":
+        calc.ldos(energy=[0.0], num_moments=moments, position=[[8, 8]],
+                  sublattice=["A"])
+    elif name == "arpes":
+        calc.arpes(k_vector=np.array([[0.0, 0.0]]), weight=[1.0],
+                   num_moments=moments, num_disorder=1)
+    elif name == "custom_one":
+        _spin_calculation().custom_one(
+            stream_=custom.Vertex(moments, [[1.0, "l0"]]),
+            num_random_=1, num_disorder_=1)
+    elif name == "custom_one_local":
+        _spin_calculation().custom_one_local(
+            stream_=custom.Vertex(moments, [[1.0, "l0"]]),
+            energy_=np.array([0.0]), position_=[[8, 8]], sublattice_=["A"])
+    elif name == "conductivity_dc":
+        calc.conductivity_dc(direction="xy", num_points=100,
+                             num_moments=moments, num_random=1)
+    elif name == "conductivity_optical":
+        calc.conductivity_optical(direction="xx", num_points=100,
+                                  num_moments=moments, num_random=1)
+    elif name == "conductivity_optical_nonlinear":
+        calc.conductivity_optical_nonlinear(direction="xxx", num_points=100,
+                                            num_moments=moments, num_random=1)
+    elif name == "custom_two":
+        _spin_calculation().custom_two(
+            stream_=[custom.Vertex(moments, [[1.0, "l0"]]),
+                     custom.Vertex(moments, [[1.0, "l0"]])],
+            num_random_=1, num_disorder_=1, num_points_=100, temperature_=0.01)
+    elif name == "custom_two_local":
+        _spin_calculation().custom_two_local(
+            stream_=[custom.Vertex(moments, [[1.0, "l0"]]),
+                     custom.Vertex(moments, [[1.0, "l0"]])],
+            positions_=[[8, 8]])
+    else:
+        raise AssertionError(name)
+
+
+PAIR = ["dos", "ldos", "arpes", "custom_one", "custom_one_local"]
+BLOCK = ["conductivity_dc", "conductivity_optical",
+         "conductivity_optical_nonlinear", "custom_two", "custom_two_local"]
+
+
+@pytest.mark.parametrize("name", PAIR)
+def test_every_pair_stepping_entry_point_refuses_an_odd_count(name):
+    with pytest.raises(SystemExit) as e:
+        _call(name, 63)
+    assert "63" in str(e.value), f"{name}'s message must name the value given"
+
+
+@pytest.mark.parametrize("name", BLOCK)
+def test_every_block_stepping_entry_point_refuses_a_non_multiple(name):
+    """200 is even, which is exactly what made this survive."""
+    with pytest.raises(SystemExit) as e:
+        _call(name, 200)
+    assert "16" in str(e.value), (
+        f"{name}'s message must say what to change 200 to")
+
+
+@pytest.mark.parametrize("name", PAIR + BLOCK)
+def test_no_entry_point_refuses_a_valid_count(name):
+    """A check that over-rejects would be its own defect."""
+    _call(name, 192)

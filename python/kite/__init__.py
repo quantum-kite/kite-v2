@@ -778,6 +778,7 @@ class Calculation:
         operators = operators or []
         self._validate_ldos_operators('ldos', operators)
 
+        _check_num_moments(num_moments, "ldos", "pair")
         self._ldos.append({'energy': energy, 'num_moments': num_moments, 'position': np.asmatrix(position),
                            'sublattice': sublattice, 'num_disorder': num_disorder, 'operators': operators})
 
@@ -1016,6 +1017,7 @@ class Calculation:
                   self._avail_dir_full.keys())
             raise SystemExit('Invalid direction!')
         else:
+            _check_num_moments(num_moments, "conductivity_optical", "block")
             self._conductivity_optical.append(
                 {'direction': self._avail_dir_full[direction], 'num_points': num_points, 'num_moments': num_moments,
                  'num_random': num_random, 'num_disorder': num_disorder,
@@ -1051,6 +1053,7 @@ class Calculation:
         else:
             special = kwargs.get('special', 0)
 
+            _check_num_moments(num_moments, "conductivity_optical_nonlinear", "block")
             self._conductivity_optical_nonlinear.append(
                 {'direction': self._avail_dir_nonl[direction], 'num_points': num_points,
                  'num_moments': num_moments, 'num_random': num_random, 'num_disorder': num_disorder,
@@ -1143,6 +1146,7 @@ class Calculation:
                 raise ValueError("The first element must be a numeric type")
             coefs.append(operator_sequence[0]) # numerical factor
             operators.append(operator_sequence[1]) # operator streams
+        _check_num_moments(stream_.moment, "custom_one", "pair")
         num_velocities = _count_velocity_operators(operators)
         self._custom_one.append({'num_moments': stream_.moment, 'num_random' : num_random_, 'num_disorder' : num_disorder_, 'operators' : operators, 'coefs' : coefs, 'num_velocities': num_velocities})
 
@@ -1173,6 +1177,7 @@ class Calculation:
                 raise ValueError("The first element must be a numeric type")
             coefs.append(operator_sequence[0]) # numerical factor
             operators.append(operator_sequence[1]) # operator streams
+        _check_num_moments(stream_.moment, "custom_one_local", "pair")
         self._custom_one_local.append({'energy': energy_, 'num_moments': stream_.moment, 'position': np.asmatrix(position_), 'sublattice': sublattice_, 'num_disorder': num_disorder_, 'operators' : operators, 'coefs' : coefs})
 
     def custom_two(self, stream_, num_random_, num_disorder_, num_points_, temperature_):
@@ -1220,6 +1225,7 @@ class Calculation:
                 coefs[i].append(operator_sequence[0]) # numerical factor
                 operators[i].append(operator_sequence[1]) # operator streams
             num_velocities += _count_velocity_operators(operators[i])
+            _check_num_moments(vertex.moment, "custom_two", "block")
 
         self._custom_two.append({'rank' : len(stream_), 'num_moments': [stream_[0].moment, stream_[1].moment], 'num_random' : num_random_, 'num_disorder' : num_disorder_, 'operators' : operators, 'coefs' : coefs, 'temperature': temperature_, 'num_points' : num_points_, 'num_velocities': num_velocities})
 
@@ -1250,6 +1256,8 @@ class Calculation:
                 coefs[i].append(operator_sequence[0]) # numerical factor
                 operators[i].append(operator_sequence[1]) # operator streams
 
+        for vertex in stream_:
+            _check_num_moments(vertex.moment, "custom_two_local", "block")
         self._custom_two_local.append({'rank' : len(stream_), 'num_moments': [stream_[0].moment, stream_[1].moment], 'positions' : positions_, 'operators' : operators, 'coefs' : coefs})
 
 

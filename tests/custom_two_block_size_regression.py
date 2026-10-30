@@ -5,9 +5,10 @@ Same defect as `Gamma2D`/`Gamma3D`, in `SimulationRankTwo.cpp` and
 steps by `MEMORY` (16) and runs a whole block whatever is left, so
 `ind = m + i + M*(n + j)` walks past `gamma`.
 
-Worse than the `Gamma2D` case in one respect: nothing on the Python side
-validates it, so an ordinary `custom.Vertex(200, ...)` reaches the guard through
-the normal API. Demonstrated by instrumenting the write before the fix -- 1672
+When this was written nothing on the Python side validated it, so an ordinary
+`custom.Vertex(200, ...)` reached the guard through the normal API; the exporter
+now refuses it too, so the file here is patched after export, which is what a
+hand-authored one amounts to. Demonstrated by instrumenting the write -- 1672
 writes past the end of a 40000-element array, the worst at index 41607; at 192
 moments, none. It does not crash, so the moments are simply wrong.
 """
@@ -55,9 +56,16 @@ kite.config_system(lat, cfg, calc, filename=sys.argv[1])
 
 
 def _run(tmp, moments):
+    """Export at a valid count, then patch it -- the exporter refuses the bad
+    one now, and this guard is the backstop for files it never saw."""
+    h5py = pytest.importorskip("h5py")
     path = tmp / f"c{moments}.h5"
-    subprocess.run([sys.executable, "-c", _BUILDER, str(path), str(moments)],
+    subprocess.run([sys.executable, "-c", _BUILDER, str(path), str(VALID)],
                    cwd=tmp, check=True, capture_output=True, text=True)
+    if moments != VALID:
+        with h5py.File(path, "r+") as f:
+            for vertex in ("Vertex0", "Vertex1"):
+                f[f"/Calculation/CustomTwo/{vertex}/NumMoments"][...] = moments
     return subprocess.run([str(KITEX), str(path)], capture_output=True, text=True)
 
 
@@ -71,8 +79,8 @@ def accepted(tmp_path_factory):
     return _run(tmp_path_factory.mktemp("ct_ok"), VALID)
 
 
-def test_the_python_api_still_lets_this_reach_the_guard(rejected):
-    """If Python ever starts validating it, this test is checking nothing."""
+def test_the_file_reaches_the_guard_at_all(rejected):
+    """If the run never got as far as the guard, the rest proves nothing."""
     assert "Traceback" not in (rejected.stdout + rejected.stderr)
 
 
