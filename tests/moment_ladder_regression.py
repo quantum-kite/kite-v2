@@ -155,13 +155,14 @@ def test_disorder_enters_mu2_as_its_variance(tmp_path):
 
 
 def test_the_ladder_catches_a_spectrum_range_that_is_too_narrow(tmp_path):
-    """The F-63 failure, detected without knowing what the calculation is for.
+    """The F-63 failure -- now caught by KITEx before any moment is written.
 
     A range covering a third of the true bandwidth puts the rescaled spectrum
-    at |x| = 3, where T_n grows exponentially. The moments explode and the odd
-    ones stop vanishing -- both visible with no physics input at all.
+    at |x| = 3, where T_n grows exponentially. This test used to read the
+    moments back and show they had exploded and that the odd ones no longer
+    vanished. Since T-024 the recursion carries a containment certificate and
+    the run aborts instead, so there are no moments to read: the same defect,
+    detected earlier. See containment_certificate_regression.py.
     """
-    mu, _, _ = run_moments(graphene(t=1.0), tmp_path, [-1.0, 1.0], num_moments=24)
-    assert np.max(np.abs(mu)) > 10, "an out-of-range spectrum must be detectable"
-    assert np.max(np.abs(mu[1::2])) > tolerance(8) * 100, (
-        "odd moments must stop vanishing when the recursion diverges")
+    with pytest.raises(subprocess.CalledProcessError):
+        run_moments(graphene(t=1.0), tmp_path, [-1.0, 1.0], num_moments=24)

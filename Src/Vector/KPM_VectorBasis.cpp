@@ -113,6 +113,33 @@ void KPM_VectorBasis<T,D>::cheb_iteration(unsigned n)
     default:
       this->template Multiply<1>();
     }
+
+  // Containment certificate (DEC-023). Chebyshev polynomials are bounded by 1
+  // on [-1, 1], so for a rescaled spectrum that really is contained,
+  // ||phi_n|| <= ||phi_0|| for every n. If the spectrum escapes the interval
+  // the recursion grows exponentially instead, and KITEx currently finishes,
+  // exits 0 and writes moments of 1e85 against a physical bound of 1.
+  //
+  // The norm is taken on the ACTIVE ring-buffer column: summing the whole
+  // buffer measures how full it is, not the norm. Threshold 1.01 -- an
+  // adequate range sits at exactly 1.000, so there is no false positive --
+  // and stride 16, which costs under 2%: the growth is exponential in n, so
+  // nothing is lost by not checking every step.
+  if(n % 16 == 0){
+    const double norm = v.col(index).norm();
+    if(n == 0)
+      norm_phi0 = norm;
+    else if(norm_phi0 > 0.0 && norm > 1.01*norm_phi0){
+      std::cout << "The rescaled spectrum is not contained in [-1, 1]: the "
+                   "Chebyshev recursion grew to " << norm/norm_phi0
+                << " times its initial norm by moment " << n << ".\n"
+                   "  spectrum_range does not cover the spectrum of the model "
+                   "as configured, disorder included.\n"
+                   "  Widen it and run again. Aborting rather than writing "
+                   "numbers that are already meaningless.\n";
+      fatal_exit();
+    }
+  }
 }
 
 // Test
