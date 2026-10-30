@@ -308,6 +308,21 @@ template <typename U, unsigned DIM>
 void customtwo<U, DIM>::save_to_file(Eigen::Matrix<std::complex<U>, -1, 1> response){
   std::ofstream myfile;
   myfile.open(filename);
+  myfile << "# Kubo-Bastin response of a user-defined vertex pair, from\n"
+            "# calculation.custom_two(), as a function of Fermi energy.\n"
+            "# The two vertices carry " << NumVelocities << " velocity operator"
+         << ((NumVelocities == 1)? "" : "s") << " between them.\n";
+  if(NumVelocities == 2)
+    myfile << "# Units: e^2/h, the same as --CondDC. For a spin current built from\n"
+              "# s_z = sigma_z/2 the hbar/2e that turns a charge conductivity into a spin\n"
+              "# one is absorbed, so this is sigma^{s_z}_xy in units of e/4pi =\n"
+              "# (hbar/2e)(e^2/h), and a quantized Z_2 plateau reads +-2.\n";
+  else
+    myfile << "# Units: a factor EnergyScale^(NumVelocities-2) has been applied, which fixes\n"
+              "# the velocity-count scaling. The absolute normalisation has only been\n"
+              "# calibrated at NumVelocities = 2, so treat the overall scale here as\n"
+              "# uncalibrated.\n";
+  myfile << "# col 1: Fermi energy (eV)   col 2: response (real)   col 3: response (imaginary)\n";
   for(int i = 0; i < NFermiEnergies; i++){
     U energy = fermiEnergies(i)*systemInfo->energy_scale + systemInfo->energy_shift;
     myfile << energy << " " << response(i).real() << " " << response(i).imag() << "\n";

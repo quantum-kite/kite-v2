@@ -177,8 +177,15 @@ For more details on the type of calculations performed during post-processing, c
     [Rashba-Edelstein Effect][ree-example] for the full derivation and a worked example.
 
     **Units**: for `#!python NumVelocities=2` (e.g. spin Hall), the result is in units of
-    $e^2/h$, same as `#!bash --CondDC`. For `#!python NumVelocities != 2`, an additional factor
-    of `#!bash EnergyScale`$^{N_v-2}$ is applied automatically.
+    $e^2/h$, same as `#!bash --CondDC`. When $A$ is a spin current built from
+    $\hat s_z=\tfrac12\sigma_z$, as in the Kane-Mele example, the factor $\hbar/2e$ that turns a
+    charge conductivity into a spin conductivity is absorbed into that number: what is written is
+    $\sigma^{s_z}_{xy}$ in units of $e/4\pi\equiv(\hbar/2e)(e^2/h)$, so a quantized
+    $\mathbb{Z}_2$ plateau reads $\pm2$. A paper quoting $\sigma^{s}$ in $e/4\pi$, or in $e^2/h$
+    with $\hbar/2e$ absorbed, uses the same number; multiply by $e/4\pi$ to recover
+    $\sigma^{s_z}_{xy}$ itself. For `#!python NumVelocities != 2`, an additional factor
+    of `#!bash EnergyScale`$^{N_v-2}$ is applied automatically; that fixes the velocity-count
+    scaling, but the absolute normalisation has only been calibrated at `#!python NumVelocities=2`.
 
 !!! info "The single-shot DC conductivity"
 
