@@ -19,6 +19,7 @@ where archive.h5 is the HDF file that stores the output of KITE. If KITE-tools d
   * Second-order optical conductivity (CondOpt2)
   * Real-space LDoS map (LDOSmap) -- the per-site map from [`#!python calculation.ldos_map()`][calculation-ldos_map], written with its site coordinates decoded, plus one file per operator label when `#!python operators=` was used
   * Momentum-space spectral map (SpectralMap) -- the map $A(\mathbf{k})$ from [`#!python calculation.spectral_map()`][calculation-spectral_map], written with its $\mathbf{k}$-point decoded
+  * Wave-packet time series (WavePacket) -- the mean position, variance and tracked operator expectation values from [`#!python calculation.gaussian_wave_packet()`][calculation-gaussian_wave_packet], on a physical time axis
   * Custom rank-one spectral density (CustomOne) -- the energy-resolved density $\mathrm{Tr}[A\,\delta(E-H)]$ of a user-defined `#!python kite.custom.Vertex` operator $A$ from [`#!python calculation.custom_one()`][calculation-custom_one]
   * Custom rank-one local spectral density (CustomOneLocal) -- the same density resolved at each probed orbital, $\tfrac12\langle j|\{\delta(E-H),A\}|j\rangle$, from [`#!python calculation.custom_one_local()`][calculation-custom_one_local]
   * Custom rank-two Kubo-Bastin response (CustomTwo) -- the Fermi-energy-resolved response reconstructed from the double-Chebyshev moment matrix $\Gamma_{mn}=\mathrm{Tr}[T_m(\hat H)\,B\,T_n(\hat H)\,A]$ of a user-defined vertex pair $A,B$ from [`#!python calculation.custom_two()`][calculation-custom_two]
@@ -86,6 +87,8 @@ Each function to compute is specified after the double hyphens — and the param
 | `#!bash --LDOSmap` | `#!bash -X` | Exclusive. Only calculate this quantity                                                          |
 | `#!bash --SpectralMap` | `#!bash -N` | Name of the output file                                                                     |
 | `#!bash --SpectralMap` | `#!bash -X` | Exclusive. Only calculate this quantity                                                      |
+| `#!bash --WavePacket` | `#!bash -N` | Name of the output file                                                                      |
+| `#!bash --WavePacket` | `#!bash -X` | Exclusive. Only calculate this quantity                                                       |
 | `#!bash --CustomOne` | `#!bash -N` | Name of the output file                                                                            |
 | `#!bash --CustomOne` | `#!bash -E` | min max num Number of energy points                                                                |
 | `#!bash --CustomOne` | `#!bash -X` | Exclusive. Only calculate this quantity                                                             |
@@ -322,6 +325,26 @@ and the header states which: with `#!python coef="gaussian"` the output is
 $A(\mathbf{k},\alpha;E)$ in 1/eV, diagonal in the orbital $\alpha$ and normalised so
 that $\int\mathrm{d}E\,A=1$ for each $(\mathbf{k},\alpha)$.
 
+### Example 11
+
+``` bash
+./KITE-tools h5_file.h5 --WavePacket -N wavepacket.dat
+```
+
+Writes the time series from `#!python calculation.gaussian_wave_packet()`: one row per
+timestep, as `#!bash t t_rescaled <x> <y> [<z>] Varx Vary [Varz]` followed by one column
+for each operator passed to `#!python operators=`, in that order.
+
+KITEx propagates the rescaled Hamiltonian, so the stored timestep is the argument of the
+Bessel expansion of $e^{-i\tilde H\tilde t}$. The first column is the physical time
+$t=\tilde t/\,$`#!bash EnergyScale`, in units of $\hbar/\mathrm{eV}$; the second is
+$\tilde t$ exactly as stored. The header quotes the scale relating them.
+
+Positions and variances are Cartesian, carrying the length unit of the lattice vectors
+and its square. The operator columns carry whatever units the registered vertex was
+given.
+
+[calculation-gaussian_wave_packet]: kite.md#calculation-gaussian_wave_packet
 [calculation-spectral_map]: kite.md#calculation-spectral_map
 [calculation-custom_one]: kite.md#calculation-custom_one
 [calculation-ldos_map]: kite.md#calculation-ldos_map
