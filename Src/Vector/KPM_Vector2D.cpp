@@ -772,7 +772,7 @@ void KPM_Vector <T, 2>::test_boundaries_system() {
   }
   std::cout << "Thread : " << r.thread_id << std::endl;
 #pragma omp barrier
-  exit(1);
+  fatal_exit();
 }
 template <typename T>
 void KPM_Vector <T, 2>::empty_ghosts(int mem_index) {

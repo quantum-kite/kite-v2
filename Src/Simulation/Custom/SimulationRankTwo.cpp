@@ -118,7 +118,7 @@ void Simulation<T, D>::custom_two(
   for (const auto &m : number_moments_) {
     if (m % 2 != 0) {
       std::cout << "The number of moments must be even\n";
-      exit(1);
+      fatal_exit();
     }
     size_gamma *= m;
   }

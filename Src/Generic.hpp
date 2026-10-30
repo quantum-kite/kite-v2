@@ -19,6 +19,23 @@
 #include <iostream>
 #include <fstream>
 #include <chrono>
+#include <cstdio>
+#include <cstdlib>
+
+// Abort from inside the OpenMP region.
+//
+// exit() runs the static destructors, which tear down HDF5 while the sibling
+// threads are still inside it: the process dies with SIGSEGV instead of the
+// code the guard asked for, and the diagnostic -- still sitting in cout's
+// buffer -- is never shown at all. Flush first, then _Exit, which skips the
+// teardown. Guards in main.cpp run before the region and keep using exit().
+inline void fatal_exit()
+{
+  std::cout.flush();
+  std::cerr.flush();
+  std::fflush(nullptr);
+  std::_Exit(1);
+}
 
 // Set of compilation parameters chosen in the Makefile
 // MEMORY is the number of KPM vectors stored in the memory while calculating Gamma2D

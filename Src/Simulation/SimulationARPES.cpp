@@ -172,7 +172,7 @@ void Simulation<T, DIM>::calc_ARPES(){
         std::cout << "Error in Simulation::calc_ARPES. The number of entries in the orbital "
           "weight vector (" << dim_w[1]*dim_w[0] << ") has to be the same as the number of "
           "orbitals (" << r.Orb << "). Exiting.\n";
-        exit(1);
+        fatal_exit();
       }
 
       

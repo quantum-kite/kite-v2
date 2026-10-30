@@ -84,7 +84,7 @@ void Simulation<T,D>::calc_singleshot() {
       direction_string = "z,z";
     else{
       std::cout << "Invalid singleshot direction. Has to be xx, yy or zz. Exiting.\n";
-      exit(1);
+      fatal_exit();
     }
        
     // We also need to determine the number of energies that we need to calculate
@@ -181,7 +181,7 @@ void Simulation<T,D>::singleshot(Eigen::Array<double, -1, 1> energies,
   if(indices.at(0).at(0) != indices.at(1).at(0)){
     std::cout << "SingleShot is only meaningful for the longitudinal conductivity.";
     std::cout << "Please use directions 'x,x', 'y,y' or 'z,z'. Exiting.\n";
-    exit(1);
+    fatal_exit();
   }
 
 

@@ -83,7 +83,7 @@ Simulation<T, D>::process_string(std::string indices_string)
           } else {
             // This block should never run
             std::cout << "Please enter a valid expression.\n";
-            exit(1);
+            fatal_exit();
           }
         }
       }

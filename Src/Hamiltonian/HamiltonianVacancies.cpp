@@ -127,7 +127,7 @@ void Vacancy_Operator<T,D>::test_field( T * phi0 )
       if( abs(phi0[*vc]) > __DBL_EPSILON__)
         {
           std::cout << "Disparate" << std::endl;
-          exit(1);
+          fatal_exit();
         }
 }
 

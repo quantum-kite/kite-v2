@@ -110,7 +110,7 @@ unsigned LatticeStructure<D>::get_BorderSize() {
     break;
   default:
     std::cout << "Error in LatticeBuilding.hpp. Exiting.\n";
-    exit(1);
+    fatal_exit();
   }
   return size;
 }
@@ -127,7 +127,7 @@ void LatticeStructure<D>::test_divisibility() {
       std::cout << "must be a multiple of the number of divisions in that ";
       std::cout << "direction (" << nd[i] << ") times TILE (" << TILE << "). ";
       std::cout << "Exiting.\n";
-      exit(1);
+      fatal_exit();
     }
   } 
 

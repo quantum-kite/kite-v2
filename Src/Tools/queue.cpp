@@ -70,7 +70,7 @@ std::string num2str3(int dir_num){
   case 26:
     dir = "zzz"; break;
   default:
-    std::cout << "Invalid direction in num2str_dir3.\n"; exit(1);
+    std::cout << "Invalid direction in num2str_dir3.\n"; fatal_exit();
   }
   return dir;
 }
@@ -98,7 +98,7 @@ std::string num2str2(int dir_num) {
   case 8:
     dir = "zy"; break;
   default:
-    std::cout << "Invalid direction for the optical conductivity.\n"; exit(1);
+    std::cout << "Invalid direction for the optical conductivity.\n"; fatal_exit();
   }
   return dir;
 }
