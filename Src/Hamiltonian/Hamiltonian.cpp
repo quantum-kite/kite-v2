@@ -37,6 +37,16 @@ Hamiltonian<T, D>::Hamiltonian(
   // to every Anderson on-site entry. Default to "no custom potential".
   check_local_potential(0)
 {
+  // generate_twists() is the only place BoundTwist is written, and
+  // Gaussian_Wave_Packet is the one calculation that never calls it --
+  // initiate_phases() reads it regardless. Measured before this line existed:
+  // the wave-packet path read 2.12e-314 and 2.13e-314 on a normal build, and
+  // -5.3e+303 under -ftrivial-auto-var-init=pattern. Small enough that the
+  // phases came out near 1 and the error stayed at 3e-4, and stable enough
+  // across runs to look reproducible, which is what made it invisible
+  // (DEC-011).
+  BoundTwist.setZero();
+
 #pragma omp critical
   {
     H5::H5File *file = new H5::H5File(filename, H5F_ACC_RDONLY);
