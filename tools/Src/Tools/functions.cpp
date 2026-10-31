@@ -44,7 +44,19 @@ template std::complex<long double> integrate<long double>(Eigen::Matrix<long dou
 
 template <typename T>
 T fermi_function(T energy, T mu, T beta){
-	return 1.0/(1.0 + exp(beta*(energy - mu)));
+	const T x = beta*(energy - mu);
+	// beta is 1/kT, so a requested temperature of zero makes it infinite. Away
+	// from mu that is already the right answer -- exp gives 0 or infinity and f
+	// is 1 or 0 -- but at energy == mu exactly the product is infinity*0, which
+	// is NaN and poisons the whole integral rather than one point of it. The
+	// T -> 0 limit of the occupation there is 1/2.
+	//
+	// This is the only input for which the result differs: every x that is a
+	// number takes the same expression it always did, so a run that produced
+	// numbers before produces the same bytes now.
+	if(std::isnan(x))
+		return T(0.5);
+	return 1.0/(1.0 + exp(x));
 }
 template float fermi_function(float, float, float);
 template double fermi_function(double, double, double);
