@@ -78,7 +78,10 @@ void Periodic_Operator<T,D>::Convert_Build (  LatticeStructure <D> & r )
         // -1, 0 or +1. A hand-authored file can hold a longer hopping, and the
         // carry then lands in the digit above. When that digit is the orbital
         // field the decoded orbital runs past Orb, which is both a different
-        // bond and an out-of-range index; warn and name the hopping.
+        // bond and an out-of-range index. Abort, naming the hopping: continuing
+        // would index past the orbital table, and warning and proceeding gave
+        // exit codes 1 1 1 1 1 0 over six runs of the same file with the seeds
+        // fixed, because what is read back varies.
         //
         // A carry out of a NON-final direction cannot be detected here: it
         // produces a legitimate address for a different cell. On a 2D

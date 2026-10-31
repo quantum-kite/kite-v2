@@ -59,7 +59,7 @@ different data, memory can be reduced along one axis without any effect on the o
 | Constant | Axis | Governs |
 |---|---|---|
 | `divisions` (runtime) | spatial | Number of threads and the partitioning of the lattice |
-| `NGHOSTS` (compile-time, unguarded) | spatial | Halo depth; equivalently, the maximum supported hopping range |
+| `NGHOSTS` (compile-time, unguarded) | spatial | Halo depth. Not the maximum supported hopping range: that limit comes from the address format, and `NGHOSTS = 2` is wide enough for every model KITE accepts |
 | `TILE` (compile-time, guarded) | spatial | Cache-blocking granularity, and a divisibility constraint on partition size |
 | `MEMORY` (compile-time, guarded) | temporal | Chebyshev-moment blocking size, applicable to CondDC/CondOpt2 only |
 
