@@ -129,10 +129,12 @@ bool customtwo<T, DIM>::fetch_parameters(){
     }
     NumMoments = numMomentsA;
 
-    T temp_from_file;
     try{
-        get_hdf5(&temp_from_file, &file, (char*)(dirName+"Temperature").c_str());
-        temperature = temp_from_file / systemInfo->energy_scale;
+        // The temperature (kb*T) is in energy units, and the python script has
+        // already divided it by SCALE -- same convention and same dataset shape
+        // as conductivity_dc, whose read this mirrors. Dividing again here ran
+        // every custom_two at T/SCALE (BUG-005).
+        get_hdf5(&temperature, &file, (char*)(dirName+"Temperature").c_str());
         beta = 1.0/temperature;
         default_temp = false;
     } catch(H5::Exception& e){}
