@@ -486,7 +486,7 @@ The KITE package for pre-processing is split up in various subclasses and contai
                 | `#!python num_disorder`:*`#!python int`*                    | Number of different disorder realisations.                                                                    |
 
     
-    :   !!! declaration-function "<span id="calculation-gaussian_wave_packet">*function*`#!python gaussian_wave_packet(num_points, num_moments, timestep, k_vector, spinor, width, mean_value, num_disorder=1, operators=None)`</span>"
+    :   !!! declaration-function "<span id="calculation-gaussian_wave_packet">*function*`#!python gaussian_wave_packet(num_points, num_moments, timestep=None, k_vector=None, spinor=None, width=None, mean_value=None, num_disorder=1, operators=None, timestep_physical=None)`</span>"
             
             
         :   Calculate the time evolution function of a wave packet.
@@ -497,13 +497,14 @@ The KITE package for pre-processing is split up in various subclasses and contai
                 |--------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------|
                 | `#!python num_points`:*`#!python int`*                             | Number of time points for the time evolution.                                                                   |
                 | `#!python num_moments`:*`#!python int`*                            | Number of polynomials in the Chebyshev expansion.                                                               |
-                | `#!python timestep`:*`#!python float`*                             | Timestep in rescaled units, conjugate to the rescaled energy: it is the argument of the Bessel expansion KITE propagates with. Physical time is this divided by `#!python EnergyScale`. |
+                | `#!python timestep`:*`#!python float`*                             | Timestep in rescaled units, conjugate to the rescaled energy: it is the argument of the Bessel expansion KITE propagates with. Physical time is this divided by `#!python EnergyScale`. Give this or `#!python timestep_physical`, not both. |
                 | `#!python k_vector`:*`#!python array_like`*                        | Different wave vectors, components corresponding to vectors b0 and b1.                                          |
                 | `#!python spinor`:*`#!python array_like`*                          | Amplitude on each orbital of the unit cell, one spinor per k vector. Seeded as given, with no projection onto the eigenstates of H(k), so unless it is an eigenvector the packet starts with weight in several bands. |
                 | `#!python width`:*`#!python float`*                                | Width of the gaussian.                                                                                          |
                 | `#!python mean_value`:*`#!python tuple(float, float)`*             | Mean value of the gaussian envelope.                                                                            |
                 | `#!python num_disorder`:*`#!python int`*                           | Number of different disorder realisations.                                                                      |
                 | `#!python operators`:*`#!python list[str]`*                       | Labels of operators registered via [`#!python add_orbital_coupling()`][calculation-add_orbital_coupling], whose expectation value is tracked at every timestep (e.g. `#!python ['l0', 'l1', 'l2']` for a 3-component spin, orbital-angular-momentum, or quadrupole operator set). |
+                | `#!python timestep_physical`:*`#!python float`*                    | Timestep in physical time ($\hbar=1$, so inverse energy) instead of rescaled time. It is multiplied by `#!python EnergyScale` on export, after an unset `#!python spectrum_range` has been estimated, so the physical step is the one asked for whatever the scale turns out to be. Both values are written to the output file. Give this or `#!python timestep`, not both. |
 
             **Tracked operators**
 

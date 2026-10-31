@@ -216,39 +216,39 @@ def _example_source():
     return (REPO / "examples" / "spin_precession_simple.py").read_text()
 
 
-def test_the_documented_physical_step_matches_the_example_it_describes():
-    """The docstring quotes a physical step; derive it and check.
+def test_the_documented_time_span_matches_the_example_it_describes():
+    """The docstring quotes a span in physical time; derive it and check.
 
-    `timestep` is in rescaled units, so the physical step is
-    `timestep / EnergyScale`. The example states 0.1. If anyone edits
-    `spectrum_range` or the default `timestep`, that sentence silently becomes
-    wrong -- which is exactly the kind of drift a reader cannot detect.
+    The example asks for its step in physical units, so the span is just
+    `num_points * timestep_physical` and no longer moves with `spectrum_range`.
+    If anyone edits either default, the sentence silently becomes wrong --
+    exactly the kind of drift a reader cannot detect.
     """
     source = _example_source()
+    signature = source[source.index("def main("):source.index("output_file=")]
 
-    lo, hi = (float(x) for x in re.search(
-        r"spectrum_range=\[([-\d.]+),\s*([-\d.]+)\]", source).groups())
-    timestep = float(re.search(r"timestep=([\d.]+)", source).group(1))
+    step = float(re.search(r"timestep_physical=([\d.]+)", signature).group(1))
+    num_points = int(re.search(r"num_points=(\d+)", signature).group(1))
+    field = float(re.search(r"B=([\d.]+)", signature).group(1))
 
-    energy_scale = (hi - lo) / 2
-    physical_step = timestep / energy_scale
+    last = round((num_points - 1) * step, 10)
+    assert f"the {num_points} points span t = 0 to {last}" in source, (
+        f"the docstring's arithmetic no longer matches the code: "
+        f"{num_points} points of {step} span t = 0 to {last}")
+    assert f"2B = {round(2 * field, 10)}" in source, (
+        f"the docstring quotes the wrong precession frequency for B={field}")
 
-    assert f"{timestep}/{energy_scale:.0f} = {physical_step}" in source, (
-        f"the docstring's arithmetic no longer matches the code: timestep="
-        f"{timestep}, EnergyScale={energy_scale}, so the physical step is "
-        f"{physical_step}")
 
-
-def test_the_example_says_the_timestep_is_not_physical_time():
-    """The single sentence a user must read before setting `timestep`."""
+def test_the_example_says_which_step_convention_it_is_using():
+    """The sentence a user must read before setting either step."""
     source = _example_source()
-    assert "rescaled units KITEx propagates in, not in physical" in source, (
-        "spin_precession_simple.py no longer warns that timestep is in rescaled "
-        "units; a user who reads it as physical time gets a time axis wrong by "
-        "a factor of EnergyScale")
-    assert "divides by\n    EnergyScale" in source, (
-        "the docstring no longer points at the processor's conversion back to "
-        "physical time")
+    assert "t_rescaled = t * EnergyScale" in source, (
+        "spin_precession_simple.py no longer states the relation between the "
+        "rescaled step KITEx propagates in and physical time; a user who reads "
+        "`timestep` as physical time gets an axis wrong by EnergyScale")
+    assert "exactly one of them is given" in source, (
+        "the docstring no longer says that `timestep` and `timestep_physical` "
+        "are alternatives rather than two independent settings")
 
 
 # --- the energy shift in the propagator --------------------------------------

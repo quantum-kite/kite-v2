@@ -11,12 +11,15 @@ operators you ask for at every timestep. This page is a from-scratch introductio
 feature, using the simplest possible physical system it can demonstrate.
 
 **Time units.** With $\hbar=1$ (KITE's convention throughout), a physical time has units of
-inverse energy. The `#!python timestep` argument is specified in the same rescaled units as the
-internal Hamiltonian $\hat H/\mathtt{energy\_scale}$ (`#!python energy_scale` is the
-`#!python Configuration` parameter that maps the model's physical energy units onto KITE's
-required $[-1,1]$ Chebyshev spectral range); to convert a rescaled timestep back to physical time,
-divide by `#!python energy_scale` expressed in the same energy units used to define the model's
-hoppings.
+inverse energy. The step is given either way round, and exactly one of the two is passed.
+`#!python timestep` is in the same rescaled units as the internal Hamiltonian
+$\hat H/\mathtt{energy\_scale}$ (`#!python energy_scale` is the `#!python Configuration`
+parameter that maps the model's physical energy units onto KITE's required $[-1,1]$ Chebyshev
+spectral range), which is what the propagator works in; `#!python timestep_physical` is in
+physical time, and KITE multiplies it by `#!python energy_scale` on export. The second is the
+one to use when `#!python spectrum_range` is left to KITE, since then the rescaled step is not
+known until the file is written. Either way the output file carries both values, under
+`#!python timestep` and `#!python timestep_physical`.
 
 ### The physics: spin precession in a field
 
@@ -91,7 +94,7 @@ calculation.add_orbital_coupling('down', 'down', -0.5, 'l2')
 
 calculation.gaussian_wave_packet(
     num_points=400, num_moments=256, num_disorder=1,
-    k_vector=[[0.0, 0.0]], spinor=[[1.0, 0.0]], width=4.0, timestep=0.5,
+    k_vector=[[0.0, 0.0]], spinor=[[1.0, 0.0]], width=4.0, timestep_physical=0.1,
     mean_value=[64, 64], operators=['l0', 'l1', 'l2'])
 ```
 

@@ -860,8 +860,9 @@ class Calculation:
 
         self._arpes.append({'k_vector': k_vector, 'weight': weight, 'num_moments': num_moments, 'num_disorder': num_disorder})
 
-    def gaussian_wave_packet(self, num_points, num_moments, timestep, k_vector, spinor, width, mean_value,
-                             num_disorder=1, operators=None, **kwargs):
+    def gaussian_wave_packet(self, num_points, num_moments, timestep=None, k_vector=None, spinor=None,
+                             width=None, mean_value=None, num_disorder=1, operators=None,
+                             timestep_physical=None, **kwargs):
         """Calculate the time evolution function of a wave packet
 
         Parameters
@@ -870,13 +871,13 @@ class Calculation:
             Number of time points for the time evolution.
         num_moments : int
             Number of polynomials in the Chebyshev expansion.
-        timestep : float
+        timestep : float, optional
             Timestep, in the same rescaled units as the energy. KITE propagates
             the rescaled Hamiltonian, so this is the argument of the Bessel
             expansion of exp(-i H t) and is conjugate to that rescaled energy:
             a step of `dt` in physical time is `dt * energy_scale` here. To put
             the output back on a physical axis, divide by `EnergyScale` from the
-            output file.
+            output file. Give either this or `timestep_physical`, not both.
         k_vector : np.array
             Different wave vectors, components corresponding to vectors b0 and b1.
         spinor : np.array
@@ -898,10 +899,30 @@ class Calculation:
             label's expectation value is written to ``/Calculation/gaussian_wave_packet/<label>``
             in the output file. As with custom_one/custom_two, labels are positional, not
             arbitrary names -- see add_orbital_coupling's documentation.
-
-            at different timesteps.
+        timestep_physical : float, optional
+            Timestep in physical time instead of rescaled time -- inverse energy
+            with hbar = 1, the same units as the `t` column KITE-tools --WavePacket
+            writes. It is converted on export as
+            `timestep = timestep_physical * EnergyScale`, so the physical step is
+            the one asked for whatever `spectrum_range` is, including when KITE
+            estimates the bounds itself. Both values are stored in the output
+            file, under `timestep` and `timestep_physical`. Give either this or
+            `timestep`, not both.
 
         """
+        missing = [name for name, value in (('k_vector', k_vector), ('spinor', spinor),
+                                            ('width', width), ('mean_value', mean_value))
+                   if value is None]
+        if missing:
+            raise ValueError(
+                "gaussian_wave_packet: missing required argument(s): {}.".format(
+                    ", ".join(missing)))
+        if (timestep is None) == (timestep_physical is None):
+            raise ValueError(
+                "gaussian_wave_packet: give exactly one of `timestep` (rescaled units, "
+                "the argument of the Bessel expansion KITE propagates with) or "
+                "`timestep_physical` (physical time, hbar = 1), not both and not neither.")
+
         operators = operators or []
         for label in operators:
             if label not in self._custom_operator_collection:
@@ -911,7 +932,8 @@ class Calculation:
 
         self._gaussian_wave_packet.append(
             {'num_points': num_points, 'num_moments': num_moments,
-             'timestep': timestep, 'num_disorder': num_disorder, 'spinor': spinor, 'width': width, 'k_vector': k_vector,
+             'timestep': timestep, 'timestep_physical': timestep_physical,
+             'num_disorder': num_disorder, 'spinor': spinor, 'width': width, 'k_vector': k_vector,
              'mean_value': mean_value, 'operators': operators})
 
     def localized_wave_packet(self,
@@ -2339,7 +2361,10 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
 
         num_moments, num_points, num_disorder, spinor, width, k_vector, \
             mean_value = [], [], [], [], [], [], []
-        timestep = []
+        # Only one of the two is set by the user; the other is derived here,
+        # once the energy scale is final -- it is not known when the calculation
+        # is declared, because an unset spectrum_range is estimated above.
+        timestep, timestep_physical = [], []
         for single_gauss_wavepacket in calculation.get_gaussian_wave_packet:
             num_moments.append(single_gauss_wavepacket['num_moments'])
             num_points.append(single_gauss_wavepacket['num_points'])
@@ -2348,7 +2373,14 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
             width.append(single_gauss_wavepacket['width'])
             k_vector.append(single_gauss_wavepacket['k_vector'])
             mean_value.append(single_gauss_wavepacket['mean_value'])
-            timestep.append(single_gauss_wavepacket['timestep'])
+            step = single_gauss_wavepacket['timestep']
+            step_physical = single_gauss_wavepacket['timestep_physical']
+            if step is None:
+                step = step_physical * config.energy_scale
+            else:
+                step_physical = step / config.energy_scale
+            timestep.append(step)
+            timestep_physical.append(step_physical)
         if len(calculation.get_gaussian_wave_packet) > 1:
             raise SystemExit('Only a single function request of each type is currently allowed. Please use another '
                              'configuration file for the same functionality.')
@@ -2374,6 +2406,11 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
         grpc_p.create_dataset('spinor', data=spinor_arr)
         grpc_p.create_dataset('k_vector', data=np.asmatrix(np.asarray(k_vector)), dtype=np.float32)
         grpc_p.create_dataset('timestep', data=timestep, dtype=np.float32)
+        # KITEx reads `timestep` only; this one is for post-processing, so the
+        # physical time axis does not have to be rebuilt by hand from
+        # EnergyScale. float64 because nothing in C++ reads it, and it is the
+        # axis analytic comparisons are made on.
+        grpc_p.create_dataset('timestep_physical', data=timestep_physical, dtype=np.float64)
 
         operator_labels = calculation.get_gaussian_wave_packet[0]['operators']
         if operator_labels:

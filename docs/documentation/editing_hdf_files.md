@@ -51,7 +51,8 @@ There is no top-level wrapper group — everything hangs directly off the file r
     ├── ldos/                   NumMoments, Energy, Orbitals, FixPosition, NumDisorder, lMU
     ├── arpes/                  NumMoments, k_vector, NumDisorder, OrbitalWeights, kMU
     ├── gaussian_wave_packet/   NumMoments, NumPoints, NumDisorder, mean_value,
-    │                           width, spinor, k_vector, timestep, Sx, Sy, Sz
+    │                           width, spinor, k_vector, timestep,
+    │                           timestep_physical (post-processing only), Sx, Sy, Sz
     ├── conductivity_dc/        NumMoments, NumRandoms, NumPoints, NumDisorder, Temperature,
     │                           Direction, Gamma<dir>   (dir = 2-letter code, e.g. "xx", "xy")
     ├── conductivity_optical/   same fields as conductivity_dc, plus Gamma<dir> and Lambda<dir>
