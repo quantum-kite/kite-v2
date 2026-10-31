@@ -114,7 +114,7 @@ void KPM_VectorBasis<T,D>::cheb_iteration(unsigned n)
       this->template Multiply<1>();
     }
 
-  // Containment certificate (DEC-023). Chebyshev polynomials are bounded by 1
+  // Containment certificate. Chebyshev polynomials are bounded by 1
   // on [-1, 1], so for a rescaled spectrum that really is contained,
   // ||phi_n|| <= ||phi_0|| for every n. If the spectrum escapes the interval
   // the recursion grows exponentially instead, and KITEx currently finishes,

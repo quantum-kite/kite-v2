@@ -78,7 +78,7 @@ void Periodic_Operator<T,D>::Convert_Build (  LatticeStructure <D> & r )
         // -1, 0 or +1. A hand-authored file can hold a longer hopping, and the
         // carry then lands in the digit above. When that digit is the orbital
         // field the decoded orbital runs past Orb, which is both a different
-        // bond and an out-of-range index; warn and name the hopping (DEC-024).
+        // bond and an out-of-range index; warn and name the hopping.
         //
         // A carry out of a NON-final direction cannot be detected here: it
         // produces a legitimate address for a different cell. On a 2D
@@ -97,8 +97,7 @@ void Periodic_Operator<T,D>::Convert_Build (  LatticeStructure <D> & r )
                        "  This file was not written by kite.config_system, "
                        "which refuses such a hopping.\n"
                        "  Aborting: continuing would read past the orbital "
-                       "table, so the run would be both wrong and unsafe "
-                       "(PM ruling, 2026-10-30, amending DEC-024 part 3).\n";
+                       "table, so the run would be both wrong and unsafe.\n";
           fatal_exit();
         }
 

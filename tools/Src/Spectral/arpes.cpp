@@ -114,7 +114,7 @@ void arpes<T, DIM>::override_parameters(){
         // -T is given in energy units, like every other reader's, and the
         // internal temperature is rescaled -- as this reader's own default,
         // 0.1/scale, already is. Without the division -T was off by
-        // energy_scale (BUG-013).
+        // energy_scale.
         temperature       = variables.ARPES_Temp/scale;
         beta              = 1.0/temperature;
         default_temp      = false;

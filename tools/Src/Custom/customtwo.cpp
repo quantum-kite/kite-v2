@@ -98,7 +98,7 @@ void customtwo<T, DIM>::set_default_parameters(){
     // +-1 eV, which on a shifted spectrum is not +-1/scale: the shift has to
     // come off first, exactly as conductivity_dc does it and as this file's own
     // -F override already did. Without it the default window was displaced by
-    // energy_shift (BUG-014).
+    // energy_shift.
     minFermiEnergy = (-1.0 - shift)/scale;
     maxFermiEnergy = ( 1.0 - shift)/scale;
     default_NFermi = true;
@@ -138,7 +138,7 @@ bool customtwo<T, DIM>::fetch_parameters(){
         // The temperature (kb*T) is in energy units, and the python script has
         // already divided it by SCALE -- same convention and same dataset shape
         // as conductivity_dc, whose read this mirrors. Dividing again here ran
-        // every custom_two at T/SCALE (BUG-005).
+        // every custom_two at T/SCALE.
         get_hdf5(&temperature, &file, (char*)(dirName+"Temperature").c_str());
         beta = 1.0/temperature;
         default_temp = false;

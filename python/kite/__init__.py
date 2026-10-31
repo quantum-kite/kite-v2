@@ -2307,7 +2307,7 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
         grpc_p = grpc.create_group('ldos_map')
         # Rescaled here, not in KITEx: an absolute energy carries the shift,
         # a width carries only the scale. Keeping both on this side means one
-        # place can drop the shift instead of six -- see BUG-010.
+        # place can drop the shift instead of six.
         grpc_p.create_dataset('Energy', data = (np.asarray(calculation._ldos_map[0]['energy']) - config.energy_shift) / config.energy_scale, dtype = np.float64)
         grpc_p.create_dataset('Sigma', data = np.asarray(calculation._ldos_map[0]['sigma']) / config.energy_scale, dtype = np.float64)
         grpc_p.create_dataset('NumVectors', data = np.asarray(calculation._ldos_map[0]['vectors']), dtype = np.int32)
@@ -2325,7 +2325,7 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
         grpc_p = grpc.create_group('spectral_map')
         # Rescaled here, not in KITEx: an absolute energy carries the shift,
         # a width carries only the scale. Keeping both on this side means one
-        # place can drop the shift instead of six -- see BUG-010.
+        # place can drop the shift instead of six.
         grpc_p.create_dataset('Energy', data = (np.asarray(calculation._spectral_map[0]['energy']) - config.energy_shift) / config.energy_scale, dtype = np.float64)
         grpc_p.create_dataset('Sigma', data = np.asarray(calculation._spectral_map[0]['sigma']) / config.energy_scale, dtype = np.float64)
         grpc_p.create_dataset('NumVectors', data = np.asarray(calculation._spectral_map[0]['vectors']), dtype = np.int32)
@@ -2805,7 +2805,7 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
         grpc_p.create_dataset('NumDisorder', data = np.asarray(calculation._custom_ss_two[0]['num_disorder']), dtype = np.int32)
         # Rescaled here, not in KITEx: an absolute energy carries the shift,
         # a width carries only the scale. Keeping both on this side means one
-        # place can drop the shift instead of six -- see BUG-010.
+        # place can drop the shift instead of six.
         grpc_p.create_dataset('Energies', data = (np.asarray(calculation._custom_ss_two[0]['energies']).flatten() - config.energy_shift) / config.energy_scale, dtype = np.float64)
         grpc_p.create_dataset('Gamma', data = np.asarray(calculation._custom_ss_two[0]['gamma']) / config.energy_scale, dtype = np.float64)
         grpc_p.create_dataset('Sigma', data = np.asarray(calculation._custom_ss_two[0]['sigma']) / config.energy_scale, dtype = np.float64)

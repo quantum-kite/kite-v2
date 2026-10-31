@@ -43,8 +43,7 @@ Hamiltonian<T, D>::Hamiltonian(
   // the wave-packet path read 2.12e-314 and 2.13e-314 on a normal build, and
   // -5.3e+303 under -ftrivial-auto-var-init=pattern. Small enough that the
   // phases came out near 1 and the error stayed at 3e-4, and stable enough
-  // across runs to look reproducible, which is what made it invisible
-  // (DEC-011).
+  // across runs to look reproducible, which is what made it invisible.
   BoundTwist.setZero();
 
 #pragma omp critical
