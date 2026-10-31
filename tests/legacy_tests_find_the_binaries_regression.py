@@ -11,9 +11,9 @@ both to absolute paths before the loop, so a test invoked from elsewhere still
 finds them and a missing build reports itself once rather than once per test.
 
 What is asserted here is that every directory resolves to the real binaries --
-not that the tests pass. Several do not, for reasons that belong to their own
-tasks: stale `configORIG.h5` fixtures that predate the `/Seed0` and `/Seed1`
-fields, and directories that assert nothing at all.
+not that the tests pass. Whether a directory asserts anything is pinned in
+`every_legacy_directory_asserts_regression.py`, and whether its fixture is
+seeded well enough to be rerun in `legacy_fixture_seed_regression.py`.
 """
 
 import os
