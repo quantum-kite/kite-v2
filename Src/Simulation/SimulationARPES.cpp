@@ -70,6 +70,18 @@ void Simulation<T,D>::ARPES(int NDisorder, int NMoments, Eigen::Array<double, -1
     KPM_Vector<T,D> kpm1(2, *this); // left vector that will be Chebyshev-iterated on
 
     // initialize the local gamma matrix and set it to 0
+    // Two moments per iteration, both written, so an odd count writes one row
+    // past the end -- demonstrated at 63 moments, where the last pass writes
+    // row 63 of an array with 63 and the run still exits 0. Python refuses an
+    // odd count at export; this is the backstop for a hand-written file.
+    if(NMoments % 2 != 0){
+      std::cout << "The number of moments must be even, got " << NMoments
+                << ".\n  ARPES accumulates two moments per iteration and "
+                   "writes both, so an odd count writes one element past the "
+                   "array. Aborting.\n";
+      fatal_exit();
+    }
+
     Eigen::Array<T, -1, -1> gamma = Eigen::Array<T, -1, -1 >::Zero(NMoments, Nk_vectors);
 
     // average for each k value
@@ -96,7 +108,7 @@ void Simulation<T,D>::ARPES(int NDisorder, int NMoments, Eigen::Array<double, -1
             kpm1.v.col(0) = kpm0.v.col(0);
             kpm0.empty_ghosts(0);
 
-            for(int n = 0; n < NMoments; n+=2) {
+            for(int n = 0; n < NMoments; n+=2) {   // see the evenness guard above
                 for(int i = n; i < n + 2; i++)
                   kpm1.cheb_iteration(i);
                 
