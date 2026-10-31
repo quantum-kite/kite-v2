@@ -92,7 +92,10 @@ std::string num2str2(int dir_num) {
   case 5:
     dir = "yx"; break;
   case 6:
-    dir = "yx"; break;
+    // "yz", not "yx": this string picks the velocity pair as well as naming the
+    // dataset, so a repeated "yx" made direction='yz' compute yx and store it as
+    // Gammayx, which KITE-tools then could not find.
+    dir = "yz"; break;
   case 7:
     dir = "zx"; break;
   case 8:
