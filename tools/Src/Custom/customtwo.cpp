@@ -237,7 +237,8 @@ void customtwo<U, DIM>::printCustomTwo(){
         "   Num integration points: "  << NEnergies                     << ((default_NEnergies)?    " (default)":"") << "\n"
         "   Num Chebyshev moments: "   << NumMoments << "\n"
         "   Number of velocity operators across both vertices: " << NumVelocities <<
-        " (NumVelocities mod 4 = " << p << " -> physical component is " << component << ")\n";
+        " (NumVelocities mod 4 = " << p << " -> physical component is " << component << ")\n"
+    << fermi_resolution_line(double(temperature), (maxEnergy - minEnergy)/double(NEnergies - 1));
 }
 
 template <typename U, unsigned DIM>

@@ -257,7 +257,8 @@ void conductivity_nonlinear<T, DIM>::printOpt2(){
     "   Num integration points: " << N_energies             << ((default_NEnergies)?    " (default)":"") << "\n"
     //"   Integration range: "       << energy_range             << ((default_energy_limits)?" (default)":" (Estimated from DoS)") << "\n"
     "   Kernel for Dirac deltas: "<< "jackson"              << " (default)\n"
-    "   Filename: "               << filename               << ((default_filename)?     " (default)":"") << "\n";
+    "   Filename: "               << filename               << ((default_filename)?     " (default)":"") << "\n"
+    << fermi_resolution_line(double(temperature), 2.0*lim/double(N_energies - 1));
 }
 
 template <typename T, unsigned DIM>

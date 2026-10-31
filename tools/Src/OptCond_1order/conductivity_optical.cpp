@@ -76,7 +76,8 @@ void conductivity_optical<T, DIM>::printOpt(){
     "   Number of green blocks: " << Convergence_G      << ((default_Convergence_G)?   " (default)":"") << "\n"
     "   Num integration points: " << N_energies         << ((default_NEnergies)?    " (default)":"") << "\n"
     "   Kernel for Dirac deltas: "<< "jackson"          << " (default)\n"
-    "   Filename: "               << filename           << ((default_filename)?     " (default)":"") << "\n";
+    "   Filename: "               << filename           << ((default_filename)?     " (default)":"") << "\n"
+    << fermi_resolution_line(double(temperature), 2.0*lim/double(N_energies - 1));
   if(!Moments_divisible)
     std::cout << "Warning! The number of moments specified does not divide the number of delta blocks"
       " and the number of green blocks. The Gamma matrix has been padded with zeros so that this requirement"

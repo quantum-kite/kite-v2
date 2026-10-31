@@ -340,7 +340,8 @@ void conductivity_dc<U, DIM>::printDC(){
         "   Integration range: "       << energy_range                  << ((default_energy_limits)?" (default)":" (Estimated from DoS)") << "\n"
         "   Num integration points: "  << NEnergies                     << ((default_NEnergies)?    " (default)":"") << "\n"
         "   Num Chebychev moments: "   << NumMoments                    << ((default_NumMoments)?   " (default)":"") << "\n"
-        "   Num threads: "             << NumThreads                    << ((default_NumThreads)?   " (default)":"") << "\n"; 
+        "   Num threads: "             << NumThreads                    << ((default_NumThreads)?   " (default)":"") << "\n"
+    << fermi_resolution_line(double(temperature), (maxEnergy - minEnergy)/double(NEnergies - 1)); 
 }
 
 
