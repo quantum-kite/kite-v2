@@ -91,11 +91,16 @@ def square(t=1.0):
     return lat
 
 
+#: The lattice the runs below use, in unit cells. The site count follows from
+#: this and the sublattice count, which is why nothing here hardcodes it.
+LENGTH = [64, 64]
+
+
 def run_moments(lattice, tmp_path, spectrum_range, num_random=8, num_moments=32,
                 disorder=None):
     """Export, run KITEx, and return the moments it wrote."""
     configuration = kite.Configuration(
-        divisions=[1, 1], length=[64, 64], boundaries=["periodic", "periodic"],
+        divisions=[1, 1], length=LENGTH, boundaries=["periodic", "periodic"],
         is_complex=False, precision=1, spectrum_range=spectrum_range)
     calculation = kite.Calculation(configuration)
     calculation.dos(num_points=200, num_moments=num_moments,
@@ -109,9 +114,21 @@ def run_moments(lattice, tmp_path, spectrum_range, num_random=8, num_moments=32,
                 float(f["EnergyScale"][()]), float(f["EnergyShift"][()]))
 
 
-def tolerance(num_random, num_sites=2 * 64 * 64, k=5.0):
-    """5 / sqrt(R*N): the stochastic-trace floor, not a fudge factor."""
-    return k / np.sqrt(num_random * num_sites)
+def sites(lattice):
+    """Sites in the run, counting the orbital index -- cells times sublattices."""
+    return int(np.prod(LENGTH)) * lattice.nsub
+
+
+def tolerance(lattice, num_random, k=5.0):
+    """5 / sqrt(R*N): the stochastic-trace floor, not a fudge factor.
+
+    The floor is only a floor if N is the site count of the run being judged.
+    Taking it from the lattice rather than writing a number keeps that true:
+    graphene has two sublattices and the square lattice one, so a fixed N would
+    hold one of them to a tolerance sqrt(2) away from its own floor and the
+    docstring above would stop being accurate.
+    """
+    return k / np.sqrt(num_random * sites(lattice))
 
 
 # --------------------------------------------------------------------------
@@ -121,8 +138,9 @@ def tolerance(num_random, num_sites=2 * 64 * 64, k=5.0):
 @pytest.mark.parametrize("build,half_width", [(graphene, 3.3), (square, 4.4)])
 def test_mu0_is_one(build, half_width, tmp_path):
     """The DOS sum rule, per site including the orbital index."""
-    mu, _, _ = run_moments(build(), tmp_path, [-half_width, half_width])
-    assert mu[0] == pytest.approx(1.0, abs=tolerance(8))
+    lattice = build()
+    mu, _, _ = run_moments(lattice, tmp_path, [-half_width, half_width])
+    assert mu[0] == pytest.approx(1.0, abs=tolerance(lattice, 8))
 
 
 @pytest.mark.parametrize("build,half_width", [(graphene, 3.3), (square, 4.4)])
@@ -130,15 +148,16 @@ def test_mu1_and_mu2_match_the_lattice(build, half_width, tmp_path):
     lattice = build()
     mu, scale, shift = run_moments(lattice, tmp_path, [-half_width, half_width])
     _, mu1, mu2 = analytic_moments(lattice, scale, shift)
-    assert mu[1] == pytest.approx(mu1, abs=tolerance(8))
-    assert mu[2] == pytest.approx(mu2, abs=tolerance(8))
+    assert mu[1] == pytest.approx(mu1, abs=tolerance(lattice, 8))
+    assert mu[2] == pytest.approx(mu2, abs=tolerance(lattice, 8))
 
 
 def test_odd_moments_vanish_on_a_bipartite_lattice(tmp_path):
     """Exact by chiral symmetry, so any violation is unambiguous."""
-    mu, _, _ = run_moments(graphene(), tmp_path, [-3.3, 3.3])
+    lattice = graphene()
+    mu, _, _ = run_moments(lattice, tmp_path, [-3.3, 3.3])
     odd = mu[1::2]
-    assert np.max(np.abs(odd)) < tolerance(8), (
+    assert np.max(np.abs(odd)) < tolerance(lattice, 8), (
         f"largest odd moment {np.max(np.abs(odd)):.2e} exceeds the stochastic floor")
 
 
@@ -151,7 +170,7 @@ def test_disorder_enters_mu2_as_its_variance(tmp_path):
     disorder.add_disorder("B", "Uniform", 0.0, sigma)
     mu, scale, shift = run_moments(lattice, tmp_path, [-4.0, 4.0], disorder=disorder)
     _, _, mu2 = analytic_moments(lattice, scale, shift, disorder_variance=sigma ** 2)
-    assert mu[2] == pytest.approx(mu2, abs=3 * tolerance(8))
+    assert mu[2] == pytest.approx(mu2, abs=3 * tolerance(lattice, 8))
 
 
 def test_the_ladder_catches_a_spectrum_range_that_is_too_narrow(tmp_path):
