@@ -134,3 +134,11 @@ __pycache__
 
 # Local scratch output (e.g. rendered audit PDFs/pages) -- never source, never pushed
 /tmp/
+
+# Figures rendered by the example scripts into the repo root
+/plots/
+
+# plot_dos.py writes its .dat/.png into its own directory when run from there;
+# the tracked copies of those files live in Section_4_A_twisted_bilayer/Output/
+examples/paper/Section_4_A_twisted_bilayer/Input/H5_files/*.dat
+examples/paper/Section_4_A_twisted_bilayer/Input/H5_files/*.png
