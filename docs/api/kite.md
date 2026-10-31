@@ -572,7 +572,7 @@ The KITE package for pre-processing is split up in various subclasses and contai
                 | `#!python temperature`:*`#!python float`* | Value of the temperature at which we calculate the response. If $eV$ is used as unit for energy, then $k_B\cdot T$ is also in $eV$. To define the temperature in arbitraty units, specify the quantity $K_B \cdot T$, which has units of energy. |
 
     
-    :   !!! declaration-function "<span id="calculation-conductivity_optical_nonlinear">*function*`#!python conductivity_optical_nonlinear(direction, num_points, num_moments, num_random, num_disorder=1, temperature=0, special=0)`</span>"
+    :   !!! declaration-function "<span id="calculation-conductivity_optical_nonlinear">*function*`#!python conductivity_optical_nonlinear(direction, num_points, num_moments, num_random, num_disorder=1, temperature=0)`</span>"
             
             
         :   Calculate nonlinear optical conductivity for a given direction.
@@ -587,7 +587,6 @@ The KITE package for pre-processing is split up in various subclasses and contai
                 | `#!python num_random`:*`#!python int`*    | Number of random vectors to use for the stochastic evaluation of trace.                                                                                                                                                                                                      |
                 | `#!python num_disorder`:*`#!python int`*  | Number of different disorder realisations.                                                                                                                                                                                                                                   |
                 | `#!python temperature`:*`#!python float`* | Value of the temperature at which we calculate the response. If $eV$ is used as unit for energy, then $k_B\cdot T$ is also in $eV$. To define the temperature in arbitraty units, specify the quantity $K_B \cdot T$, which has units of energy.                             |
-                | `#!python special`:*`#!python int`*       | Optional, a parameter that can simplify the calculation for some materials.                                                                                                                                                                                                  |
     
     
     :   !!! declaration-function "<span id="calculation-singleshot_conductivity_dc">*function*`#!python singleshot_conductivity_dc(energy, direction, eta, num_moments, num_random, num_disorder=1, preserve_disorder=False)`</span>"

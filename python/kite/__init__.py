@@ -1064,8 +1064,6 @@ class Calculation:
             Number of different disorder realisations.
         temperature : float
             Value of the temperature at which we calculate the response.
-
-            Optional parameters, forward special, a parameter that can simplify the calculation for some materials.
         """
 
         if direction not in self._avail_dir_nonl:
