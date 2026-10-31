@@ -76,6 +76,7 @@ bool customtwo<T, DIM>::is_required(){
 template <typename T, unsigned DIM>
 void customtwo<T, DIM>::set_default_parameters(){
     double scale = systemInfo->energy_scale;
+    double shift = systemInfo->energy_shift;
 
     // The integration step has to be well under the broadening it resolves.
     // At the former default of 513 points over [-0.99, 0.99], dE = 3.87e-3
@@ -94,8 +95,12 @@ void customtwo<T, DIM>::set_default_parameters(){
     default_energy_limits = true;
 
     NFermiEnergies = 100;
-    minFermiEnergy = -1.0/scale;
-    maxFermiEnergy = 1.0/scale;
+    // +-1 eV, which on a shifted spectrum is not +-1/scale: the shift has to
+    // come off first, exactly as conductivity_dc does it and as this file's own
+    // -F override already did. Without it the default window was displaced by
+    // energy_shift (BUG-014).
+    minFermiEnergy = (-1.0 - shift)/scale;
+    maxFermiEnergy = ( 1.0 - shift)/scale;
     default_NFermi = true;
     default_mFermi = true;
     default_MFermi = true;
