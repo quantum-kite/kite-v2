@@ -191,16 +191,19 @@ void conductivity_nonlinear<T, DIM>::override_parameters(){
   double scale = systemInfo.energy_scale;
   double shift = systemInfo.energy_shift;
 
-    if(variables.CondOpt2_Temp != -8888)     temperature = variables.CondOpt2_Temp/scale;
-    if(variables.CondOpt2_NumEnergies != -1) N_energies  = variables.CondOpt2_NumEnergies;
-    if(variables.CondOpt2_ratio != 8.8888)   ratio       = variables.CondOpt2_ratio;
+    // Each branch clears its own default_ flag, as the other readers' do. Without
+    // that, printOpt2() marks every line "(default)" whatever the user passed,
+    // which is how a ratio of -8.8888 could be printed as if it were intended.
+    if(variables.CondOpt2_Temp != -8888){    temperature = variables.CondOpt2_Temp/scale;        default_temperature = false;}
+    if(variables.CondOpt2_NumEnergies != -1){N_energies  = variables.CondOpt2_NumEnergies;       default_NEnergies   = false;}
+    if(variables.CondOpt2_ratio != -8.8888){ ratio       = variables.CondOpt2_ratio;             default_ratio       = false;}
     if(variables.CondOpt2_print_all != -2)   print_all   = variables.CondOpt2_print_all;
-    if(variables.CondOpt2_FreqMax != -8888)  maxFreq     = variables.CondOpt2_FreqMax/scale;
-    if(variables.CondOpt2_FreqMin != -8888)  minFreq     = variables.CondOpt2_FreqMin/scale;
-    if(variables.CondOpt2_NumFreq != -1)     N_omegas    = variables.CondOpt2_NumFreq;
-    if(variables.CondOpt2_Fermi != -8888)    e_fermi     = (variables.CondOpt2_Fermi - shift)/scale;
-    if(variables.CondOpt2_Scat != -8888)     scat        = variables.CondOpt2_Scat/scale;
-    if(variables.CondOpt2_Name != "")        filename    = variables.CondOpt2_Name;
+    if(variables.CondOpt2_FreqMax != -8888){ maxFreq     = variables.CondOpt2_FreqMax/scale;     default_maxfreq     = false;}
+    if(variables.CondOpt2_FreqMin != -8888){ minFreq     = variables.CondOpt2_FreqMin/scale;     default_minfreq     = false;}
+    if(variables.CondOpt2_NumFreq != -1){    N_omegas    = variables.CondOpt2_NumFreq;           default_Nfreqs      = false;}
+    if(variables.CondOpt2_Fermi != -8888){   e_fermi     = (variables.CondOpt2_Fermi - shift)/scale; default_efermi  = false;}
+    if(variables.CondOpt2_Scat != -8888){    scat        = variables.CondOpt2_Scat/scale;        default_scat        = false;}
+    if(variables.CondOpt2_Name != ""){       filename    = variables.CondOpt2_Name;              default_filename    = false;}
     beta = 1.0/temperature;
 }
 
@@ -282,12 +285,14 @@ bool conductivity_nonlinear<T, DIM>::fetch_parameters(){
   // Fetch the number of Chebyshev Moments, temperature and number of points
   get_hdf5(&NumMoments, &file, (char*)(dirName+"NumMoments").c_str());	
   get_hdf5(&temperature, &file, (char*)(dirName+"Temperature").c_str());	
+  default_temperature = false;                // it came from the file, not from set_default_parameters
   get_hdf5(&NumPoints, &file, (char*)(dirName+"NumPoints").c_str());	
   get_hdf5(&special, &file, (char*)(dirName+"Special").c_str());	
   beta = 1.0/temperature;   // 1/kT, where k is the Boltzmann constant in eV/K
 	
   // Frequency parameters needed to run the simulation
   N_omegas = NumPoints;
+  default_Nfreqs = false;
 
   // Check whether the matrices we're going to retrieve are complex or not
   complex = systemInfo.isComplex;
