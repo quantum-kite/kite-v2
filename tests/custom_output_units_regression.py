@@ -128,9 +128,12 @@ def test_the_velocity_rescaling_is_stated_only_when_there_is_one(runs):
 
 
 def test_the_spin_conductivity_convention_is_named(runs):
-    """e^2/h with hbar/2e absorbed, so the quantized plateau reads 2, not 1."""
+    """e^2/h for the pair as written, so the reader can tell 1 from 2."""
     header = _header(runs["plain"] / "custom_two.dat")
     assert "e^2/h" in header, "the custom_two header no longer states its units"
-    assert "e/4pi" in header and "hbar/2e" in header, (
-        "the header names e^2/h but not which convention absorbs hbar/2e, so a "
-        "reader cannot tell whether a quantized plateau should be 1 or 2")
+    assert "e/4pi" in header, (
+        "the header states e^2/h but never mentions the e/4pi convention, so a "
+        "reader cannot convert a spin response to the units it is usually quoted in")
+    assert "+-1" in header, (
+        "the header must say outright what a quantized Z_2 plateau reads in the "
+        "units it reports, or the ambiguity that produced a factor 2 comes back")

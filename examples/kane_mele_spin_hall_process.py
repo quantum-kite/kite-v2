@@ -74,7 +74,11 @@ def spin_hall(file_path, mu_values, k_BT=0.01, scat_phys=0.04,
         )
         energy_scale = np.array(f["EnergyScale"]).item()
         num_velocities = int(np.array(f["/Calculation/CustomTwo/NumVelocities"]))
-        moments_matrix = f["/Calculation/CustomTwo/Gamma"][:].T
+        # Read in the orientation KITE-tools reads it. The stored dataset is
+        # already what the reconstruction wants; transposing it here put this
+        # script in the opposite orientation to the C++, which for a Hall-type
+        # (nearly imaginary) Gamma is a sign flip.
+        moments_matrix = f["/Calculation/CustomTwo/Gamma"][:]
 
     Moments_D, Moments_G = moments_matrix.shape
     spin_degeneracy = 1.0
@@ -101,7 +105,11 @@ def spin_hall(file_path, mu_values, k_BT=0.01, scat_phys=0.04,
     units = 1.0 / (2.0 * np.pi)
     density_scale = (num_orbitals * spin_degeneracy) / (unit_cell_area * units)
     energy_scale_correction = energy_scale ** (num_velocities - 2)
-    return mu_values, 2.0 * cond * density_scale * energy_scale_correction
+    # e^2/h for the operator pair as written, matching KITE-tools. No factor 2:
+    # the s_z = sigma_z/2 vertex carries its own 1/2, so the plateau reads 1.
+    # spin_degeneracy stays 1 here as it is in the C++ -- a spin factor is put
+    # in by hand or carried by the lattice, never supplied by the reconstruction.
+    return mu_values, cond * density_scale * energy_scale_correction
 
 
 if __name__ == "__main__":

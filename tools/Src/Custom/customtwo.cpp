@@ -82,8 +82,8 @@ void customtwo<T, DIM>::set_default_parameters(){
     // At the former default of 513 points over [-0.99, 0.99], dE = 3.87e-3
     // against a default broadening of 0.01/energy_scale = 2.5e-3 -- coarser
     // than the Lorentzian being integrated, costing about 1% silently.
-    // Measured on the Kane-Mele spin Hall plateau: 513 -> -2.0656,
-    // 1025 -> -2.0884, 2049 -> -2.0874, 4097 and 32769 -> -2.0874.
+    // Measured on the Kane-Mele spin Hall plateau, which converges from
+    // below: the grid stops moving the answer at 2049 points.
     NEnergies = 1025;
     default_NEnergies = true;
 
@@ -149,12 +149,12 @@ bool customtwo<T, DIM>::fetch_parameters(){
     try{
         Gamma = Eigen::Array<std::complex<T>,-1,-1>::Zero(NumMoments, NumMoments);
         get_hdf5(Gamma.data(), &file, (char*)MatrixName.c_str());
-        // store_custom_two writes Tr[T_m B T_n A]: SimulationRankTwo.cpp:169 puts
-        // the BARE Chebyshev index on the row, while Gamma2D.cpp:138 -- which the
-        // reconstruction was written against -- puts the SANDWICHED index there.
-        // The two storage conventions are exact transposes, so undo it here and
-        // the triple product below matches CondDC/fill.cpp's exactly.
-        Gamma = Gamma.transpose().eval();
+        // Read as written. The raw accumulations in Gamma2D.cpp and
+        // SimulationRankTwo.cpp are adjoints of each other, but both writers
+        // then apply the same projection 0.5*(G + factor*G^dagger), and
+        // P(G^dagger) = factor*P(G) for real factor = +/-1. The two stored
+        // matrices are therefore the same object, element for element, and
+        // nothing has to be undone here.
         result = true;
     } catch(H5::Exception& e) {debug_message("CustomTwo: There is no Gamma matrix.\n");}
 
@@ -321,10 +321,12 @@ void customtwo<U, DIM>::save_to_file(Eigen::Matrix<std::complex<U>, -1, 1> respo
             "# The two vertices carry " << NumVelocities << " velocity operator"
          << ((NumVelocities == 1)? "" : "s") << " between them.\n";
   if(NumVelocities == 2)
-    myfile << "# Units: e^2/h, the same as --CondDC. For a spin current built from\n"
-              "# s_z = sigma_z/2 the hbar/2e that turns a charge conductivity into a spin\n"
-              "# one is absorbed, so this is sigma^{s_z}_xy in units of e/4pi =\n"
-              "# (hbar/2e)(e^2/h), and a quantized Z_2 plateau reads +-2.\n";
+    myfile << "# Units: e^2/h for the operator pair exactly as written, the same as\n"
+              "# --CondDC. Nothing is folded in here: a vertex built from\n"
+              "# s_z = sigma_z/2 carries that 1/2 itself, so the Kane-Mele Z_2\n"
+              "# plateau reads +-1. Multiply by 2 to quote it as sigma^{s_z}_xy in\n"
+              "# units of e/4pi. Spin degeneracy is never supplied here either --\n"
+              "# put it in by hand, or carry both spins in the lattice.\n";
   else
     myfile << "# Units: a factor EnergyScale^(NumVelocities-2) has been applied, which fixes\n"
               "# the velocity-count scaling. The absolute normalisation has only been\n"
@@ -374,31 +376,20 @@ void customtwo<U, DIM>::calculate(){
 
     Eigen::Matrix<std::complex<U>, -1, 1> response = calc_response(X);
 
-    // Normalization validated against the quantized Z2 spin Hall plateau
-    // (examples/kane_mele_spin_hall.py, NumVelocities=2 case) -- NOT the same
-    // constant as conductivity_dc.cpp's own "den" (that machinery's Gamma comes
-    // from a structurally different C++ moment-accumulation path, Gamma2D.cpp,
-    // and is independently calibrated against the Haldane Chern-insulator
-    // e^2/h plateau; the two are not assumed to share a normalization constant
-    // just because both reconstruct a Kubo-Bastin trace).
-    U den = 2.0*systemInfo->num_orbitals*systemInfo->spin_degeneracy
+    // The same constant as conductivity_dc.cpp's own "den". Both paths
+    // reconstruct the same Kubo-Bastin trace from the same stored moment
+    // matrix, so they normalize identically. A factor 2 stood here, fitted
+    // against a single spin Hall plateau; on a spinless model it put
+    // custom_two at twice conductivity_dc for the same vertex pair.
+    U den = systemInfo->num_orbitals*systemInfo->spin_degeneracy
             / systemInfo->unit_cell_area / unit_scale;
     U energy_scale_correction = std::pow(systemInfo->energy_scale, NumVelocities - 2);
 
-    // No sign convention is applied here: the orientation mismatch that used to
-    // need one is undone by the transpose in fetch_parameters(), so this path
-    // now contracts the same way CondDC/fill.cpp does.
-    //
-    // What stood here chose the sign at runtime from how real the stored Gamma
-    // was. That is the right discriminant in principle -- transposing negates an
-    // antisymmetric Gamma and leaves a symmetric one alone, and for a Hermitian
-    // Gamma symmetric means real -- but it was an L1 ratio compared against 0.5
-    // on stochastic data. On the shipped examples/kane_mele_spin_hall_disorder.py
-    // it reads 0.064, 0.344, 0.438, 0.472 at W = 0, 0.5, 1, 2: the antisymmetric
-    // signal decays with disorder while the real-part noise floor does not. From
-    // W = 0.5 upward that Gamma is also genuinely mixed-symmetry, where no single
-    // sign is correct for both parts. See
-    // tests/custom_two_sign_convention_regression.py.
+    // The component chosen above carries the whole convention: the raw vertex
+    // operators are missing a factor of i each, so i^p with p = NumVelocities
+    // fixes which part of Z is physical, and i^p has period 4. No further sign
+    // is applied. The sign belongs to the observable that was requested, never
+    // to the data, so nothing here inspects Gamma.
     response = response*(den*energy_scale_correction);
 
     save_to_file(response);

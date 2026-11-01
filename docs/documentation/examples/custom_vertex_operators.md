@@ -168,10 +168,20 @@ leaves the series truncated and the plateau acquires a percent-level ripple.
 **flat plateau** at
 
 $$
-\sigma^{s_z}_{xy}\approx -2.00
+\sigma^{s_z}_{xy}\approx +1.00
 $$
 
-across the bulk gap ($|E|\lesssim 0.74\,t$), consistent with the expected quantized spin Hall value. The
+across the bulk gap ($|E|\lesssim 0.74\,t$), consistent with the expected quantized spin Hall value.
+
+KITE-tools reports this in $e^2/h$ for the vertex pair exactly as written, the same units `--CondDC`
+uses. The `l0` matrix built above is $s_z=\tfrac12\sigma_z$, so the factor $\tfrac12$ is already in the
+operator and the plateau comes out at $1$: each spin sector contributes its own Chern number weighted
+by $\pm\tfrac12$. To quote the result as $\sigma^{s_z}_{xy}$ in units of $e/4\pi$, where the quantized
+value is $2$, multiply by $2$. Note also that **spin degeneracy is never supplied by the
+reconstruction** — it is $1$ on every path. A spinful model carries both spins in the lattice, as this
+one does; otherwise put the factor in by hand.
+
+The
 quantization follows from $s_z$ conservation: with no Rashba term the two spin sectors decouple into
 independent Chern insulators, so $\sigma^{s_z}_{xy}$ is fixed by their Chern numbers — the plateau's *existence* and *flatness* are the physics being demonstrated at this lattice size, not
 a claim of an exact quantized integer. The overall sign of $\sigma^{s_z}_{xy}$ is fixed by the arbitrary choice
@@ -196,10 +206,10 @@ mobility gap and the plateau degrades.
 
 | $W/t$ | behavior |
 |---|---|
-| $0$ | flat plateau $\approx -2.0$ |
+| $0$ | flat plateau $\approx +1.0$ |
 | $0.5$ | still flat (well below the gap) |
 | $1.0$ | visibly rounding (comparable to the gap) |
-| $2.0$ | washed out to $\approx -0.4$ (well past the gap) |
+| $2.0$ | washed out to $\approx +0.2$ (well past the gap) |
 
 Two implementation points worth flagging. First, the manual `#!python spectrum_range` must bound the *actual*
 spectrum including the disorder spread — a fixed clean-model range would let eigenvalues spill outside the

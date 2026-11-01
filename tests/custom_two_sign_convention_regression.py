@@ -7,15 +7,15 @@ so it cannot see a magnitude error, and it says nothing about the vertex pairs
 or disorder strengths where the sign is actually decided on a knife edge. This
 file covers both.
 
-**Why the convention needs care.** `store_custom_two` writes Tr[T_m B T_n A] --
-the bare Chebyshev index on the row (Src/Simulation/Custom/SimulationRankTwo.cpp
-:169) -- while the reconstruction was written against Gamma2D.cpp:138, which
-puts the sandwiched index there. The two storage conventions are exact
-transposes, so `customtwo.cpp` undoes the transpose when it reads Gamma. It used
-instead to infer a global sign at runtime from how real Gamma was; that is the
-right discriminant for a Gamma that is purely symmetric or purely antisymmetric,
-but it was an L1 ratio against a 0.5 threshold measured on stochastic data, and
-several shipped Gammas are neither.
+**Why the convention needs care.** The two writers accumulate adjoints of each
+other, but both apply the same projection 0.5*(G + factor*G_dagger) before
+storing, and P(G_dagger) = factor*P(G). The stored matrices are therefore the
+same object and `customtwo.cpp` reads Gamma as written, undoing nothing. The
+sign needs no runtime discriminant either: i^p has period 4, so p mod 4 fixes
+which part of the contraction is physical. A heuristic that read the sign off how
+real Gamma was is not sound -- it measures the antisymmetric (Hall) weight
+against the symmetric (longitudinal) one, which is a continuous physical
+observable, and several shipped Gammas carry both.
 """
 
 import shutil
@@ -90,38 +90,27 @@ def test_custom_two_and_conductivity_dc_agree_in_sign(tmp_path):
 
 @pytest.mark.skipif(not (GRAPHENE.exists() and KITE_TOOLS.exists()),
                     reason="needs the graphene fixture and a built KITE-tools")
-def test_custom_two_is_exactly_twice_conductivity_dc(tmp_path):
+def test_custom_two_matches_conductivity_dc(tmp_path):
     """Pins the normalization, which a correlation test cannot.
 
-    The two paths differ by a factor of two in source: customtwo.cpp:349 uses
-    `den = 2.0*num_orbitals*spin_degeneracy/...` where conductivity_dc.cpp:376
-    uses `den = num_orbitals*spin_degeneracy/...`. Measured here on the same
-    file, the median pointwise ratio is 1.95.
+    Both readers reconstruct the same Kubo-Bastin trace from the same stored
+    moment matrix, so for the same vertex pair they report the same number, in
+    e^2/h for the operators exactly as written. `spin_degeneracy` is 1 on both
+    paths: a spin factor is never supplied by the reconstruction, it is put in
+    by hand or carried by the lattice.
 
-    That factor is a convention difference, not an error. The two were
-    calibrated against references that differ in whether spin is in the model:
-    conductivity_dc against the Haldane e^2/h plateau, which is spinless, and
-    custom_two against the Kane-Mele spin Hall plateau, whose four sublattices
-    (Aup, Bup, Adn, Bdn) carry spin explicitly. The lattice used here is the
-    spinless one (sublattices A and B, NOrbitals = 2), so a user who wants a
-    spin-degenerate result from conductivity_dc supplies the factor of 2
-    themselves.
-
-    This test pins the relationship so a change to either normalization is
-    visible instead of silent.
+    This assertion used to read ~2.0, and that is how the defect survived --
+    custom_two carried a literal factor 2 calibrated on a spinful model and
+    applied to every vertex pair, and this file called it a convention.
     """
     _, custom = _run_tools("--CustomTwo", tmp_path)
     _, builtin = _run_tools("--CondDC", tmp_path)
     significant = np.abs(builtin) > 0.4 * np.abs(builtin).max()
     ratio = np.median(custom[significant] / builtin[significant])
-    assert ratio == pytest.approx(2.0, rel=0.10), (
-        f"custom_two/conductivity_dc median ratio is {ratio:.4f}, not ~2. One of "
+    assert ratio == pytest.approx(1.0, rel=0.10), (
+        f"custom_two/conductivity_dc median ratio is {ratio:.4f}, not ~1. One of "
         f"the two `den` constants has changed; see the docstring.")
 
-
-# --------------------------------------------------------------------------
-# The discriminant, and the premise underneath it.
-# --------------------------------------------------------------------------
 
 KANE_MELE = SWEEP / "kane_mele_spin_hall" / "kane_mele_spin_hall-output.h5"
 
@@ -132,18 +121,18 @@ def test_kane_mele_plateau_stays_quantized():
     """The calibration the reconstruction must not break.
 
     With no Rashba term the two spin sectors decouple into independent Chern
-    insulators carrying +1 and -1, so sigma^{s_z}_{xy} sits on a plateau of
-    magnitude 2 across the bulk gap. This is the reference the normalization was
-    calibrated against, and any change to how Gamma is contracted has to
-    reproduce it.
+    insulators carrying +1 and -1. The example registers l0 at +/-0.5, so the
+    vertex is s_z = sigma_z/2 and each sector enters weighted by +/-1/2: the
+    plateau sits at +1 in the units KITE-tools reports, not 2. Multiply by 2 to
+    quote it as sigma^{s_z}_xy in units of e/4pi, where the quantized value is 2.
     """
     subprocess.run([str(KITE_TOOLS), KANE_MELE.name, "--CustomTwo"],
                    cwd=str(KANE_MELE.parent), capture_output=True, text=True, check=True)
     data = np.loadtxt(KANE_MELE.parent / "custom_two.dat")
     mu, sigma = data[:, 0], data[:, 1]
     plateau = sigma[np.abs(mu) < 0.6].mean()
-    assert plateau == pytest.approx(-2.0, rel=0.10), (
-        f"the spin Hall plateau is {plateau:.4f}, not the quantized -2")
+    assert plateau == pytest.approx(1.0, rel=0.10), (
+        f"the spin Hall plateau is {plateau:.4f}, not the quantized +1")
 
 
 @needs_sweep

@@ -124,7 +124,11 @@ def edelstein(file_path, mu_values, k_BT=0.01, scat_phys=0.04,
         )
         energy_scale = np.array(f["EnergyScale"]).item()
         num_velocities = int(np.array(f["/Calculation/CustomTwo/NumVelocities"]))
-        moments_matrix = f["/Calculation/CustomTwo/Gamma"][:].T
+        # Same orientation KITE-tools reads, so the two agree. The absolute
+        # sign of this odd-vertex response has not been checked against an
+        # independent reference; what is checked is that script and binary
+        # reconstruct from the same matrix.
+        moments_matrix = f["/Calculation/CustomTwo/Gamma"][:]
 
     Moments_D, Moments_G = moments_matrix.shape
 

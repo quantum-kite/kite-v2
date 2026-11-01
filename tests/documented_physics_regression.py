@@ -58,8 +58,9 @@ def test_kane_mele_spin_hall_plateau_is_quantized():
     -2.098, because `M >~ 10*energy_scale/eta` (docs/documentation/optimization.md)
     asks for M >~ 4000 and the example ships 256, so the reconstruction rings.
     That is a property of the parameters, not a disagreement between routes: the
-    Python reconstruction gives -2.095 at the same eta, within 0.1% of
-    KITE-tools. Do not tighten this without also fixing the broadening, which
+    Python reconstruction agrees with KITE-tools to a fraction of a percent at
+    the same eta. The vertex carries s_z = sigma_z/2, so the plateau is +1 in
+    the units reported; multiply by 2 to quote it in e/4pi. Do not tighten this without also fixing the broadening, which
     currently cannot be set from the command line.
     """
     _rerun("kane_mele_spin_hall", "--CustomTwo")
@@ -67,8 +68,8 @@ def test_kane_mele_spin_hall_plateau_is_quantized():
     mu, sigma = data[:, 0], data[:, 1]
     gap = np.abs(mu) < 0.74
     plateau = sigma[gap].mean()
-    assert plateau == pytest.approx(-2.0, rel=0.10), (
-        f"the spin Hall plateau is {plateau:.4f}, not near the quantized -2")
+    assert plateau == pytest.approx(1.0, rel=0.10), (
+        f"the spin Hall plateau is {plateau:.4f}, not near the quantized +1")
     flatness = sigma[gap].std() / abs(plateau)
     assert flatness < 0.05, (
         f"the plateau is {flatness:.1%} ragged; the page calls it flat")
