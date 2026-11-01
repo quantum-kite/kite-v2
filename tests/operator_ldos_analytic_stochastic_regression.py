@@ -19,11 +19,30 @@ sigma_y=-1), each weighted by that eigenstate's O-expectation value:
                                                u,d basis; rho_sigma_z = 0 at E=B, so
                                                this reduces to half of rho_I)
 
-These give a closed-form expectation for all five operators' STOCHASTIC output,
-not just a sign check, without needing to match the deterministic method's
-different (Jackson-kernel) broadening. Run from an isolated temporary
-directory so output filenames can't collide with a concurrent or stale run
-from operator_ldos_regression.py (both use the same lattice and label names).
+These give a closed-form expectation for all five operators' STOCHASTIC output
+without needing to match the deterministic method's different (Jackson-kernel)
+broadening. Run from an isolated temporary directory so output filenames can't
+collide with a concurrent or stale run from operator_ldos_regression.py (both
+use the same lattice and label names).
+
+HOW MUCH OF THAT IS LOAD-BEARING, stated plainly because the list above reads
+like five independent checks and is not:
+
+  * sigma_x and sigma_z come back at 1e-12 and 1e-17 with zero stochastic
+    error. They are not "small", they are structurally zero at every cell for
+    any sign or ordering convention KITE could use, so those two assertions are
+    0 == 0 and cannot fail. They are worth keeping as a guard -- a non-zero
+    value would mean the operator is not the one that was declared -- but they
+    test no reconstruction.
+  * g(2B) = exp(-72)/(sigma*sqrt(2*pi)) is about 5e-32, so the second Gaussian
+    never arrives: rho_I and rho_sigma_y are equal to fifteen digits and
+    rho_P_up is exactly half of both. The two-Gaussian structure the derivation
+    rests on is not probed. Separating the eigenvalues (sigma of order B/3)
+    would make it load-bearing.
+
+So what this file actually pins is one independent magnitude, g_sigma(0), plus
+the ABSOLUTE sign of sigma_y on the stochastic path -- which sigma_y_regression
+pins only relatively, and which is the reason the file exists.
 """
 import glob
 import math

@@ -20,6 +20,20 @@ regression matrix"). Five operators on the same exactly-solvable system
 
 All five run through BOTH the exact (calculation.ldos) and stochastic
 (calculation.ldos_map) code paths, in one KITE configuration file.
+
+WHICH OF THOSE CAN ACTUALLY FAIL. H = B*sigma_y has no u/d asymmetry at all,
+so LDOS_u and LDOS_d are identically equal (+34.6876 each, measured) and
+sigma_z is identically zero. The sigma_z line above therefore compares zero
+against zero and cannot fail, and the P_up line would pass just as well with
+the projector applied to 'd' instead of 'u'. Both are kept as guards -- a
+non-zero sigma_z would mean the declared operator is not the one being
+applied -- but neither tests the identity it is written as.
+
+What does have teeth here is `I == LDOS_u + LDOS_d`, a real factor-of-two and
+cell-trace check, and the sigma_y sign agreement between the two paths. An
+onsite splitting between 'u' and 'd' would make the sigma_z and P_up lines
+load-bearing; it has not been added because it changes the solvable system
+these tests are built on.
 """
 import glob
 import os

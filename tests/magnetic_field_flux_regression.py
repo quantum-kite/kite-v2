@@ -87,8 +87,14 @@ def field():
         "lx": lx, "ly": ly, "m": m,
         "flux_per_cell": m / ly,
         "total_flux": m * lx,
-        # l_B^2 = Phi_0/(2 pi B) = A_cell/(2 pi f), in units of the lattice constant.
-        "l_B": float(np.sqrt((area * 1e18) / (2 * np.pi * (m / ly)))),
+        # l_B^2 = Phi_0/(2 pi B) = A_cell/(2 pi f). `area * 1e18` puts it back
+        # in nm^2, so the square root is in nm; dividing by |a1| expresses it in
+        # lattice constants, which is what the assertions below compare against.
+        # Without that division the two agree only for a lattice whose |a1| is
+        # 1 nm, which is true of the example this test drives and of nothing
+        # else -- dos_dccond_haldane.py uses a = 0.24595 nm.
+        "l_B": float(np.sqrt((area * 1e18) / (2 * np.pi * (m / ly)))
+                     / np.linalg.norm(vectors[0])),
     }
 
 
