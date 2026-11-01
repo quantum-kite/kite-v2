@@ -26,7 +26,7 @@ The target functions currently available are:
   : Calculates a given component of the 2nd-order nonlinear optical conductivity tensor.
 * [`#!python singleshot_conductivity_dc`][calculation-singleshot_conductivity_dc]
   : Calculates the longitudinal DC conductivity for a set of Fermi energies (uses the $\propto\mathcal{O}(N)$ single-shot method).
-* [`#!python custom_one`][calculation-custom_one], [`#!python custom_one_local`][calculation-custom_one_local], [`#!python custom_two`][calculation-custom_two], [`#!python custom_two_local`][calculation-custom_two_local], [`#!python custom_singleshot_two`][calculation-custom_singleshot_two]
+* [`#!python custom_one`][calculation-custom_one], [`#!python custom_one_local`][calculation-custom_one_local], [`#!python custom_two`][calculation-custom_two]
   : Calculate generalized rank-one/rank-two KPM traces of user-defined operators built from `#!python kite.custom.Vertex`.
   
 
@@ -162,7 +162,7 @@ is described in the [full reference][calculation-custom_one]. The available func
 * [`#!python custom_one`][calculation-custom_one] / [`#!python custom_one_local`][calculation-custom_one_local]
   : The rank-one trace `#!python Tr[Tn(H)·J]` for one operator $J$, either as a lattice-wide trace or resolved at
     one position/energy.
-* [`#!python custom_two`][calculation-custom_two] / [`#!python custom_two_local`][calculation-custom_two_local] / [`#!python custom_singleshot_two`][calculation-custom_singleshot_two]
+* [`#!python custom_two`][calculation-custom_two]
   : The rank-two trace `#!python Tr[Tn(H)·A·Tm(H)·B]` for two operators $A$, $B$ — as an energy-integrated
     (Fermi-sea) quantity, resolved at chosen positions, or evaluated single-shot at chosen energies (KITEx-only,
     no post-processing).
@@ -281,8 +281,6 @@ python plot_dos.py                # display the data
 [calculation-custom_one]: ../api/kite.md#calculation-custom_one
 [calculation-custom_one_local]: ../api/kite.md#calculation-custom_one_local
 [calculation-custom_two]: ../api/kite.md#calculation-custom_two
-[calculation-custom_two_local]: ../api/kite.md#calculation-custom_two_local
-[calculation-custom_singleshot_two]: ../api/kite.md#calculation-custom_singleshot_two
 [custom-vertex-example]: examples/custom_vertex_operators.md
 
 [modification-modification-par-magnetic_field]: ../api/kite.md#modification-par-magnetic_field

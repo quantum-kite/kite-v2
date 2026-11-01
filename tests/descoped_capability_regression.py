@@ -1,4 +1,4 @@
-"""`localized_wave_packet` is descoped this release and must stay undocumented.
+"""The descoped capabilities stay in the tree and stay out of the documentation.
 
 RF-014 -- the localized wave packet and its lead/sample/transmission machinery --
 is out of scope for this version. The implementation is deliberately NOT deleted:
@@ -11,7 +11,16 @@ first written up in `3d67f7d` (2026-07-22, "Document the previously-undocumented
 Calculation methods..."), and no commit before 2026-07 mentions it anywhere under
 `docs/`. Removing those pages restores the state the project was in.
 
-This guards both halves: the pages stay clear, and the code stays present.
+The same ruling was taken again for the vertex capabilities beyond on-site
+Hermitian operators (DEC-028): `custom_two_local`, `custom_singleshot_two` and
+bond vertices for `custom_one_local`. None has a KITE-tools reader, none has an
+example -- the API page said so itself, twice, in a "No worked example yet"
+admonition -- and `custom_singleshot_two`'s normalization was never settled.
+This version ships on-site Hermitian vertices only. As with RF-014 the code is
+left exactly where it is; what is withdrawn is the claim.
+
+This guards both halves for all of them: the pages stay clear, and the code
+stays present.
 """
 
 import re
@@ -59,3 +68,41 @@ def test_the_implementation_is_still_present():
     dispatch = (REPO / "Src" / "Simulation" / "GlobalSimulation.cpp").read_text()
     assert "calc_localized_wavepacket" in dispatch, (
         "KITEx no longer dispatches calc_localized_wavepacket")
+
+
+#: The vertex capabilities descoped by DEC-028, with the implementation that
+#: must survive the descoping: the Python entry point and the KITEx driver.
+DEC_028 = {
+    "custom_two_local": ("Src/Simulation/Custom/SimulationRankTwoLocal.cpp",
+                         "calc_custom_two_local"),
+    "custom_singleshot_two": ("Src/Simulation/Custom/SimulationSingleshotTwo.cpp",
+                              "calc_custom_ss_two"),
+}
+
+
+@pytest.mark.parametrize("capability", sorted(DEC_028))
+def test_no_page_documents_the_descoped_vertex_capabilities(capability):
+    offenders = [p.relative_to(REPO) for p in (REPO / "docs").rglob("*.md")
+                 if capability in p.read_text(errors="ignore")]
+    assert not offenders, (
+        f"{capability} is documented in {offenders}, and it is descoped this "
+        "release per DEC-028. Bringing it back into scope is a PM decision and "
+        "this test should go with it")
+
+
+@pytest.mark.parametrize("capability", sorted(DEC_028))
+def test_the_descoped_vertex_implementation_is_still_present(capability):
+    """Descoped means undocumented, not deleted -- the owner said so explicitly."""
+    driver, dispatch = DEC_028[capability]
+
+    api = (REPO / "python" / "kite" / "__init__.py").read_text()
+    assert re.search(rf"def {capability}\s*\(", api), (
+        f"Calculation.{capability}() has been deleted. DEC-028 descopes the "
+        "documentation only; removing the implementation is a different "
+        "decision and was not taken")
+
+    assert (REPO / driver).exists(), f"{driver} has been deleted; the implementation stays"
+
+    global_simulation = (REPO / "Src" / "Simulation" / "GlobalSimulation.cpp").read_text()
+    assert dispatch in global_simulation, (
+        f"KITEx no longer dispatches {dispatch}")

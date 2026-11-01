@@ -299,7 +299,6 @@ The KITE package for pre-processing is split up in various subclasses and contai
         | <span id="calculation-get_custom_one">`#!python get_custom_one`:*`#!python dict`*</span>                                         | Returns the requested rank-one custom-operator trace functions.                                                             |
         | <span id="calculation-get_custom_one_local">`#!python get_custom_one_local`:*`#!python dict`*</span>                             | Returns the requested local (position/energy-resolved) rank-one custom-operator functions.                                  |
         | <span id="calculation-get_custom_two">`#!python get_custom_two`:*`#!python dict`*</span>                                         | Returns the requested rank-two custom-operator trace functions.                                                             |
-        | <span id="calculation-get_custom_two_local">`#!python get_custom_two_local`:*`#!python dict`*</span>                             | Returns the requested local rank-two custom-operator functions.                                                             |
         | <span id="calculation-get_custom_ss_two">`#!python get_custom_ss_two`:*`#!python dict`*</span>                                   | Returns the requested single-shot rank-two custom-operator functions.                                                       |
 
 
@@ -321,8 +320,6 @@ The KITE package for pre-processing is split up in various subclasses and contai
         | [`#!python custom_one(stream_, num_random_, num_disorder_)`][calculation-custom_one]           | Calculate the rank-one custom-operator trace `#!python Tr[Tn(H)·J]`.        |
         | [`#!python custom_one_local(stream_, energy_, position_, sublattice_ [, ...])`][calculation-custom_one_local] | Calculate the rank-one custom-operator trace at a chosen energy and position. |
         | [`#!python custom_two(stream_, num_random_, num_disorder_, num_points_, temperature_)`][calculation-custom_two] | Calculate the rank-two custom-operator trace `#!python Tr[Tn(H)·A·Tm(H)·B]`. |
-        | [`#!python custom_two_local(stream_, positions_)`][calculation-custom_two_local]               | Calculate the rank-two custom-operator trace at chosen positions.           |
-        | [`#!python custom_singleshot_two(stream_, num_random_, num_disorder_ [, ...])`][calculation-custom_singleshot_two] | Calculate the rank-two custom-operator trace at chosen energies, using KITEx (single-shot method). |
 
     :   !!! declaration-function "<span id="calculation-dos">*function* `#!python dos(num_points, num_moments, num_random, num_disorder=1)`</span>"
             
@@ -785,57 +782,6 @@ The KITE package for pre-processing is split up in various subclasses and contai
                 `#!python kane_mele_spin_hall_disorder.py`) for a worked example of `#!python custom_two()`,
                 walked through in depth in [Custom Vertex Operators][custom-vertex-example].
 
-    :   !!! declaration-function "<span id="calculation-custom_two_local">*function*`#!python custom_two_local(stream_, positions_)`</span>"
-
-
-        :   The position-resolved sibling of [`#!python custom_two()`][calculation-custom_two]: evaluates the same
-            rank-two trace at a list of chosen positions, with no random-vector/disorder averaging, energy-point count,
-            or temperature argument.
-
-            **Parameters**
-
-            :   | Parameter                                    | Description                                                                                      |
-                |---------------------------------------------------|----------------------------------------------------------------------------------------------------|
-                | `#!python stream_`:*`#!python list(kite.custom.Vertex, kite.custom.Vertex)`* | The two vertices `#!python [A, B]` defining the operators $A$ and $B$. |
-                | `#!python positions_`:*`#!python array_like`*     | Array of shape `#!python (number_of_positions, D + 1)` listing the positions at which the trace is evaluated ($D$ lattice directions plus a sublattice/orbital index). |
-
-            !!! Note "No worked example yet"
-
-                There is currently no example script that uses `#!python custom_two_local()`.
-
-    :   !!! declaration-function "<span id="calculation-custom_singleshot_two">*function*`#!python custom_singleshot_two(stream_, num_random_, num_disorder_, gamma_, sigma_, energies_)`</span>"
-
-
-        :   The energy-resolved, single-shot sibling of [`#!python custom_two()`][calculation-custom_two]: evaluated
-            directly by [KITEx][kitex] at fixed broadening and a chosen list of energies, analogous to how
-            [`#!python singleshot_conductivity_dc()`][calculation-singleshot_conductivity_dc] relates to
-            [`#!python conductivity_dc()`][calculation-conductivity_dc] — no [KITE-tools][kitetools] post-processing step
-            is required.
-
-            **Parameters**
-
-            :   | Parameter                                        | Description                                                                                                          |
-                |-------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------|
-                | `#!python stream_`:*`#!python list(kite.custom.Vertex, kite.custom.Vertex)`* | The two vertices `#!python [A, B]` defining the operators $A$ and $B$.                            |
-                | `#!python num_random_`:*`#!python int`*               | Number of random vectors to use for the stochastic evaluation of the trace.                                          |
-                | `#!python num_disorder_`:*`#!python int`*             | Number of different disorder realisations.                                                                           |
-                | `#!python gamma_`:*`#!python float`*                  | Imaginary broadening (self-energy) parameter, as in [`#!python singleshot_conductivity_dc()`][calculation-singleshot_conductivity_dc]'s `#!python eta`. |
-                | `#!python sigma_`:*`#!python float`*                  | Width of the Gaussian broadening applied to the reconstructed spectral quantity.                                     |
-                | `#!python energies_`:*`#!python array_like`*          | List of energies at which `#!python custom_singleshot_two()` will be calculated.                                     |
-
-            !!! Warning "`energies_`/`gamma_`/`sigma_` are not shifted by `energy_shift`"
-
-                Unlike [`#!python singleshot_conductivity_dc()`][calculation-singleshot_conductivity_dc], which subtracts
-                [`#!python config.energy_shift`][configuration-energy_shift] from `#!python energy` before exporting it,
-                `#!python custom_singleshot_two()`'s `#!python energies_`/`#!python gamma_`/`#!python sigma_` are only
-                divided by `#!python config.energy_scale` (this division happens on the KITEx/C++ side, not in Python) —
-                `#!python energy_shift` is never subtracted. If your `#!python spectrum_range` is not symmetric about
-                zero, `#!python energies_` is measured relative to the Hamiltonian's raw zero, not the center of your
-                configured `#!python spectrum_range`.
-
-            !!! Note "No worked example yet"
-
-                There is currently no example script that uses `#!python custom_singleshot_two()`.
 
 ## kite.visualize
 
@@ -1062,7 +1008,6 @@ The KITE package for pre-processing is split up in various subclasses and contai
 [calculation-get_custom_one]: #calculation-get_custom_one
 [calculation-get_custom_one_local]: #calculation-get_custom_one_local
 [calculation-get_custom_two]: #calculation-get_custom_two
-[calculation-get_custom_two_local]: #calculation-get_custom_two_local
 [calculation-get_custom_ss_two]: #calculation-get_custom_ss_two
 [comment]: <> (Class Methods)
 [calculation-dos]: #calculation-dos
@@ -1080,8 +1025,6 @@ The KITE package for pre-processing is split up in various subclasses and contai
 [calculation-custom_one]: #calculation-custom_one
 [calculation-custom_one_local]: #calculation-custom_one_local
 [calculation-custom_two]: #calculation-custom_two
-[calculation-custom_two_local]: #calculation-custom_two_local
-[calculation-custom_singleshot_two]: #calculation-custom_singleshot_two
 
 [comment]: <> (Class Configuration)
 [configuration]: #configuration
