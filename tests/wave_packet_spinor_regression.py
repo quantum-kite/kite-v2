@@ -12,13 +12,27 @@ lattice, where the two orbitals are the A and B sublattices, and that the three
 places documenting `spinor` say which basis it is in.
 """
 
+import importlib.util
 import re
+import sys
 from pathlib import Path
 
 import numpy as np
 import pytest
 
 REPO = Path(__file__).resolve().parents[1]
+
+sys.path.insert(0, str(REPO / "python"))
+from kite import visualize
+
+
+def _shipped_example_module():
+    """Load `examples/spin_precession_simple.py` as a module, by path."""
+    path = REPO / "examples" / "spin_precession_simple.py"
+    spec = importlib.util.spec_from_file_location("spin_precession_simple", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 #: Every place a user meets the parameter, and how to find the text that
 #: describes it in each. Anchoring on the description itself matters: a whole
@@ -63,13 +77,23 @@ def _graphene_bloch(k, t=1.0):
 
 
 def _precession_bloch(k, t=1.0, field=0.1):
-    """The shipped example: identical hopping on both orbitals, plus B*sigma_x.
+    """H(k) of the shipped example, built from the example's own Lattice.
 
-    The on-site term couples two *different* sublattices at the same position,
-    so it is off-diagonal whichever direction convention add_hoppings uses.
+    Deliberately not retyped here. The claim these tests make is about
+    `examples/spin_precession_simple.py`, so the Hamiltonian they diagonalise
+    has to come from that file: a copy can be made to say whatever the author
+    already believed, and once did -- the field term was written as
+    `B*diag(1,-1)` when line 85 of the example is
+    `([0, 0], 'up', 'down', B)`, a coupling between two *different*
+    sublattices. The test passed, permanently, asserting the wrong thing.
+
+    `hamiltonian_k` is the same builder `hamiltonian_k_convention_regression.py`
+    pins against `config_system`'s real-space export, so the matrix here is the
+    one KITE propagates.
     """
-    eps = -2 * t * (np.cos(k[0]) + np.cos(k[1]))
-    return eps * np.eye(2) + field * np.array([[0.0, 1.0], [1.0, 0.0]])
+    example = _shipped_example_module()
+    lattice = example.simple_square_lattice_with_field(t=t, B=field)
+    return visualize.hamiltonian_k(lattice, np.asarray(k, dtype=float))
 
 
 def test_the_shipped_example_seeds_both_bands_equally():

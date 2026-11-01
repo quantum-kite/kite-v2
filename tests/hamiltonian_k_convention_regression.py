@@ -35,8 +35,12 @@ positions (test 2 below) is required to catch the phase-sign bug --
 this is why the original version of this test (row-only, paired fixture)
 passed even before the phase-sign fix.
 """
+import importlib.util
 import os
 import sys
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parents[1]
 
 import numpy as np
 
@@ -79,21 +83,22 @@ def config_system_hamiltonian_k(lattice, k):
 
 
 def weyl_lattice(t=1.0):
-    """Complex, from_sub != to_sub, PAIRED hopping (both directions stored
-    explicitly) -- same model as examples/weyl_lt.py. Exercises the row/col
-    convention but NOT the phase sign (paired-hopping phase dependence
-    collapses to cosines -- see module docstring)."""
-    lat = latt.Lattice(a1=[1, 0, 0], a2=[0, 1, 0], a3=[0, 0, 1])
-    lat.add_sublattices(("A", [0, 0, 0], 0.0), ("B", [0, 0, 0], 0.0))
-    lat.add_hoppings(
-        ([1, 0, 0], "A", "B", 0.5 * t),
-        ([1, 0, 0], "B", "A", 0.5 * t),
-        ([0, 1, 0], "A", "B", 0.5 * t * 1j),
-        ([0, 1, 0], "B", "A", -0.5 * t * 1j),
-        ([0, 0, 1], "A", "A", 0.5 * t),
-        ([0, 0, 1], "B", "B", -0.5 * t),
-    )
-    return lat
+    """The shipped Weyl semimetal, taken from `examples/weyl_lt.py` itself.
+
+    Complex, `from_sub != to_sub`, PAIRED hopping (both directions stored
+    explicitly). Exercises the row/col convention but NOT the phase sign
+    (paired-hopping phase dependence collapses to cosines -- see the module
+    docstring).
+
+    Imported rather than retyped: a test that says "same model as X" and then
+    writes the model out by hand is asserting what its author believed about X,
+    not what X contains, and the two drift silently.
+    """
+    path = REPO / "examples" / "weyl_lt.py"
+    spec = importlib.util.spec_from_file_location("weyl_lt", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.weyl_semimetal(t=t)
 
 
 def unpaired_lattice():
