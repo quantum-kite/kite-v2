@@ -24,7 +24,7 @@ git clone https://github.com/quantum-kite/kite-v2.git
 
 ## 2. Get dependencies
 
-* [HDF5][hdf5] (version 1.8.13 or newer, built with the C++ and high-level APIs)
+* [HDF5][hdf5] (version 1.14.6 or newer, built with the C++ and high-level APIs)
 * [FFTW3][fftw3] (float and double precision — long double is not required, see [Section 5.2][fftw3_common_issue])
 * [CMake][cmake] (version 3.9 or newer)
 * [gcc][gcc] (version 4.8.1 or newer)

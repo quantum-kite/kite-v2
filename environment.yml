@@ -21,7 +21,9 @@ dependencies:
   - llvm-openmp >=14            # no known version requirement; CMake requires its presence
   - cmake >=3.9                 # matches cmake_minimum_required in CMakeLists.txt
   - make >=4.2                  # no known requirement
-  - hdf5 >=1.8.13 nompi*        # floor from installation.md; nompi avoids pulling in mpich
+  - hdf5 >=1.14.6 nompi*        # lowest version KITE is built and tested against
+                                # (MacPorts route); the conda route resolves 2.x and
+                                # is tested too. nompi avoids pulling in mpich
   - fftw >=3.3.8                # no known requirement
   - numpy >=1.20                # no known requirement
   - scipy >=1.6                 # scipy.integrate.simpson, which replaced simps

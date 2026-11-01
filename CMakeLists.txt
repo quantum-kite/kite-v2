@@ -22,14 +22,19 @@ endif()
 project(KITE)
 
 
-find_package(HDF5 COMPONENTS CXX C HL)
+find_package(HDF5 1.14.6 COMPONENTS CXX C HL)
 
 # HDF5 is required, not optional, and so are its C++ and high-level components:
 # the configuration file, the moments and the results all travel through it, and
 # "H5Cpp.h" is included unconditionally. Reporting a missing dependency as a
 # status line and configuring anyway turns one clear line into a wall of C++
-# errors much later, with the cause scrolled away. No minimum version is
-# asserted here -- which version is actually required has not been established.
+# errors much later, with the cause scrolled away.
+#
+# The minimum matches the floor in environment.yml and the one stated in
+# docs/installation.md, and it is the lowest version KITE is actually built
+# against: the MacPorts route resolves 1.14.6 and the conda route resolves 2.x,
+# and both pass the suite. Older releases may well work; none is exercised
+# anywhere, and a floor nothing tests is not a supported range.
 if(NOT HDF5_FOUND)
     message(FATAL_ERROR
         "KITE requires HDF5 with the C++ and high-level APIs, and CMake could not find it.\n"
