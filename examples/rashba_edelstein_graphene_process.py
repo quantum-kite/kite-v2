@@ -10,7 +10,12 @@
         python rashba_edelstein_graphene_process.py rashba_edelstein_graphene-output.h5
 """
 
+import shutil
+import subprocess
 import sys
+import tempfile
+from pathlib import Path
+
 import h5py
 import numpy as np
 import matplotlib.pyplot as plt
@@ -57,104 +62,43 @@ def fermi_function(E, mu, beta):
 
 def edelstein(file_path, mu_values, k_BT=0.01, scat_phys=0.04,
               deltascat_phys=0.04, n_egrid=2000):
-    """Return (mu_values, chi_yx), chi_yx in units of e/h.
+    """Return (mu_values, chi_yx) by running KITE-tools, in units of e/h.
 
-    General Kubo-Bastin reconstruction for custom_two(), valid for ANY
-    NumVelocities parity -- not the spin-Hall-specific ".imag branch" formula
-    this file previously copied verbatim from kane_mele_spin_hall_process.py.
+    The reconstruction lives in KITE-tools (--CustomTwo) and nowhere else. This
+    used to re-implement it in Python, which meant every convention -- the
+    component selected from the contraction, the energy-scale power, the
+    carrier charge each velocity operator carries -- had to be kept correct in
+    two places at once. They drifted, so there is one implementation now and
+    this is a thin wrapper around it.
 
-    Derivation (verified against both a p=2 case, spin Hall, and this file's
-    own p=1 case, pure Rashba):
-
-    Write each raw stored operator as X = i^n_X * X_H with X_H genuinely
-    Hermitian (n_X counts "missing factors of i" from KITE's convention that a
-    bare commutator/velocity token is stored anti-Hermitian, not with its
-    compensating 1/i -- see custom_one's docstring). The physical
-    (Hermitian-operator) Kubo-Bastin integrand is
-        X(E) = -2*Im[ Tr[A_H delta(E-H) B_H dG+/dE] ],
-    and custom_two's stochastic trace gives Gamma_mn = Tr[T_m(H) A T_n(H) B]
-    = i^p * Tr[T_m(H) A_H T_n(H) B_H], p = n_A + n_B = NumVelocities. Since
-    i^p has period 4 (not 2), the physically correct component of
-        Z(E) = sum_mn delta_m(E) * Gamma_mn * dgreen_n(E)
-    depends on p mod 4, not just its parity:
-        p%4 == 0: X(E) = -2*Im[Z]
-        p%4 == 1: X(E) = +2*Re[Z]      (this vertex: bare s_x has 0
-                                         velocity tokens, v_y has 1 -> p=1)
-        p%4 == 2: X(E) = +2*Im[Z]      (spin Hall: {v_x,s_z}/2 has 1, v_y
-                                         has 1 -> p=2 -- this is the case
-                                         the old ".imag" formula silently
-                                         assumed for every vertex pair)
-        p%4 == 3: X(E) = -2*Re[Z]
-
-    Verified: for p=2 (spin Hall), this reduces to exactly (not just
-    proportionally) the already-validated kane_mele_spin_hall_process.py
-    plateau sigma_xy~-2.02. For p=1 (this vertex), it fixes two independent,
-    previously-broken structural checks: chi_yx(mu) becomes odd in mu with a
-    genuine zero at mu=0 for pure Rashba (lambda_I=0), and drops to
-    near-zero inside the lattice's true bulk gap (lambda_I!=0) instead of
-    showing a spurious flat Fermi-sea-like plateau there. p=0 and p=3 are not
-    independently validated against a separate physical vertex (that would
-    need a genuinely different vertex construction with 0 or 3 velocity
-    tokens), but tests/custom_two_mod4_regression.py verifies the full 4-entry
-    table is internally self-consistent: since Z(E) is linear in Gamma_mn,
-    multiplying the already-validated p=2 data by i^s and reading off the
-    table entry for p=(2+s)%4 must reproduce the identical physical result
-    for all four residues, which it does to machine precision.
-
-    Units: same e^2/h calibration as conductivity_dc (see custom_two's own
-    docstring in docs/api/kite.md), with the EnergyScale^(NumVelocities-2)
-    correction applied for NumVelocities != 2 (derived from KITE's rescaled-
-    Hamiltonian convention, same logic as custom_one's EnergyScale factor) --
-    this correction is generic in NumVelocities, not just this vertex's p=1:
-    an observable built from A,B with a combined NumVelocities=p carries p-2
-    fewer powers of the rescaling energy_scale than the p=2 (e^2/h-like)
-    case, i.e. p powers of e (one per velocity operator, following KITE's raw
-    "v"=[H,r] convention) divided by h and multiplied by
-    energy_scale^(p-2) to restore physical energy units; whether that
-    combination is literally e^2/h, e/h, or something else depends on how
-    many of A,B are themselves velocity operators versus dimensionless
-    operators like spin, not on p alone. For this vertex (NumVelocities=1)
-    the result carries one fewer power of e than e^2/h, i.e. e/h.
+    k_BT, scat_phys, deltascat_phys and n_egrid are passed through to the
+    binary, so the defaults here are the ones the figure was made with rather
+    than the binary's own.
     """
-    with h5py.File(file_path, "r") as f:
-        num_orbitals = np.array(f["NOrbitals"]).item()
-        latt_vecs = f["LattVectors"][:]
-        unit_cell_area = np.abs(
-            latt_vecs[0, 0] * latt_vecs[1, 1] - latt_vecs[0, 1] * latt_vecs[1, 0]
-        )
-        energy_scale = np.array(f["EnergyScale"]).item()
-        num_velocities = int(np.array(f["/Calculation/CustomTwo/NumVelocities"]))
-        # Same orientation KITE-tools reads, so the two agree. The absolute
-        # sign of this odd-vertex response has not been checked against an
-        # independent reference; what is checked is that script and binary
-        # reconstruct from the same matrix.
-        moments_matrix = f["/Calculation/CustomTwo/Gamma"][:]
+    binary = Path(__file__).resolve().parents[1] / "build" / "KITE-tools"
+    if not binary.exists():
+        raise FileNotFoundError(
+            f"{binary} not found -- build KITE-tools before post-processing")
 
-    Moments_D, Moments_G = moments_matrix.shape
+    source = Path(file_path).resolve()
+    mu_values = np.asarray(mu_values, dtype=float)
+    with tempfile.TemporaryDirectory() as work:
+        work = Path(work)
+        local = work / source.name
+        shutil.copy(source, local)
+        subprocess.run(
+            [str(binary), local.name, "--CustomTwo",
+             "-T", repr(k_BT), "-S", repr(scat_phys), "-d", repr(deltascat_phys),
+             "-E", str(int(n_egrid)),
+             "-F", repr(float(mu_values.min())), repr(float(mu_values.max())),
+             str(len(mu_values)),
+             "-N", "custom_two.dat"],
+            cwd=work, check=True, capture_output=True, text=True)
+        data = np.loadtxt(work / "custom_two.dat")
 
-    beta = energy_scale / k_BT
-    scat_dim = scat_phys / energy_scale
-    deltascat_dim = deltascat_phys / energy_scale
-
-    E_grid = np.linspace(-0.995, 0.995, n_egrid)
-
-    delta = fill_delta(E_grid, deltascat_dim, Moments_G)
-    dgreenR = fill_dgreenR(E_grid, scat_dim, Moments_D)
-    Z = np.einsum("ni,nm,im->i", delta, moments_matrix, dgreenR)
-
-    p = num_velocities % 4
-    X = {0: -2.0 * Z.imag, 1: 2.0 * Z.real, 2: 2.0 * Z.imag, 3: -2.0 * Z.real}[p]
-
-    chi = np.empty(len(mu_values))
-    for i, mu in enumerate(mu_values):
-        integrand = X * fermi_function(E_grid, mu / energy_scale, beta)
-        chi[i] = simpson(integrand, E_grid)
-
-    units = 1.0 / (2.0 * np.pi)
-    density_scale = num_orbitals / (unit_cell_area * units)
-    energy_scale_correction = energy_scale ** (num_velocities - 2)
-    chi_yx = 2.0 * chi * density_scale * energy_scale_correction
-    return mu_values, chi_yx
+    # The binary lays its own Fermi grid over the requested range; put it back
+    # on the caller's points so the two curves of the figure share an axis.
+    return mu_values, np.interp(mu_values, data[:, 0], data[:, 1])
 
 
 def plot(pos_h5, neg_h5, control_h5, out_path="plots/rashba_edelstein_graphene_preview.png"):
