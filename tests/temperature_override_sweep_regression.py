@@ -28,13 +28,12 @@ with no fixed reduction order, so two runs of the *same* binary on the same
 input differ in the last digits at more than one thread, and a byte comparison
 would be measuring the scheduler.
 
-`--CondOpt` does not obey the first rule. It reads the stored temperature into
-`temperature` but never recomputes `beta`, which is the only thing its
-integrand uses, so the no-flag run reproduces `-T 0.001` -- the hardcoded
-default -- while printing the temperature that was asked for. That is BUG-015,
-which is open: rather than skip the case, this file asserts the broken
-behaviour, so fixing the one line makes it fail and the entry has to come out
-of `KNOWN_BROKEN`.
+Writing it as a sweep paid for itself immediately: `--CondOpt` failed the first
+rule. It read the stored temperature into `temperature` but never recomputed
+`beta`, which is the only thing its integrand uses, so every run computed at
+the hardcoded 0.001 eV while printing the temperature that had been asked for.
+That is BUG-015, now fixed; this file is what found it and what would find the
+next one.
 """
 
 import os
@@ -109,11 +108,6 @@ READERS = [
     ("--ARPES", "arpes.dat", _arpes_default_ev),
 ]
 
-#: Readers known to ignore the stored temperature, with the defect that says so.
-#: Asserted in the failing direction below, so the entry has to be removed the
-#: day the defect is fixed rather than quietly covering a reader that now works.
-KNOWN_BROKEN = {"--CondOpt": "BUG-015"}
-
 
 @pytest.fixture(scope="module")
 def exported(tmp_path_factory):
@@ -157,14 +151,7 @@ def test_the_flag_at_its_own_value_reproduces_the_default_run(flag, output,
     asked = temperature()
     plain = _read(exported, flag, "plain")
     flagged = _read(exported, flag, "same", "-T", repr(asked))
-    agree = (plain / output).read_bytes() == (flagged / output).read_bytes()
-    if flag in KNOWN_BROKEN:
-        assert not agree, (
-            f"{flag} now reproduces its own stored temperature, so "
-            f"{KNOWN_BROKEN[flag]} is fixed; drop it from KNOWN_BROKEN and let "
-            "this case assert the rule like the others")
-        return
-    assert agree, (
+    assert (plain / output).read_bytes() == (flagged / output).read_bytes(), (
         f"{flag} -T {asked} does not reproduce the run with no flag, although "
         f"that run uses {asked} eV. One of the two paths is not applying the "
         "energy-scale conversion the other applies")

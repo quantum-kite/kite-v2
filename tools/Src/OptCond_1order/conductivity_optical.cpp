@@ -186,6 +186,13 @@ bool conductivity_optical<T, DIM>::fetch_parameters(){
 
   N_omegas = NumPoints;
   default_Nfreqs = false;
+  // beta, not temperature, is what the integrand uses: the deltaF lambda below
+  // captures it by value. Reading Temperature without recomputing beta left
+  // this reader computing at the set_default_parameters value of 0.001 eV
+  // while the banner printed the temperature the user had asked for. The three
+  // siblings that fetch a temperature -- conductivity_dc, conductivity_2order
+  // and customtwo -- all recompute here for the same reason.
+  beta = 1.0/temperature;
   default_temperature = false;
   
 
