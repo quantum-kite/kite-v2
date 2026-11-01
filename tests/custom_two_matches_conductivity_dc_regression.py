@@ -41,12 +41,20 @@ def _haldane():
     return module.haldane()
 
 
-@pytest.fixture(scope="module")
-def both_reconstructions(tmp_path_factory):
+ORIENTATIONS = [
+    pytest.param(("xy", "vx", "vy"), id="transverse"),
+    pytest.param(("xx", "vx", "vx"), id="longitudinal"),
+    pytest.param(("yx", "vy", "vx"), id="transverse-reversed"),
+]
+
+
+@pytest.fixture(scope="module", params=ORIENTATIONS)
+def both_reconstructions(request, tmp_path_factory):
     kite = pytest.importorskip("kite")
     from kite import custom
 
-    work = tmp_path_factory.mktemp("custom_two_vs_dc")
+    direction, first, second = request.param
+    work = tmp_path_factory.mktemp("custom_two_vs_dc_" + direction)
     h5 = work / "hal.h5"
 
     configuration = kite.Configuration(
@@ -57,10 +65,10 @@ def both_reconstructions(tmp_path_factory):
     calculation = kite.Calculation(configuration)
     calculation.conductivity_dc(
         num_points=200, num_moments=MOMENTS, num_random=4,
-        num_disorder=1, direction="xy", temperature=0.05)
+        num_disorder=1, direction=direction, temperature=0.05)
     calculation.custom_two(
-        stream_=[custom.Vertex(MOMENTS, [[1.0, "vx"]]),
-                 custom.Vertex(MOMENTS, [[1.0, "vy"]])],
+        stream_=[custom.Vertex(MOMENTS, [[1.0, first]]),
+                 custom.Vertex(MOMENTS, [[1.0, second]])],
         num_random_=4, num_disorder_=1, num_points_=200, temperature_=0.05)
     kite.config_system(_haldane(), configuration, calculation, filename=str(h5))
 
@@ -85,7 +93,14 @@ def _ratio_on_common_grid(dc, custom_two):
 
 
 def test_the_two_reconstructions_agree(both_reconstructions):
-    """Equality, not correlation: the factor and the sign both have to be right."""
+    """Equality, not correlation: the factor and the sign both have to be right.
+
+    Run for all three orientations. Parity alone does not separate them: a
+    same-vertex pair (v_x, v_x) is longitudinal and its stored Gamma is real and
+    symmetric, while (v_x, v_y) is transverse and its Gamma is genuinely complex.
+    Both carry two velocity operators, so a convention keyed on that count has to
+    hold for both, and sigma_xy = -sigma_yx has to come out of the vertex order.
+    """
     ratio = np.median(_ratio_on_common_grid(*both_reconstructions))
     assert ratio == pytest.approx(1.0, abs=0.05), (
         f"custom_two/conductivity_dc = {ratio:+.4f}; a spinless model leaves no "

@@ -149,12 +149,10 @@ bool customtwo<T, DIM>::fetch_parameters(){
     try{
         Gamma = Eigen::Array<std::complex<T>,-1,-1>::Zero(NumMoments, NumMoments);
         get_hdf5(Gamma.data(), &file, (char*)MatrixName.c_str());
-        // Read as written. The raw accumulations in Gamma2D.cpp and
-        // SimulationRankTwo.cpp are adjoints of each other, but both writers
-        // then apply the same projection 0.5*(G + factor*G^dagger), and
-        // P(G^dagger) = factor*P(G) for real factor = +/-1. The two stored
-        // matrices are therefore the same object, element for element, and
-        // nothing has to be undone here.
+        // Gamma2D.cpp and SimulationRankTwo.cpp accumulate adjoints of each
+        // other, but both apply the same projection 0.5*(G + factor*G^dagger)
+        // before storing, and P(G^dagger) = factor*P(G) for real factor = +/-1.
+        // The two stored matrices are the same object, element for element.
         result = true;
     } catch(H5::Exception& e) {debug_message("CustomTwo: There is no Gamma matrix.\n");}
 
@@ -329,9 +327,11 @@ void customtwo<U, DIM>::save_to_file(Eigen::Matrix<std::complex<U>, -1, 1> respo
               "# put it in by hand, or carry both spins in the lattice.\n";
   else
     myfile << "# Units: a factor EnergyScale^(NumVelocities-2) has been applied, which fixes\n"
-              "# the velocity-count scaling. The absolute normalisation has only been\n"
-              "# calibrated at NumVelocities = 2, so treat the overall scale here as\n"
-              "# uncalibrated.\n";
+              "# the velocity-count scaling, and a factor (-1)^NumVelocities for the\n"
+              "# carrier charge q = -e that each velocity operator carries when it becomes\n"
+              "# a current. The absolute MAGNITUDE has only been calibrated at\n"
+              "# NumVelocities = 2, so treat the overall scale here as uncalibrated; the\n"
+              "# sign is fixed by the convention above and is not.\n";
   myfile << "# col 1: Fermi energy (eV)   col 2: response (real)   col 3: response (imaginary)\n";
   for(int i = 0; i < NFermiEnergies; i++){
     U energy = fermiEnergies(i)*systemInfo->energy_scale + systemInfo->energy_shift;
@@ -376,21 +376,28 @@ void customtwo<U, DIM>::calculate(){
 
     Eigen::Matrix<std::complex<U>, -1, 1> response = calc_response(X);
 
-    // The same constant as conductivity_dc.cpp's own "den". Both paths
+    // The same constant as conductivity_dc.cpp's own "den": both paths
     // reconstruct the same Kubo-Bastin trace from the same stored moment
-    // matrix, so they normalize identically. A factor 2 stood here, fitted
-    // against a single spin Hall plateau; on a spinless model it put
-    // custom_two at twice conductivity_dc for the same vertex pair.
+    // matrix, so they normalize identically.
     U den = systemInfo->num_orbitals*systemInfo->spin_degeneracy
             / systemInfo->unit_cell_area / unit_scale;
     U energy_scale_correction = std::pow(systemInfo->energy_scale, NumVelocities - 2);
 
-    // The component chosen above carries the whole convention: the raw vertex
+    // The component chosen above settles the i bookkeeping: the raw vertex
     // operators are missing a factor of i each, so i^p with p = NumVelocities
-    // fixes which part of Z is physical, and i^p has period 4. No further sign
-    // is applied. The sign belongs to the observable that was requested, never
-    // to the data, so nothing here inspects Gamma.
-    response = response*(den*energy_scale_correction);
+    // fixes which part of Z is physical, and i^p has period 4. Nothing here
+    // inspects Gamma -- the component belongs to the observable that was
+    // requested, never to the data.
+    //
+    // What that leaves is the charge. Each velocity operator turns a velocity
+    // into a current, which carries the carrier charge q = -e, so a response
+    // built from p of them carries q^p while KITE's raw operators do not. An
+    // even count gives a positive power of e and is invisible -- conductivity_dc
+    // always has two and reports in e^2/h -- while an odd count is a sign.
+    // Reported quantities carry e^p, the same convention as --CondDC.
+    // q = -e per velocity operator: (-1)^p, with the magnitude already in den.
+    const U charge_sign = (NumVelocities % 2 == 0) ? U(1.0) : U(-1.0);
+    response = response*(charge_sign*den*energy_scale_correction);
 
     save_to_file(response);
 }
