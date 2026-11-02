@@ -30,7 +30,7 @@ The [tight-binding][tightbinding] (TB) model is defined on a [Python interface][
 
 [HDF5]: https://www.hdfgroup.org
 [Pybinding]: https://docs.pybinding.site/en/stable
-[lattice]: https://github.com/quantum-kite/kite-v2/blob/master/src/kite/lattice.py
+[lattice]: https://github.com/quantum-kite/kite-v2/blob/master/python/kite/lattice.py
 [pybinding-lattice]: https://docs.pybinding.site/en/stable/_api/pybinding.Lattice.html
 [script]: index.md
 [tightbinding]: ../background/tight_binding.md

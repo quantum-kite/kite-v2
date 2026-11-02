@@ -78,7 +78,7 @@ addressing one does not require any concession on the other.
 KITE is built from three independently-compiled components that communicate only through a shared
 [HDF5 file][hdf5_structure]:
 
-1. **Python interface** (the `kite` package, `src/kite/`, installed via `#!bash pip install -e .`; see
+1. **Python interface** (the `kite` package, `python/kite/`, installed via `#!bash pip install -e .`; see
    [Installation][installation]) constructs the lattice/Hamiltonian description and calculation settings,
    and writes them to a new `.h5` file. It uses KITE's own native `#!python kite.lattice.Lattice` class by
    default; [Pybinding][pybinding] is an optional extra (`#!bash pip install -e ".[pybinding]"`) for users

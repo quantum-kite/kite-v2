@@ -92,7 +92,7 @@ $S(E)=\mathrm{Tr}[\hat M_z\,\delta(E-\hat H)]$ (both applied in
    `#!bash LattVectors`) — the per-cell factors cancel between the extensive trace and the extensive sample
    area, leaving this fixed ratio.
 2. **Hopping-value rescaling.** KITE's `#!python "vx"`/`#!python "vy"` are built directly from the hopping
-   values *as exported to the HDF5* — which `#!python src/kite/__init__.py` divides by `#!bash EnergyScale`
+   values *as exported to the HDF5* — which `#!python python/kite/__init__.py` divides by `#!bash EnergyScale`
    before KITEx runs. So the vertex KITE actually evaluates is $A_{\rm computed}=A_{\rm physical}/E_{\rm
    scale}$, and reconstructing the physical density requires multiplying by $E_{\rm scale}$ to compensate.
 

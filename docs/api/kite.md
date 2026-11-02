@@ -228,8 +228,8 @@ The KITE package for pre-processing is split up in various subclasses and contai
                 reproducible as a block. It does not currently guarantee that a "plain" and an
                 "operator-weighted" calculation requested together (e.g. via `#!python operators=`
                 on [`#!python ldos()`][calculation-ldos]/[`#!python ldos_map()`][calculation-ldos_map])
-                draw the same random disorder/probe-vector realization -- see
-                `maintenance/2026-07-26-random-state-report.md` for the open follow-up.
+                draw the same random disorder/probe-vector realization -- this is an
+                open follow-up.
 
     : <span id="configuration-angles">`#!python angles`: *`#!python float` or `#!python tuple(float, float)` or `#!python tuple(float, float, float)`*</span>
         : The angles used for the twisted boundary conditions when `#!python boundary="twist"` is selected.
