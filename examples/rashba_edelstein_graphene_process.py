@@ -106,9 +106,7 @@ def plot(pos_h5, neg_h5, control_h5, out_path="plots/rashba_edelstein_graphene_p
 
     Flipping the sign of lambda_R must flip the sign of chi_yx (S_REE ~
     zhat x E, and reversing the Rashba term reverses the helicity of the
-    spin-momentum locking) -- the same sign-inversion check shown in Fig. 2(a)
-    of Medina Duenas et al., Commun. Phys. (2026) [arXiv:2510.21240], just
-    with two lambda_R values instead of their full color-graded sweep.
+    spin-momentum locking).
 
     The control isn't expected to be exactly zero at finite num_random_ (see
     rashba_edelstein_graphene.py's docstring), but should be much smaller than

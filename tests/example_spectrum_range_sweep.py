@@ -65,7 +65,7 @@ def _capture(path):
                 return None
             if not captured and hasattr(module, "main"):
                 try:
-                    module.main()
+                    module.main(*MAIN_ARGS.get(path.name, ()))
                 except _Captured:
                     pass
                 except BaseException:
@@ -92,10 +92,17 @@ NOT_CAPTURED = {
     "afm_zigzag_bands.py": "plots bands; makes no KITE calculation",
     "band_structure_graphene.py": "plots bands; makes no KITE calculation",
     "lattice_visualization_demo.py": "draws the lattice; makes no KITE calculation",
-    # main() takes a required argument, so the capture cannot call it. Both of
-    # these DO declare a spectrum_range, and nothing checks it.
-    "afm_zigzag_dos.py": "main(spin) requires an argument",
-    "kane_mele_spin_hall_disorder.py": "main(W) requires an argument",
+}
+
+#: Arguments for the examples whose main() takes a required one. Each value is
+#: one the example itself uses, so the sweep checks the same configuration a
+#: reader would run. kane_mele_spin_hall_disorder sweeps W over (0, 0.5, 1, 2)
+#: and derives its spectrum_range from W, so the widest disorder is the one
+#: that actually tests the bound -- its own comment records the overflow found
+#: at W = 2.0 against a range that did not account for the disorder spread.
+MAIN_ARGS = {
+    "afm_zigzag_dos.py": ("up",),
+    "kane_mele_spin_hall_disorder.py": (2.0,),
 }
 
 #: Filled by the single capture pass below, for the accounting test.

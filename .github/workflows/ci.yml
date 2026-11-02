@@ -92,12 +92,26 @@ jobs:
         shell: bash -el {0}
         run: cmake --build build --config Release -j 4
 
-      - name: Smoke test — generate a config and run KITEx
+      # The whole pipeline, end to end, on the cheapest example there is: the
+      # Python API writes an HDF5 configuration, KITEx reads it and computes,
+      # and KITE-tools post-processes the result into a .dat. That is the gate
+      # — it answers "do the three pieces still talk to each other", which is
+      # the failure nothing else here would catch.
+      #
+      # It is deliberately NOT the full example sweep. Running every shipped
+      # example takes about 93 minutes, two production-scale ones accounting
+      # for most of it, which is far too slow to sit in front of a push. The
+      # sweep stays a manual check (tests/run_all_examples.py); this stays
+      # small enough that it always runs.
+      - name: Smoke test — Python to KITEx to KITE-tools
         shell: bash -el {0}
         run: |
           cd examples
           python dos_graphene.py
           ../build/KITEx graphene_lattice-output.h5
+          ../build/KITE-tools graphene_lattice-output.h5
+          test -s dos.dat || { echo "KITE-tools produced no dos.dat"; exit 1; }
+          echo "pipeline ok: $(wc -l < dos.dat) rows in dos.dat"
 
       # The regression scripts that check KITE-tools against a real KITEx run
       # need stored output to compare with. All of these are cheap (seconds),
