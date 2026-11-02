@@ -202,16 +202,16 @@ The procedure is analogous to adding a hopping term to the
 [Pybinding lattice object][lattice]. 
 
 An important remark is in order. KITE's structural disorder functionality is rather general and allows users to create bespoke disorder landscapes for their simulations,
-while benefiting from KITE's efficient domain decomposition algorithm. However, as mentioned in [Sec. 2 - Lattice][tutorial-lattice], every hopping connects sites in the same
-unit cell or in a first-neighbour cell — each component of `#!python relative_index` is `#!python -1`,
-`#!python 0` or `#!python +1`. This applies equally to the disorder patterns, since they are an inherent
-part of the lattice model: a bond that reaches further is refused when the configuration file is written.
-For a pattern that needs longer bonds, define a supercell.
+while benefiting from KITE's efficient domain decomposition algorithm. However, as mentioned in [Sec. 2 - Lattice][tutorial-lattice], it is assumed by default that all hopping terms in the model
+connect sites that belong to either the same unit cell or neighboring cells that are separated by at most 2 lattice spacings along a given direction. This applies equally to the disorder patterns
+as they are an inherent part of the lattice model. To relax this constraint, the users must adjust 
+the NGHOSTS parameter in `#!bash kite/Src/Generic.hpp` and recompile [KITEx][kitex], otherwise an error message is output and the KITE program exits. 
 
 !!! Info
 
-    See [Code Structure & Compilation Options][code_structure] for how KITE's domain decomposition
-    works and how it relates to memory usage.
+    See [Code Structure & Compilation Options][code_structure] for why `NGHOSTS` is exactly 2 by default
+    (it's the ghost-halo depth of KITE's domain decomposition, which must be at least as deep as the
+    longest-range hopping/disorder pattern in the model) and how it relates to `TILE` and memory usage.
 
 Let us begin by defining the sublattices that will constitute the disorder.
 In this case we are not restricted to a single unit cell:
@@ -227,10 +227,6 @@ node5 = [[-1, +1], 'B']
 ```
 
 After defining a parent  [`#!python kite.StructuralDisorder`][structural_disorder] object, we can construct the desired pattern:
-
-Both values below are energies in the same units as the hoppings and onsite terms, and
-both are **increments added to the clean lattice**, not replacements: a bond value of
-$-t$ cancels a hopping of $+t$, and a value of $0$ changes nothing.
 
 ``` python
  # define an object based on the lattice with a certain concentration

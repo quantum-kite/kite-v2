@@ -65,7 +65,7 @@ $$
 
 ## Dirac-delta Function
 
-: An order-$M$ expansion (regularized by the Jackson kernel) produces a Gaussian approximation of $\delta(\lambda\!-\!\mathcal{H})$ endowed by a width $\sigma_{\lambda}\!\approx\!\delta \varepsilon\,\pi/M$ in $\lambda$[^2][^7]. That width is the band-centre value: it carries a factor $\sqrt{1-\tilde\lambda^{2}}$, with $\tilde\lambda=(\lambda-\varepsilon_0)/\delta\varepsilon$, so the expansion sharpens towards the band edges. The [Green's-function route](#single-particle-greens-functions) broadens **uniformly across the band** instead, by the $\eta$ the user sets.
+: An order-$M$ expansion (regularized by the Jackson kernel) produces a Gaussian approximation of $\delta(\lambda\!-\!\mathcal{H})$ endowed by a width $\sigma_{\lambda}\!\approx\!\delta \varepsilon\,\pi/M$ in $\lambda$[^2][^7]. 
 The choice of $M$ then fixes the effective spectral width, $\sigma_{\lambda}$, which must be sufficiently narrow to accurately describe all relevant features of the calculated property. 
 However, if $\sigma_{\lambda}$ becomes too narrow ($M$ too high), the discrete eigenvalues of the SPH are well-resolved and the obtained data suffers from large (finite-size) fluctuations. For information on other available kernels see Weisse *et al.*[^2].
 

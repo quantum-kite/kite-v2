@@ -4,16 +4,13 @@ Then, its memory-efficient and heavily-parallelized C++ code employs extremely a
 The scope of KITE extends beyond periodic systems, with its true power revealed through the study of more realistic lattice models. These systems include randomly distributed dilute impurities, structural defects, ad-atoms, mechanical strain and external magnetic fields.
 Some illustrative examples may be found in KITE’s presentation paper[^2]. See the [Tutorial][tutorial] section for a quick-start guide.
 
-KITE's latest release (version 2.0) contains the following functionalities:
+KITE's latest release (version 1.1) contains the following functionalities:
 
 * Average density of states (DOS) and local DOS
 * $\mathbf{k}$-space spectral functions and ARPES response
 * Linear DC conductivity tensor (using the Kubo-Greenwood formula)
 * First and second-order optical (AC) conductivities
 * Spin dynamics by time-evolution of gaussian wave-packets
-* Real-space LDOS maps and $\mathbf{k}$-space spectral maps
-* Expectation values of user-defined vertex operators, over the full spectrum or at a chosen site
-* Two-operator correlators of user-defined vertex operators, over the full spectrum
 
 These calculations can now be applied to arbitrary two- and three-dimensional tight-binding models that have:
 

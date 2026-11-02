@@ -139,10 +139,8 @@ carry weight); the brightest response sits one lattice site off-center, essentia
 the perturbation decays outward with visible oscillatory structure. That oscillation spans roughly two orders
 of magnitude between background and peak, so a **linear** color scale collapses everything but the single
 brightest pixel — the figure above uses a **log** color scale, which is what makes the decaying ring structure
-visible. `#!bash KITE-tools --LDOSmap` writes this map as a `#!bash .dat` with the site index decoded into
-coordinates. The script above instead reads the `#!python /Calculation/ldos_map/Map` dataset directly with
-`#!python h5py` (shape `(2, Sizet)`, row 0 the mean, row 1 the stochastic standard error), which keeps the
-map in array form for the plot.
+visible. There is no KITE-tools step for `#!python ldos_map`; the `#!python /Calculation/ldos_map/Map` dataset
+(shape `(2, Sizet)`, row 0 the mean, row 1 the stochastic standard error) is read directly with `#!python h5py`.
 
 ### `spectral_map()` — Weyl semimetal, constant-energy contours
 

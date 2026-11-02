@@ -15,15 +15,6 @@ _The full script for this example can be found [here](https://github.com/quantum
 ### Lattice
 Let us begin with the definition of the Hamiltonian for the case of purely imaginary next-nearest-neighbor hoppings:
 
-The next-nearest-neighbour amplitude below is $-i\,t_2$ on A–A and $+i\,t_2$ on B–B, with
-$t_2=t/10$. The filled band then carries Chern number $C=+1$, which is the sign of the
-$\sigma_{xy}=+1\,e^2/h$ plateau computed further down. A Chern sign only means something
-alongside the convention that fixes it: KITE stores
-`#!python add_one_hopping(R, from_sub, to_sub, v)` as $H[\mathrm{row}=\texttt{from\_sub},
-\mathrm{col}=\texttt{to\_sub}]$ and uses $e^{+i\mathbf k\cdot\mathbf r}$. The
-same assignment is used by `#!python examples/haldane_orbital_magnetization.py` and by the
-up-spin block of `#!python examples/kane_mele_spin_hall.py`.
-
 ``` python linenums="1"
 def haldane(onsite=(0, 0), t=1):
     """Return lattice specification for Haldane model"""

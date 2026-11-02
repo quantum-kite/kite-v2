@@ -115,7 +115,8 @@ Three structural checks, cheap and independent of any absolute-normalization amb
    genuine zero at $\mu=0$.
 3. Flipping the sign of $\lambda_R$ must flip the sign of $\chi_{yx}$ at every $\mu$: the Rashba
    term's helicity reverses, so the induced spin density $\mathbf S_\text{REE}\propto\hat
-   z\times\mathbf E$ reverses too.
+   z\times\mathbf E$ reverses too — the same sign-inversion signature shown in Fig. 2(a) of
+   Medina Dueñas *et al.*[^1]
 
 <figure>
     <img src="../../../assets/images/custom_vertex_operators/rashba_edelstein_graphene_pureR.png" style="width: 34em;" />
@@ -133,7 +134,7 @@ mirror images through the origin.
     and its post-processing yourself, and try turning Kane-Mele SOC back on (`#!python t2!=0`) to
     see the bulk gap and van Hove features reappear in $\chi_{yx}(\mu)$.
 
-[^1]: J. Medina Dueñas, S. Giménez de Castro, J. H. García, and S. Roche, "Optimal spin-charge interconversion in graphene through spin-pseudospin entanglement control," [arXiv:2510.21240](https://arxiv.org/abs/2510.21240).
+[^1]: J. Medina Dueñas, S. Giménez de Castro, J. H. García, and S. Roche, "Optimal spin-charge interconversion in graphene through spin-pseudospin entanglement control," [Commun. Phys. (2026)](https://www.nature.com/articles/s42005-026-02658-9) ([arXiv:2510.21240](https://arxiv.org/abs/2510.21240)).
 
 [custom-vertex-example]: custom_vertex_operators.md
 [ree-example]: https://github.com/quantum-kite/kite-v2/tree/master/examples/rashba_edelstein_graphene.py

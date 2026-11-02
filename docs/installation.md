@@ -24,7 +24,7 @@ git clone https://github.com/quantum-kite/kite-v2.git
 
 ## 2. Get dependencies
 
-* [HDF5][hdf5] (version 1.14.6 or newer, built with the C++ and high-level APIs)
+* [HDF5][hdf5] (version 1.8.13 or newer, built with the C++ and high-level APIs)
 * [FFTW3][fftw3] (float and double precision — long double is not required, see [Section 5.2][fftw3_common_issue])
 * [CMake][cmake] (version 3.9 or newer)
 * [gcc][gcc] (version 4.8.1 or newer)
@@ -234,7 +234,7 @@ cmake -DCMAKE_C_COMPILER=/opt/local/bin/gcc-mp-14 -DCMAKE_CXX_COMPILER=/opt/loca
 (float/double), and `#!bash Found OpenMP`, and `#!bash make` should complete with only benign
 deprecation warnings (safe to ignore, as noted in Section 3).
 
-### 2.4 Using conda (recommended) { #conda_section }
+### 2.4 Using conda (recommended for reproducibility) { #conda_section }
 
 !!! note "Linux/macOS only — see [Docker][docker_section] on Windows"
 
@@ -271,31 +271,8 @@ and open a new terminal window.
 
 **If you use MacPorts:**
 
-MacPorts packages `#!bash micromamba`, which is conda-compatible and reads `#!bash environment.yml`
-directly, so the environment below can be created through MacPorts itself. Run these from the
-`#!bash kite/` directory, since `#!bash environment.yml` and `#!bash .` are resolved relative to it:
-
-``` bash
-sudo port install micromamba
-eval "$(micromamba shell hook --shell "$(basename "${SHELL}")")"
-micromamba env create -f environment.yml
-micromamba activate kite
-pip install -e .
-```
-
-!!! warning "`#!bash micromamba activate` needs the shell hook first"
-
-    Without the `#!bash eval` line, `#!bash micromamba activate kite` fails with
-    `#!bash critical libmamba Shell not initialized` — micromamba runs as a subprocess and cannot
-    modify the parent shell on its own. The `#!bash eval` lasts for the current terminal session;
-    for a permanent setup run `#!bash micromamba shell init --shell "$(basename "${SHELL}")"` once
-    and open a new terminal. This is micromamba's equivalent of `#!bash conda init` below.
-
-Then build as in [Section 3][kitex_kitetools], substituting `#!bash $MAMBA_ROOT_PREFIX/envs/kite` for
-`#!bash $CONDA_PREFIX` if that variable is not set in your shell.
-
-MacPorts does not package conda or miniforge themselves (`#!bash port search miniforge` returns no
-match). If you prefer them to micromamba, use the official installer script, which is
+MacPorts does not package conda/miniforge (`#!bash port search miniforge` returns no match) — there's
+no MacPorts-specific install path. Use the official installer script instead, which is
 package-manager-agnostic and installs into its own prefix (`#!bash ~/miniforge3` by default), entirely
 separate from MacPorts' `#!bash /opt/local`:
 

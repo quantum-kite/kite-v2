@@ -228,16 +228,8 @@ The KITE package for pre-processing is split up in various subclasses and contai
                 reproducible as a block. It does not currently guarantee that a "plain" and an
                 "operator-weighted" calculation requested together (e.g. via `#!python operators=`
                 on [`#!python ldos()`][calculation-ldos]/[`#!python ldos_map()`][calculation-ldos_map])
-                draw the same random disorder/probe-vector realization -- this is an
-                open follow-up.
-
-            !!! Note "What to record to reproduce a run"
-
-                `#!python seed_h`, `#!python seed_v` **and** `#!python divisions`. The same
-                seeds under a different decomposition give a different disorder realization and
-                different probe vectors, so a seed quoted on its own does not reproduce a figure.
-                `#!bash OMP_NUM_THREADS` is *not* part of the recipe: `KITEx` overrides it with
-                the product of `#!python divisions`.
+                draw the same random disorder/probe-vector realization -- see
+                `maintenance/2026-07-26-random-state-report.md` for the open follow-up.
 
     : <span id="configuration-angles">`#!python angles`: *`#!python float` or `#!python tuple(float, float)` or `#!python tuple(float, float, float)`*</span>
         : The angles used for the twisted boundary conditions when `#!python boundary="twist"` is selected.
@@ -292,6 +284,7 @@ The KITE package for pre-processing is split up in various subclasses and contai
         | <span id="calculation-get_spectral_map">`#!python get_spectral_map`:*`#!python dict`*</span>                                     | Returns the requested spectral-map functions.                                                                               |
         | <span id="calculation-get_arpes">`#!python get_arpes`:*`#!python dict`*</span>                                                   | Returns the requested ARPES functions.                                                                                      |
         | <span id="calculation-get_gaussian_wave_packet">`#!python get_gaussian_wave_packet`:*`#!python dict`*</span>                     | Returns the requested wave packet time evolution function, with a gaussian wavepacket mutiplied with different plane waves. |
+        | <span id="calculation-get_localized_wave_packet">`#!python get_localized_wave_packet`:*`#!python dict`*</span>                   | Returns the requested localized wave packet time evolution function, with spectral filtering.                              |
         | <span id="calculation-get_conductivity_dc">`#!python get_conductivity_dc`:*`#!python dict`*</span>                               | Returns the requested DC conductivity functions.                                                                            |
         | <span id="calculation-get_conductivity_optical">`#!python get_conductivity_optical`:*`#!python dict`*</span>                     | Returns the requested optical conductivity functions.                                                                       |
         | <span id="calculation-get_conductivity_optical_nonlinear">`#!python get_conductivity_optical_nonlinear`:*`#!python dict`*</span> | Returns the requested nonlinear optical conductivity functions.                                                             |
@@ -299,6 +292,7 @@ The KITE package for pre-processing is split up in various subclasses and contai
         | <span id="calculation-get_custom_one">`#!python get_custom_one`:*`#!python dict`*</span>                                         | Returns the requested rank-one custom-operator trace functions.                                                             |
         | <span id="calculation-get_custom_one_local">`#!python get_custom_one_local`:*`#!python dict`*</span>                             | Returns the requested local (position/energy-resolved) rank-one custom-operator functions.                                  |
         | <span id="calculation-get_custom_two">`#!python get_custom_two`:*`#!python dict`*</span>                                         | Returns the requested rank-two custom-operator trace functions.                                                             |
+        | <span id="calculation-get_custom_two_local">`#!python get_custom_two_local`:*`#!python dict`*</span>                             | Returns the requested local rank-two custom-operator functions.                                                             |
         | <span id="calculation-get_custom_ss_two">`#!python get_custom_ss_two`:*`#!python dict`*</span>                                   | Returns the requested single-shot rank-two custom-operator functions.                                                       |
 
 
@@ -311,6 +305,7 @@ The KITE package for pre-processing is split up in various subclasses and contai
         | [`#!python spectral_map(energy_, sigma_, vectors_ [, ...])`][calculation-spectral_map]          | Calculate a momentum-space (k-resolved) map of the spectral function at one energy. |
         | [`#!python arpes(k_vector, weight [, ...])`][calculation-arpes]                                | Calculate the spectral contribution for given k-points and weights.         |
         | [`#!python gaussian_wave_packet(num_points [, ...])`][calculation-gaussian_wave_packet]        | Calculate the time evolution function of a wave packet.                     |
+        | [`#!python localized_wave_packet(time, num_measures, initial_pos [, ...])`][calculation-localized_wave_packet] | Calculate the time evolution of a localized/gaussian wave packet with spectral filtering. |
         | [`#!python conductivity_dc(direction, [, ...])`][calculation-conductivity_dc]                  | Calculate the DC conductivity for a given direction.                        |
         | [`#!python conductivity_optical(direction, [, ...])`][calculation-conductivity_optical]        | Calculate optical conductivity for a given direction.                       |
         | [`#!python conductivity_optical_nonlinear([...])`][calculation-conductivity_optical_nonlinear] | Calculate nonlinear optical conductivity for a given direction.             |
@@ -320,6 +315,8 @@ The KITE package for pre-processing is split up in various subclasses and contai
         | [`#!python custom_one(stream_, num_random_, num_disorder_)`][calculation-custom_one]           | Calculate the rank-one custom-operator trace `#!python Tr[Tn(H)·J]`.        |
         | [`#!python custom_one_local(stream_, energy_, position_, sublattice_ [, ...])`][calculation-custom_one_local] | Calculate the rank-one custom-operator trace at a chosen energy and position. |
         | [`#!python custom_two(stream_, num_random_, num_disorder_, num_points_, temperature_)`][calculation-custom_two] | Calculate the rank-two custom-operator trace `#!python Tr[Tn(H)·A·Tm(H)·B]`. |
+        | [`#!python custom_two_local(stream_, positions_)`][calculation-custom_two_local]               | Calculate the rank-two custom-operator trace at chosen positions.           |
+        | [`#!python custom_singleshot_two(stream_, num_random_, num_disorder_ [, ...])`][calculation-custom_singleshot_two] | Calculate the rank-two custom-operator trace at chosen energies, using KITEx (single-shot method). |
 
     :   !!! declaration-function "<span id="calculation-dos">*function* `#!python dos(num_points, num_moments, num_random, num_disorder=1)`</span>"
             
@@ -483,7 +480,7 @@ The KITE package for pre-processing is split up in various subclasses and contai
                 | `#!python num_disorder`:*`#!python int`*                    | Number of different disorder realisations.                                                                    |
 
     
-    :   !!! declaration-function "<span id="calculation-gaussian_wave_packet">*function*`#!python gaussian_wave_packet(num_points, num_moments, timestep=None, k_vector=None, spinor=None, width=None, mean_value=None, num_disorder=1, operators=None, timestep_physical=None)`</span>"
+    :   !!! declaration-function "<span id="calculation-gaussian_wave_packet">*function*`#!python gaussian_wave_packet(num_points, num_moments, timestep, k_vector, spinor, width, mean_value, num_disorder=1, operators=None, probing_point=0)`</span>"
             
             
         :   Calculate the time evolution function of a wave packet.
@@ -494,14 +491,14 @@ The KITE package for pre-processing is split up in various subclasses and contai
                 |--------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------|
                 | `#!python num_points`:*`#!python int`*                             | Number of time points for the time evolution.                                                                   |
                 | `#!python num_moments`:*`#!python int`*                            | Number of polynomials in the Chebyshev expansion.                                                               |
-                | `#!python timestep`:*`#!python float`*                             | Timestep in rescaled units, conjugate to the rescaled energy: it is the argument of the Bessel expansion KITE propagates with. Physical time is this divided by `#!python EnergyScale`. Give this or `#!python timestep_physical`, not both. |
+                | `#!python timestep`:*`#!python float`*                             | Timestep for calculation of time evolution.                                                                     |
                 | `#!python k_vector`:*`#!python array_like`*                        | Different wave vectors, components corresponding to vectors b0 and b1.                                          |
-                | `#!python spinor`:*`#!python array_like`*                          | Amplitude on each orbital of the unit cell, one spinor per k vector. Seeded as given, with no projection onto the eigenstates of H(k), so unless it is an eigenvector the packet starts with weight in several bands. |
+                | `#!python spinor`:*`#!python array_like`*                          | Spinors for each of the k vectors.                                                                              |
                 | `#!python width`:*`#!python float`*                                | Width of the gaussian.                                                                                          |
                 | `#!python mean_value`:*`#!python tuple(float, float)`*             | Mean value of the gaussian envelope.                                                                            |
                 | `#!python num_disorder`:*`#!python int`*                           | Number of different disorder realisations.                                                                      |
                 | `#!python operators`:*`#!python list[str]`*                       | Labels of operators registered via [`#!python add_orbital_coupling()`][calculation-add_orbital_coupling], whose expectation value is tracked at every timestep (e.g. `#!python ['l0', 'l1', 'l2']` for a 3-component spin, orbital-angular-momentum, or quadrupole operator set). |
-                | `#!python timestep_physical`:*`#!python float`*                    | Timestep in physical time ($\hbar=1$, so inverse energy) instead of rescaled time. It is multiplied by `#!python EnergyScale` on export, after an unset `#!python spectrum_range` has been estimated, so the physical step is the one asked for whatever the scale turns out to be. Both values are written to the output file. Give this or `#!python timestep`, not both. |
+                | `#!python probing_point`:*`#!python int` or `#!python array_like`* | Forward probing point, defined with x, y coordinate were the wavepacket will be checked at different timesteps. |
 
             **Tracked operators**
 
@@ -518,6 +515,38 @@ The KITE package for pre-processing is split up in various subclasses and contai
                 back by an explicit ordered list, not the
                 single-digit `#!python "l0"`–`#!python "l9"` scheme described in the warning above — so this path
                 does not share that 10-operator limit.
+
+    :   !!! declaration-function "<span id="calculation-localized_wave_packet">*function*`#!python localized_wave_packet(time, num_measures, initial_pos, num_moments=0, width=-1., energy_window=[0.,0.], initial_wavevector=None, probes=None, sample_start=-1, sample_L=-1)`</span>"
+
+
+        :   Calculate the time evolution of a localized (point-like) or Gaussian-envelope wave packet, with optional
+            spectral filtering. This is distinct from [`#!python gaussian_wave_packet()`][calculation-gaussian_wave_packet]:
+            the initial state is dispatched between a point-like or a Gaussian-envelope wave packet depending on
+            whether `#!python width > 0`, it can be band/energy-filtered to `#!python energy_window` before propagation,
+            and it reports richer observables (spatial spread statistics, return probability, propagator amplitude,
+            spectral moments, and transmission weights at chosen probe positions) than the plain spin expectation
+            values returned by `#!python gaussian_wave_packet()`.
+
+            **Parameters**
+
+            :   | Parameter                                              | Description                                                                                                                          |
+                |----------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------|
+                | `#!python time`:*`#!python float`*                       | Total dimensionless time over which the wave packet is evolved. Together with `#!python num_measures`, this sets the time step between measurements. |
+                | `#!python num_measures`:*`#!python int`*                 | Number of times the evolved state is probed.                                                                                          |
+                | `#!python initial_pos`:*`#!python array_like`*           | Initial position of the localized wave packet in lattice coordinates, `#!python [n_x, n_y[, n_z], n_orbital]`.                       |
+                | `#!python num_moments`:*`#!python int`*                  | Number of Chebyshev moments to calculate for the spectral function of the propagated state.                                          |
+                | `#!python width`:*`#!python float`*                      | Width of the Gaussian envelope in real space. If `#!python width <= 0` a point-like (not Gaussian-enveloped) wave packet is used.     |
+                | `#!python energy_window`:*`#!python array_like`*         | The localized packet is filtered to keep only eigenstates with energy inside this window.                                            |
+                | `#!python initial_wavevector`:*`#!python array_like`*    | Wavevector the Gaussian envelope is centered around, in reciprocal lattice coordinates.                                               |
+                | `#!python probes`:*`#!python array_like`*                | List of positions, in lattice coordinates, where the propagator/transmission weights are evaluated.                                  |
+                | `#!python sample_start`:*`#!python int`*                 | Start (in the x-direction) of a disordered sample region embedded between clean leads, for transport/localization-length studies.     |
+                | `#!python sample_L`:*`#!python int`*                     | Length of the disordered sample region described by `#!python sample_start`.                                                          |
+
+            !!! Note "No worked example yet"
+
+                There is currently no example script in `#!bash examples/` that uses `#!python localized_wave_packet()`.
+                See the C++ implementation (`Src/Simulation/SimulationLocalizedWavePacket.cpp`) and the parameter reference
+                above for now.
 
     :   !!! declaration-function "<span id="calculation-conductivity_dc">*function*`#!python conductivity_dc(direction, num_points, num_moments, num_random, num_disorder=1, temperature=0)`</span>"
             
@@ -569,7 +598,7 @@ The KITE package for pre-processing is split up in various subclasses and contai
                 | `#!python temperature`:*`#!python float`* | Value of the temperature at which we calculate the response. If $eV$ is used as unit for energy, then $k_B\cdot T$ is also in $eV$. To define the temperature in arbitraty units, specify the quantity $K_B \cdot T$, which has units of energy. |
 
     
-    :   !!! declaration-function "<span id="calculation-conductivity_optical_nonlinear">*function*`#!python conductivity_optical_nonlinear(direction, num_points, num_moments, num_random, num_disorder=1, temperature=0)`</span>"
+    :   !!! declaration-function "<span id="calculation-conductivity_optical_nonlinear">*function*`#!python conductivity_optical_nonlinear(direction, num_points, num_moments, num_random, num_disorder=1, temperature=0, special=0)`</span>"
             
             
         :   Calculate nonlinear optical conductivity for a given direction.
@@ -584,6 +613,7 @@ The KITE package for pre-processing is split up in various subclasses and contai
                 | `#!python num_random`:*`#!python int`*    | Number of random vectors to use for the stochastic evaluation of trace.                                                                                                                                                                                                      |
                 | `#!python num_disorder`:*`#!python int`*  | Number of different disorder realisations.                                                                                                                                                                                                                                   |
                 | `#!python temperature`:*`#!python float`* | Value of the temperature at which we calculate the response. If $eV$ is used as unit for energy, then $k_B\cdot T$ is also in $eV$. To define the temperature in arbitraty units, specify the quantity $K_B \cdot T$, which has units of energy.                             |
+                | `#!python special`:*`#!python int`*       | Optional, a parameter that can simplify the calculation for some materials.                                                                                                                                                                                                  |
     
     
     :   !!! declaration-function "<span id="calculation-singleshot_conductivity_dc">*function*`#!python singleshot_conductivity_dc(energy, direction, eta, num_moments, num_random, num_disorder=1, preserve_disorder=False)`</span>"
@@ -599,15 +629,14 @@ The KITE package for pre-processing is split up in various subclasses and contai
                 As such, the results are already available in the [HDF5]-file. You can extract the results from the
                 [HDF5]-file [as explained in the tutorial][tutorial-hdf5].
 
-                [KITE-tools][kitetools] will also write it out for you, which saves reading the
-                [HDF5]-file by hand and reports the Fermi energies in the same convention as every
-                other quantity:
-
+                There is also [a script][kitetools-output] that automates this process with, `#!python "output.h5"`
+                the name of the [HDF5]-file processed by [KITEx][kitex]:
+                
                 ``` bash
-                ./build/KITE-tools output.h5 --SingleShot
+                python3 process_single_shot.py output.h5
                 ``` 
                 
-                this will result in a data-file `#!python "singleshot_condDC.dat"`, as explained in the
+                this will result in a data-file `#!python "output.dat"`, as explained in the
                 [API of KITE-tools][kitetools-output].                
 
             **Parameters**
@@ -782,6 +811,57 @@ The KITE package for pre-processing is split up in various subclasses and contai
                 `#!python kane_mele_spin_hall_disorder.py`) for a worked example of `#!python custom_two()`,
                 walked through in depth in [Custom Vertex Operators][custom-vertex-example].
 
+    :   !!! declaration-function "<span id="calculation-custom_two_local">*function*`#!python custom_two_local(stream_, positions_)`</span>"
+
+
+        :   The position-resolved sibling of [`#!python custom_two()`][calculation-custom_two]: evaluates the same
+            rank-two trace at a list of chosen positions, with no random-vector/disorder averaging, energy-point count,
+            or temperature argument.
+
+            **Parameters**
+
+            :   | Parameter                                    | Description                                                                                      |
+                |---------------------------------------------------|----------------------------------------------------------------------------------------------------|
+                | `#!python stream_`:*`#!python list(kite.custom.Vertex, kite.custom.Vertex)`* | The two vertices `#!python [A, B]` defining the operators $A$ and $B$. |
+                | `#!python positions_`:*`#!python array_like`*     | Array of shape `#!python (number_of_positions, D + 1)` listing the positions at which the trace is evaluated ($D$ lattice directions plus a sublattice/orbital index). |
+
+            !!! Note "No worked example yet"
+
+                There is currently no example script that uses `#!python custom_two_local()`.
+
+    :   !!! declaration-function "<span id="calculation-custom_singleshot_two">*function*`#!python custom_singleshot_two(stream_, num_random_, num_disorder_, gamma_, sigma_, energies_)`</span>"
+
+
+        :   The energy-resolved, single-shot sibling of [`#!python custom_two()`][calculation-custom_two]: evaluated
+            directly by [KITEx][kitex] at fixed broadening and a chosen list of energies, analogous to how
+            [`#!python singleshot_conductivity_dc()`][calculation-singleshot_conductivity_dc] relates to
+            [`#!python conductivity_dc()`][calculation-conductivity_dc] — no [KITE-tools][kitetools] post-processing step
+            is required.
+
+            **Parameters**
+
+            :   | Parameter                                        | Description                                                                                                          |
+                |-------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------|
+                | `#!python stream_`:*`#!python list(kite.custom.Vertex, kite.custom.Vertex)`* | The two vertices `#!python [A, B]` defining the operators $A$ and $B$.                            |
+                | `#!python num_random_`:*`#!python int`*               | Number of random vectors to use for the stochastic evaluation of the trace.                                          |
+                | `#!python num_disorder_`:*`#!python int`*             | Number of different disorder realisations.                                                                           |
+                | `#!python gamma_`:*`#!python float`*                  | Imaginary broadening (self-energy) parameter, as in [`#!python singleshot_conductivity_dc()`][calculation-singleshot_conductivity_dc]'s `#!python eta`. |
+                | `#!python sigma_`:*`#!python float`*                  | Width of the Gaussian broadening applied to the reconstructed spectral quantity.                                     |
+                | `#!python energies_`:*`#!python array_like`*          | List of energies at which `#!python custom_singleshot_two()` will be calculated.                                     |
+
+            !!! Warning "`energies_`/`gamma_`/`sigma_` are not shifted by `energy_shift`"
+
+                Unlike [`#!python singleshot_conductivity_dc()`][calculation-singleshot_conductivity_dc], which subtracts
+                [`#!python config.energy_shift`][configuration-energy_shift] from `#!python energy` before exporting it,
+                `#!python custom_singleshot_two()`'s `#!python energies_`/`#!python gamma_`/`#!python sigma_` are only
+                divided by `#!python config.energy_scale` (this division happens on the KITEx/C++ side, not in Python) —
+                `#!python energy_shift` is never subtracted. If your `#!python spectrum_range` is not symmetric about
+                zero, `#!python energies_` is measured relative to the Hamiltonian's raw zero, not the center of your
+                configured `#!python spectrum_range`.
+
+            !!! Note "No worked example yet"
+
+                There is currently no example script that uses `#!python custom_singleshot_two()`.
 
 ## kite.visualize
 
@@ -1001,6 +1081,7 @@ The KITE package for pre-processing is split up in various subclasses and contai
 [calculation-get_spectral_map]: #calculation-get_spectral_map
 [calculation-get_arpes]: #calculation-get_arpes
 [calculation-get_gaussian_wave_packet]: #calculation-get_gaussian_wave_packet
+[calculation-get_localized_wave_packet]: #calculation-get_localized_wave_packet
 [calculation-get_conductivity_dc]: #calculation-get_conductivity_dc
 [calculation-get_conductivity_optical]: #calculation-get_conductivity_optical
 [calculation-get_conductivity_optical_nonlinear]: #calculation-get_conductivity_optical_nonlinear
@@ -1008,6 +1089,7 @@ The KITE package for pre-processing is split up in various subclasses and contai
 [calculation-get_custom_one]: #calculation-get_custom_one
 [calculation-get_custom_one_local]: #calculation-get_custom_one_local
 [calculation-get_custom_two]: #calculation-get_custom_two
+[calculation-get_custom_two_local]: #calculation-get_custom_two_local
 [calculation-get_custom_ss_two]: #calculation-get_custom_ss_two
 [comment]: <> (Class Methods)
 [calculation-dos]: #calculation-dos
@@ -1016,6 +1098,7 @@ The KITE package for pre-processing is split up in various subclasses and contai
 [calculation-spectral_map]: #calculation-spectral_map
 [calculation-arpes]: #calculation-arpes
 [calculation-gaussian_wave_packet]: #calculation-gaussian_wave_packet
+[calculation-localized_wave_packet]: #calculation-localized_wave_packet
 [calculation-conductivity_dc]: #calculation-conductivity_dc
 [calculation-conductivity_optical]: #calculation-conductivity_optical
 [calculation-conductivity_optical_nonlinear]: #calculation-conductivity_optical_nonlinear
@@ -1025,6 +1108,8 @@ The KITE package for pre-processing is split up in various subclasses and contai
 [calculation-custom_one]: #calculation-custom_one
 [calculation-custom_one_local]: #calculation-custom_one_local
 [calculation-custom_two]: #calculation-custom_two
+[calculation-custom_two_local]: #calculation-custom_two_local
+[calculation-custom_singleshot_two]: #calculation-custom_singleshot_two
 
 [comment]: <> (Class Configuration)
 [configuration]: #configuration
@@ -1069,9 +1154,6 @@ The KITE package for pre-processing is split up in various subclasses and contai
 [custom-vertex-example]: ../documentation/examples/custom_vertex_operators.md
 [rashba-edelstein-example]: ../documentation/examples/rashba_edelstein.md
 [spectral-function-example]: ../documentation/examples/spectral_function.md
-[markov_maps_example]: ../documentation/examples/markov_local_maps.md
-[visualize-plot_unit_cell]: #visualize-plot_unit_cell
-[visualize-hamiltonian_k]: #visualize-hamiltonian_k
 
 [^1]: A. Weiße, G. Wellein, A. Alvermann, and H. Fehske, [Rev. Mod. Phys. 78, 275 (2006)](https://doi.org/10.1103/RevModPhys.78.275).
 [^2]: S. M. João, M. Anđelković, L. Covaci, T. G. Rappoport, João M. Viana Parente Lopes, and A. Ferreira, [R. Soc. open sci. 7, 191809 (2020)](https://royalsocietypublishing.org/doi/10.1098/rsos.191809).

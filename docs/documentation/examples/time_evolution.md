@@ -3,7 +3,8 @@
 Most calculations on this site are static, energy-resolved spectral properties -- a density of
 states, a local density of states, a spectral function -- computed once and for all from the
 Hamiltonian's spectrum, not a response to any perturbation. Others (conductivity, spin Hall
-response) genuinely are linear-response coefficients.
+response) genuinely are linear-response coefficients. `#!python calculation.localized_wave_packet()`
+is also a real-time propagation, elsewhere on this site.
 [`#!python calculation.gaussian_wave_packet()`][calculation-gaussian_wave_packet] is the member of
 this family introduced here: it builds a Gaussian-enveloped wave packet and propagates it **in real
 time**, using a Chebyshev expansion of $e^{-iHt}$, then reports the expectation value of whatever
@@ -11,15 +12,12 @@ operators you ask for at every timestep. This page is a from-scratch introductio
 feature, using the simplest possible physical system it can demonstrate.
 
 **Time units.** With $\hbar=1$ (KITE's convention throughout), a physical time has units of
-inverse energy. The step is given either way round, and exactly one of the two is passed.
-`#!python timestep` is in the same rescaled units as the internal Hamiltonian
-$\hat H/\mathtt{energy\_scale}$ (`#!python energy_scale` is the `#!python Configuration`
-parameter that maps the model's physical energy units onto KITE's required $[-1,1]$ Chebyshev
-spectral range), which is what the propagator works in; `#!python timestep_physical` is in
-physical time, and KITE multiplies it by `#!python energy_scale` on export. The second is the
-one to use when `#!python spectrum_range` is left to KITE, since then the rescaled step is not
-known until the file is written. Either way the output file carries both values, under
-`#!python timestep` and `#!python timestep_physical`.
+inverse energy. The `#!python timestep` argument is specified in the same rescaled units as the
+internal Hamiltonian $\hat H/\mathtt{energy\_scale}$ (`#!python energy_scale` is the
+`#!python Configuration` parameter that maps the model's physical energy units onto KITE's
+required $[-1,1]$ Chebyshev spectral range); to convert a rescaled timestep back to physical time,
+divide by `#!python energy_scale` expressed in the same energy units used to define the model's
+hoppings.
 
 ### The physics: spin precession in a field
 
@@ -94,69 +92,12 @@ calculation.add_orbital_coupling('down', 'down', -0.5, 'l2')
 
 calculation.gaussian_wave_packet(
     num_points=400, num_moments=256, num_disorder=1,
-    k_vector=[[0.0, 0.0]], spinor=[[1.0, 0.0]], width=4.0, timestep_physical=0.1,
+    k_vector=[[0.0, 0.0]], spinor=[[1.0, 0.0]], width=4.0, timestep=0.5,
     mean_value=[64, 64], operators=['l0', 'l1', 'l2'])
 ```
 
 The `#!python spinor=[[1.0, 0.0]]` seeds the wave packet purely in the "up" orbital — the
-$S_z=+\tfrac12$ eigenstate.
-
-!!! warning "The spinor is an orbital amplitude, not a band amplitude"
-
-    `#!python spinor` gives the amplitude on each **orbital** of the unit cell, in the
-    order the sublattices were added. KITE seeds that vector directly — it does not
-    project onto the eigenstates of $H(\mathbf{k})$ — so unless what you pass happens to
-    be an eigenvector, the packet starts with weight in several bands and its evolution
-    carries each of their frequencies.
-
-    That is what happens here, and it is the mechanism of the example rather than a flaw
-    in it. The orbitals *are* `up` and `down`, so the orbital basis is the $S_z$ basis, and
-    $H(\mathbf{k}) = \varepsilon(\mathbf{k})\hat I + B\hat\sigma_x$ has eigenstates
-    $(1,\pm 1)/\sqrt2$ at energies $\varepsilon(\mathbf{k}) \pm B$. The seeded $(1,0)$
-    therefore puts exactly half its weight in each, and the $\tfrac12\cos(2Bt)$ you see is
-    the beat between the two.
-
-    To seed an eigenstate instead, pass one: $(1,1)/\sqrt2$ leaves
-    $\langle S_x\rangle$ at $+\tfrac12$ and nothing precesses. Starting from
-    $(1,\mathrm{i})/\sqrt2$ gives the same precession in the $y$–$z$ plane,
-    $\langle S_y\rangle = \tfrac12\cos(2Bt)$ and $\langle S_z\rangle = \tfrac12\sin(2Bt)$.
-
-    On a lattice whose orbitals are not spin — honeycomb's $A$ and $B$ sublattices, say —
-    the same $(1,0)$ means "all weight on $A$", which is again an equal superposition of
-    the two bands, but of nothing you would call a spin state.
-
-!!! warning "The spinor is held fixed across the packet's momentum spread"
-
-    `#!python width` is a real-space length in the same units as the lattice vectors, so
-    the packet covers a momentum range $\Delta k\approx 1/\texttt{width}$ around each $k$
-    you list, and the spinor you gave for that $k$ is applied unchanged across the whole
-    range. Seeding an eigenvector of $H(\mathbf{k})$ therefore gives a single-band packet
-    only where that eigenvector varies little over $\Delta k$; near a band touching or an
-    avoided crossing it does not, and part of the weight sits in the other band.
-    `#!python spinor` takes one row per $k$-vector, so you can follow the eigenvector
-    across the packet where that matters.
-
-    It does not arise in the example above: $H(\mathbf{k})=\varepsilon(\mathbf{k})\hat I+B\hat\sigma_x$
-    has $k$-independent eigenvectors, so any width is safe.
-
-!!! note "`#!python k_vector` is fractional, `#!python hamiltonian_k()` is Cartesian"
-
-    `#!python k_vector` is given in fractional coordinates — components along the
-    reciprocal lattice vectors — so graphene's $K$ point is `#!python [1/3, -1/3]`, not its
-    Cartesian value. [`#!python kite.visualize.hamiltonian_k()`][visualize-hamiltonian_k]
-    takes Cartesian $k$, so if you diagonalize $H(\mathbf{k})$ to choose a spinor, convert
-    before seeding:
-
-    ``` python
-    vectors = np.asarray(lattice.vectors)
-    vectors = vectors[:, :vectors.shape[0]]
-    k_frac = k_cart @ vectors.T / (2 * np.pi)
-    ```
-
-    Passing a Cartesian $k$ straight to `#!python gaussian_wave_packet()` seeds a different
-    momentum, with no error.
-
-As with `#!python custom_one()`/`#!python custom_two()`, this
+$S_z=+\tfrac12$ eigenstate. As with `#!python custom_one()`/`#!python custom_two()`, this
 mechanism has one hard restriction worth knowing up front: a tracked operator must be a single
 on-site matrix, identical at every site — it cannot represent a quantity that couples different
 lattice sites (see the warning under
@@ -185,5 +126,4 @@ for both the propagator and the operator-registration mechanism.
 [calculation-gaussian_wave_packet]: ../../api/kite.md#calculation-gaussian_wave_packet
 [calculation-custom_one]: ../../api/kite.md#calculation-custom_one
 [calculation-add_orbital_coupling]: ../../api/kite.md#calculation-add_orbital_coupling
-[visualize-hamiltonian_k]: ../../api/kite.md#visualize-hamiltonian_k
 [precession-example]: https://github.com/quantum-kite/kite-v2/tree/master/examples/spin_precession_simple.py

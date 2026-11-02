@@ -32,11 +32,14 @@ ensures all threads have completed the copy, and each thread then reads its neig
 buffer into its own ghost region. This is implemented with OpenMP barriers and shared memory, not message
 passing, since all threads reside in a single process.
 
-The ghost halo must be at least as deep as the longest-range hopping in the model, since a thread cannot
-otherwise reach the site it needs to couple to across a sub-domain boundary. As stated in
-[tight-binding models][tb_model] and [Disorder][disorder_doc], a hopping — and a disorder pattern, which
-is itself a special hopping or on-site term — spans at most one unit cell in each direction, so
-`NGHOSTS = 2` covers every model KITE accepts.
+The default value of `NGHOSTS` is not arbitrary. As stated in [tight-binding models][tb_model] and
+[Disorder][disorder_doc], KITE's default build assumes that hopping terms — and disorder patterns, which
+are themselves special hopping or on-site terms — connect unit cells no more than two lattice spacings
+apart in any given direction. The ghost halo must be at least as deep as the longest-range hopping present
+in the model, since a thread cannot otherwise access the site it needs to couple to across a sub-domain
+boundary; `NGHOSTS = 2` is therefore the constant that encodes this maximum supported hopping range.
+Models with longer-range hoppings (third-nearest-neighbor and beyond) require increasing `NGHOSTS` in
+`Src/Generic.hpp` and recompiling KITEx, as described in [Compilation Options](#compilation-options) below.
 
 `TILE` is a related but distinct constant: a cache-blocking granularity for the Hamiltonian-vector multiply
 loops, unconnected to hopping range. It intersects domain decomposition through a single constraint,
@@ -59,7 +62,7 @@ different data, memory can be reduced along one axis without any effect on the o
 | Constant | Axis | Governs |
 |---|---|---|
 | `divisions` (runtime) | spatial | Number of threads and the partitioning of the lattice |
-| `NGHOSTS` (compile-time, unguarded) | spatial | Halo depth. Not the maximum supported hopping range: that limit comes from the address format, and `NGHOSTS = 2` is wide enough for every model KITE accepts |
+| `NGHOSTS` (compile-time, unguarded) | spatial | Halo depth; equivalently, the maximum supported hopping range |
 | `TILE` (compile-time, guarded) | spatial | Cache-blocking granularity, and a divisibility constraint on partition size |
 | `MEMORY` (compile-time, guarded) | temporal | Chebyshev-moment blocking size, applicable to CondDC/CondOpt2 only |
 
@@ -75,7 +78,7 @@ addressing one does not require any concession on the other.
 KITE is built from three independently-compiled components that communicate only through a shared
 [HDF5 file][hdf5_structure]:
 
-1. **Python interface** (the `kite` package, `python/kite/`, installed via `#!bash pip install -e .`; see
+1. **Python interface** (the `kite` package, `src/kite/`, installed via `#!bash pip install -e .`; see
    [Installation][installation]) constructs the lattice/Hamiltonian description and calculation settings,
    and writes them to a new `.h5` file. It uses KITE's own native `#!python kite.lattice.Lattice` class by
    default; [Pybinding][pybinding] is an optional extra (`#!bash pip install -e ".[pybinding]"`) for users
@@ -171,7 +174,8 @@ This mechanism relies on the `#ifndef` guard present in the definition of each c
       `Src/Lattice/LatticeStructure.cpp`, `Src/Vector/KPM_Vector2D.cpp`/`KPM_Vector3D.cpp`, and
       `Src/Hamiltonian/HamiltonianDefects.cpp` — as loop bounds
       (`for(i = NGHOSTS; i < Ld[d] - NGHOSTS; ...)`), boundary-exchange buffer indexing, and ghost-buffer
-      size calculations. It covers every model KITE accepts and is not a tuning knob.
+      size calculations. Increasing this constant to support longer-range hopping models requires
+      auditing those call sites, as the change is not risk-free.
     - **`PATTERNS`** is unused in the current codebase — a repository-wide search finds only its own
       definition, with no call sites.
     - `VVERBOSE`/`SSPRINT` are minor debug switches (very verbose tracing, and an internal print-frequency

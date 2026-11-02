@@ -83,18 +83,6 @@ $$
 where $\Omega_{c}$ is the 3D/2D volume of the unit cell.  When the user requests a magnetic field strength $|\mathbf{B}|$ (given in Tesla), KITE calculates $B_{\textrm{min}}$ first and then uses that to determine the required $n$ to achieve the closest possible value of $|\mathbf{B}|$ by rounding $|\mathbf{B}|/\mathbf{B}_{\textrm{min}}=n$ to the nearest integer. If $n$ rounds down to zero, it means that the system is too small to support the requested magnetic field. When determining $B_{\textrm{min}}$, 
 KITE assumes that the primitive vectors in the Python configuration script are given in nanometers.
 
-The flux per unit cell is $\Phi_{\textrm{cell}}/\Phi_{0}=n/N_{2}$, and the total flux through the
-sample is $n\,N_{1}$ flux quanta.
-
-Instead of a field in Tesla, $n$ can be set through the flux per unit cell directly:
-
-``` python
-modification = kite.Modification(flux=1/512)
-```
-
-which gives $n=\textrm{flux}\times N_{2}$. Unlike `#!python magnetic_field`, this value is **truncated** rather than rounded, so with periodic
-boundary conditions give it as an exact multiple of $1/N_{2}$.
-
 
 
 [modification-par-magnetic_field]: ../api/kite.md#modification-par-magnetic_field

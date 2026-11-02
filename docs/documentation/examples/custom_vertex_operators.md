@@ -37,9 +37,8 @@ of the two families gives $\Gamma_{mn}$. **`#!python num_moments` must be even**
 ### From moments to a transport coefficient: the Kubo-Bastin integral
 
 $\Gamma_{mn}$ is a matrix of numbers, not yet a conductivity. The conversion is the numerical implementation of
-the **Kubo-Bastin formula**[^1], done by KITE-tools, which writes `#!bash custom_two.dat`.
-`#!python examples/kane_mele_spin_hall_process.py` carries out the same integral in Python when you want
-to inspect or reshape the reconstruction. In the KPM representation, both the spectral operator
+the **Kubo-Bastin formula**[^1], done in Python (`#!python examples/cond_sum.py`, adapted for spin in
+`#!python examples/kane_mele_spin_hall_process.py`). In the KPM representation, both the spectral operator
 $\delta(E-\hat H)$ and the Green's-function derivative $dG^{\pm}/dE$ entering the Kubo-Bastin integral are
 expanded in Chebyshev polynomials of $\hat H$; substituting these expansions turns the trace into a
 contraction of the precomputed moment matrix with two energy-dependent coefficient vectors,
@@ -101,11 +100,9 @@ The Kubo-Bastin trace machinery never changes — only the operators you feed it
 The Kane-Mele model[^2] is the honeycomb-lattice $\mathbb Z_2$ topological insulator: two **time-reversed
 copies of the Haldane model**, one per spin, with the intrinsic (next-nearest-neighbor, complex) spin-orbit
 hopping carrying **opposite phase** for the two spins. `#!python examples/kane_mele_spin_hall.py` builds the
-lattice with four sublattices — `Aup, Bup, Adn, Bdn` — where the up-spin block uses the same
-bond-phase assignment as the [documented Haldane example][haldane-example], at $t_2=0.15$: the
-next-nearest-neighbour amplitude as coded is $-i\,t_2$ on A–A and $+i\,t_2$ on B–B, giving
-$C_\uparrow=+1$. The down-spin block is its complex conjugate, $+i\,t_2$ on A–A, so
-$C_\downarrow=-1$. Nearest-neighbor charge hopping is $-t$ and spin-diagonal, with no spin-flip
+lattice with four sublattices — `Aup, Bup, Adn, Bdn` — where the up-spin block reproduces the
+[documented Haldane example][haldane-example] exactly (NNN phase $+i$ on A–A) and the down-spin block is its
+complex conjugate ($-i$ on A–A). Nearest-neighbor charge hopping is $-t$ and spin-diagonal, with no spin-flip
 term. Parameters: $t=1$, $t_2=0.15$, on a $64\times64$ lattice with 256 moments.
 
 The opposite SOC sign per spin is what distinguishes Kane-Mele (a $\mathbb Z_2$ insulator with quantized *spin*
@@ -135,55 +132,14 @@ orbital operator is a full $N_\text{orb}\times N_\text{orb}$ matrix, and registe
 silently truncate it. The two vertices are the symmetrized spin current $A=\tfrac12\{\hat v_x,\hat s_z\}$ and
 the charge velocity $B=\hat v_y$.
 
-### Reproducing it
-
-``` bash
-python kane_mele_spin_hall.py                    # writes kane_mele_spin_hall-output.h5
-../build/KITEx kane_mele_spin_hall-output.h5     # computes the moment matrix Gamma_mn
-python kane_mele_spin_hall_process.py            # Kubo-Bastin integral and plot
-```
-
-with the parameters that produce the plateau below:
-
-| | |
-| --- | --- |
-| Lattice | honeycomb, $64\times64$ cells, 4 sublattices (Aup, Bup, Adn, Bdn) |
-| $t$, $t_2$ | $1.0$, $0.15$ |
-| Chebyshev moments $M$ | 256 |
-| Random vectors | 1 |
-| Spectral half-width $\delta\varepsilon$ | 4 |
-| Green's-function broadening $\eta$ | 0.04 |
-| Dirac-delta broadening | 0.04 |
-| Temperature $k_BT$ | 0.01 |
-| Fermi energies | 201 points over $[-2, 2]$ |
-| Energy-integration grid | 2000 points over $[-0.995, 0.995]$ (reduced units) |
-
-The broadening is the one to watch. It sets the energy resolution, and the moment count has to be
-large enough to resolve it: $M \gtrsim 10\,\delta\varepsilon/\eta$ (see
-[Optimisation][optimization]). Here that gives $M \gtrsim 1000$ against the 256 the example ships,
-which is close enough for a flat plateau; reconstructing the same moments at a much finer $\eta$
-leaves the series truncated and the plateau acquires a percent-level ripple.
-
-**Verified result.** At these parameters the Kubo-Bastin post-processing yields a genuinely
-**flat plateau** at
+**Verified result.** The Kubo-Bastin post-processing yields a genuinely **flat plateau** at
 
 $$
-\sigma^{s_z}_{xy}\approx +1.00
+\sigma^{s_z}_{xy}\approx -2.02
 $$
 
-across the bulk gap ($|E|\lesssim 0.74\,t$), consistent with the expected quantized spin Hall value.
-
-KITE-tools reports this in $e^2/h$ for the vertex pair exactly as written, the same units `--CondDC`
-uses. The `l0` matrix built above is $s_z=\tfrac12\sigma_z$, so the factor $\tfrac12$ is already in the
-operator and the plateau comes out at $1$: each spin sector contributes its own Chern number weighted
-by $\pm\tfrac12$. To quote the result as $\sigma^{s_z}_{xy}$ in units of $e/4\pi$, where the quantized
-value is $2$, multiply by $2$. Note also that **spin degeneracy is never supplied by the
-reconstruction** — it is $1$ on every path. A spinful model carries both spins in the lattice, as this
-one does; otherwise put the factor in by hand.
-
-The
-quantization follows from $s_z$ conservation: with no Rashba term the two spin sectors decouple into
-independent Chern insulators, so $\sigma^{s_z}_{xy}$ is fixed by their Chern numbers — the plateau's *existence* and *flatness* are the physics being demonstrated at this lattice size, not
+across the bulk gap ($|E|\lesssim 0.74\,t$), consistent with the expected quantized $\mathbb Z_2$ spin Hall
+value — the plateau's *existence* and *flatness* are the physics being demonstrated at this lattice size, not
 a claim of an exact quantized integer. The overall sign of $\sigma^{s_z}_{xy}$ is fixed by the arbitrary choice
 of which spin is assigned $+\tfrac12$ in the `l0` matrix — flipping every `l0` entry flips the sign of the
 plateau; this is a genuine convention, not a physical ambiguity.
@@ -191,9 +147,9 @@ plateau; this is a genuine convention, not a physical ambiguity.
 ### The disorder-washout extension
 
 `#!python examples/kane_mele_spin_hall_disorder.py` adds on-site (Anderson) disorder of uniform width $W$ on
-all four sublattices and sweeps $W$. Physically, the plateau is protected as long as (i) the bulk mobility
-gap survives, (ii) time-reversal symmetry is preserved on average, and (iii) $s_z$ remains conserved —
-on-site potential disorder satisfies all three. On-site potential disorder respects TRS, so for $W$ well below the gap the plateau should be
+all four sublattices and sweeps $W$. Physically, the $\mathbb Z_2$ invariant — and hence the quantized plateau
+— is protected as long as (i) the bulk mobility gap survives and (ii) time-reversal symmetry is preserved on
+average. On-site potential disorder respects TRS, so for $W$ well below the gap the plateau should be
 essentially untouched; once $W$ approaches and exceeds $E_g\approx1.56\,t$, disorder broadening closes the
 mobility gap and the plateau degrades.
 
@@ -206,10 +162,10 @@ mobility gap and the plateau degrades.
 
 | $W/t$ | behavior |
 |---|---|
-| $0$ | flat plateau $\approx +1.0$ |
+| $0$ | flat plateau $\approx -2.0$ |
 | $0.5$ | still flat (well below the gap) |
 | $1.0$ | visibly rounding (comparable to the gap) |
-| $2.0$ | washed out to $\approx +0.2$ (well past the gap) |
+| $2.0$ | washed out to $\approx -0.4$ (well past the gap) |
 
 Two implementation points worth flagging. First, the manual `#!python spectrum_range` must bound the *actual*
 spectrum including the disorder spread — a fixed clean-model range would let eigenvalues spill outside the
@@ -236,4 +192,3 @@ wiggles there are stochastic, not physical structure.
 [haldane-example]: haldane.md
 [kane_mele_example]: https://github.com/quantum-kite/kite-v2/tree/master/examples/kane_mele_spin_hall.py
 [kane_mele_disorder_example]: https://github.com/quantum-kite/kite-v2/tree/master/examples/kane_mele_spin_hall_disorder.py
-[optimization]: ../optimization.md

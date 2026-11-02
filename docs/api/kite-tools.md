@@ -17,13 +17,10 @@ where archive.h5 is the HDF file that stores the output of KITE. If KITE-tools d
   * DC conductivity (CondDC)
   * Optical conductivity (CondOpt)
   * Second-order optical conductivity (CondOpt2)
-  * Real-space LDoS map (LDOSmap) -- the per-site map from [`#!python calculation.ldos_map()`][calculation-ldos_map], written with its site coordinates decoded, plus one file per operator label when `#!python operators=` was used
-  * Momentum-space spectral map (SpectralMap) -- the map $A(\mathbf{k})$ from [`#!python calculation.spectral_map()`][calculation-spectral_map], written with its $\mathbf{k}$-point decoded
-  * Wave-packet time series (WavePacket) -- the mean position, variance and tracked operator expectation values from [`#!python calculation.gaussian_wave_packet()`][calculation-gaussian_wave_packet], on a physical time axis
   * Custom rank-one spectral density (CustomOne) -- the energy-resolved density $\mathrm{Tr}[A\,\delta(E-H)]$ of a user-defined `#!python kite.custom.Vertex` operator $A$ from [`#!python calculation.custom_one()`][calculation-custom_one]
-  * Custom rank-one local spectral density (CustomOneLocal) -- the same density resolved at each probed orbital, $\tfrac12\langle j|\{\delta(E-H),A\}|j\rangle$, from [`#!python calculation.custom_one_local()`][calculation-custom_one_local]
   * Custom rank-two Kubo-Bastin response (CustomTwo) -- the Fermi-energy-resolved response reconstructed from the double-Chebyshev moment matrix $\Gamma_{mn}=\mathrm{Tr}[T_m(\hat H)\,B\,T_n(\hat H)\,A]$ of a user-defined vertex pair $A,B$ from [`#!python calculation.custom_two()`][calculation-custom_two]
-  * Single-shot longitudinal DC conductivity (SingleShot) -- the conductivity [KITEx][kitex] solved for directly at each Fermi energy of [`#!python calculation.singleshot_conductivity_dc()`][calculation-singleshot_conductivity_dc]
+
+The SingleShot DC conductivity does not require the post-processing through KITE-tools.
 
 
 ### Advanced usage
@@ -83,18 +80,9 @@ Each function to compute is specified after the double hyphens — and the param
 | `#!bash --CondOpt2` | `#!bash -S`  | Broadening parameter of the Green’s function                                                        |
 | `#!bash --CondOpt2` | `#!bash -O`  | min max num Range of frequencies                                                                    |
 | `#!bash --CondOpt2` | `#!bash -X`  | Exclusive. Only calculate this quantity                                                             |
-| `#!bash --LDOSmap` | `#!bash -N` | Name of the output file                                                                         |
-| `#!bash --LDOSmap` | `#!bash -X` | Exclusive. Only calculate this quantity                                                          |
-| `#!bash --SpectralMap` | `#!bash -N` | Name of the output file                                                                     |
-| `#!bash --SpectralMap` | `#!bash -X` | Exclusive. Only calculate this quantity                                                      |
-| `#!bash --WavePacket` | `#!bash -N` | Name of the output file                                                                      |
-| `#!bash --WavePacket` | `#!bash -X` | Exclusive. Only calculate this quantity                                                       |
 | `#!bash --CustomOne` | `#!bash -N` | Name of the output file                                                                            |
 | `#!bash --CustomOne` | `#!bash -E` | min max num Number of energy points                                                                |
 | `#!bash --CustomOne` | `#!bash -X` | Exclusive. Only calculate this quantity                                                             |
-| `#!bash --CustomOneLocal` | `#!bash -N` | Name of the output file                                                                       |
-| `#!bash --CustomOneLocal` | `#!bash -E` | min max num Number of energy points                                                           |
-| `#!bash --CustomOneLocal` | `#!bash -X` | Exclusive. Only calculate this quantity                                                        |
 | `#!bash --CustomTwo` | `#!bash -N` | Name of the output file                                                                            |
 | `#!bash --CustomTwo` | `#!bash -E` | Number of energy points used in the integration                                                     |
 | `#!bash --CustomTwo` | `#!bash -T` | Temperature                                                                                          |
@@ -102,8 +90,6 @@ Each function to compute is specified after the double hyphens — and the param
 | `#!bash --CustomTwo` | `#!bash -d` | Broadening parameter of the Dirac delta                                                             |
 | `#!bash --CustomTwo` | `#!bash -F` | min max num Range of Fermi energies. min and max may be omitted if only one is required              |
 | `#!bash --CustomTwo` | `#!bash -X` | Exclusive. Only calculate this quantity                                                             |
-| `#!bash --SingleShot` | `#!bash -N` | Name of the output file                                                                            |
-| `#!bash --SingleShot` | `#!bash -X` | Exclusive. Only calculate this quantity                                                             |
 
 All the values specified in this way are assumed to be in the same units as the ones used in the configuration file. All quantities are double-precision numbers except for the ones representing integers, such as the number of points. This list may be found in KITE-tools, run `KITE-tools --help`:
 
@@ -119,7 +105,7 @@ In the table below, we specify the name of the files that are created by KITE-to
 | Optical Conductivity              | `#!bash optical_cond.dat`    | Frequency         | Opt. Cond ($Re$) | Opt. Cond ($Im$) |
 | DC Conductivity                   | `#!bash condDC.dat`          | Fermi energy      | Cond ($Re$)      | Cond ($Im$)      |
 | Second-order optical conductivity | `#!bash nonlinear_cond.dat`  | Frequency         | NL Cond ($Re$)   | NL Cond ($Im$)   |
-| Single-shot DC Conductivity       | `#!bash singleshot_condDC.dat` | Fermi energy    | Cond ($Re$)      |                  |
+| Single-shot DC Conductivity       | `#!bash [HDF5-filename].dat` | Fermi energy      | Cond ($Re$)      | Cond ($Im$)      |
 | Custom rank-one spectral density   | `#!bash custom_one.dat`      | energy            | $\mathrm{Tr}[A\,\delta(E-H)]$ ($Re$) |      |
 | Custom rank-two Kubo-Bastin response | `#!bash custom_two.dat`    | Fermi energy      | response ($Re$)  |                  |
 
@@ -177,22 +163,19 @@ For more details on the type of calculations performed during post-processing, c
     [Rashba-Edelstein Effect][ree-example] for the full derivation and a worked example.
 
     **Units**: for `#!python NumVelocities=2` (e.g. spin Hall), the result is in units of
-    $e^2/h$, same as `#!bash --CondDC`. When $A$ is a spin current built from
-    $\hat s_z=\tfrac12\sigma_z$, as in the Kane-Mele example, the factor $\hbar/2e$ that turns a
-    charge conductivity into a spin conductivity is absorbed into that number: what is written is
-    $\sigma^{s_z}_{xy}$ in units of $e/4\pi\equiv(\hbar/2e)(e^2/h)$, so a quantized
-    $\mathbb{Z}_2$ plateau reads $\pm2$. A paper quoting $\sigma^{s}$ in $e/4\pi$, or in $e^2/h$
-    with $\hbar/2e$ absorbed, uses the same number; multiply by $e/4\pi$ to recover
-    $\sigma^{s_z}_{xy}$ itself. For `#!python NumVelocities != 2`, an additional factor
-    of `#!bash EnergyScale`$^{N_v-2}$ is applied automatically; that fixes the velocity-count
-    scaling, but the absolute normalisation has only been calibrated at `#!python NumVelocities=2`.
+    $e^2/h$, same as `#!bash --CondDC`. For `#!python NumVelocities != 2`, an additional factor
+    of `#!bash EnergyScale`$^{N_v-2}$ is applied automatically.
 
-!!! info "The single-shot DC conductivity"
+!!! info "Processing the single-shot DC conductivity"
 
-    `#!bash --SingleShot` has no parameters beyond the output file because there is nothing
-    to reconstruct: the conductivity is computed energy by energy during the [KITEx][kitex]
-    run, and the temperature, broadening and Fermi energies were fixed then. KITE-tools
-    only writes it out, as `#!bash singleshot_condDC.dat`.
+    The single shot DC conductivity does not need any post-processing as it is an energy dependent calculation where the conductivity is calculated on the fly.
+    In this particular case, the data is extracted directly from the hdf file with the following python script in the `#!bash kite/tools/`-folder:
+    
+    ``` bash
+    python3 process_single_shot.py output.h5
+    ```
+    
+    The output of this script will be a data-file with name `#!bash output.dat` or similar, structured as given in the table above.
 
 ## Examples
 
@@ -240,25 +223,6 @@ Reconstructs the `#!python custom_one()` spectral density $\mathrm{Tr}[A\,\delta
 ### Example 6
 
 ``` bash
-./KITE-tools h5_file.h5 --CustomOneLocal -E -3 3 400
-```
-
-Reconstructs the `#!python custom_one_local()` spectral density over 400 energy points in
-the range `#!python [-3, 3]`, writing one column per orbital probed when
-[KITEx][kitex] ran. The probed orbitals are fixed at that point and cannot be
-changed here; the output file names each column's cell and orbital in its header.
-
-The units are those of the vertex operator $A$, per eV, per orbital. There is no
-$1/N$ and no volume factor: the seeding is a single basis ket, not a stochastic
-trace, so this is a quantity at one orbital rather than a density per unit area.
-`#!python custom_one_local()`'s vertex is an on-site, Hermitian operator, hence
-diagonal in the orbital basis, so $A|j\rangle = A_{jj}|j\rangle$ and the result is
-exactly $A_{jj}$ times the orbital-resolved local density of states. For off-diagonal
-or velocity vertices use `#!bash --CustomOne` or `#!bash --CustomTwo`.
-
-### Example 7
-
-``` bash
 ./KITE-tools h5_file.h5 --CondOpt2 -R -1 -P 1 -O 0 2 200
 ```
 
@@ -266,7 +230,7 @@ Computes the **DC photocurrent / shift-current response** (the degenerate $\omeg
 second-order optical conductivity, selected via `#!bash -R -1`) over the frequency range `#!python [0, 2]`
 with 200 points, writing each Gamma-contribution to its own file (`#!bash -P 1`).
 
-### Example 8
+### Example 7
 
 ``` bash
 ./KITE-tools h5_file.h5 --CustomTwo -F -2 2 200 -T 0.01
@@ -279,86 +243,8 @@ equidistant points in `#!python [-2, 2]`, at temperature `#!bash 0.01`.
 
 [resources]: ../background/index.md
 [ground_rules]: ../documentation/optimization.md
-### Example 9
-
-``` bash
-./KITE-tools h5_file.h5 --LDOSmap -N ldos_map.dat
-```
-
-Writes the real-space map from `#!python calculation.ldos_map()` with its site
-index decoded into coordinates: one row per orbital per unit cell, as
-`#!bash x y [z] orbital value error`. The last column is the standard error over
-the random vectors, which KITEx stores alongside the value.
-
-No energy range is accepted. Unlike the other quantities here, KITEx finishes the
-energy resolution itself and stores a single map at the energy and width fixed
-when it ran; those are echoed in the output header, converted back to eV.
-
-The units depend on the coefficient set chosen at that point: `#!python coef="gaussian"`
-(the default) gives a density of states per site, in 1/eV, Gaussian-broadened with
-standard deviation `#!python sigma` in real energy units; `#!python coef="window"`
-gives the dimensionless spectral weight in a window of width `#!python sigma` about
-the target energy. The header states which.
-
-When `#!python operators=` was used, each label also gets its own file, named after
-it, carrying one value per unit cell summed over orbitals.
-
-
-### Example 10
-
-``` bash
-./KITE-tools h5_file.h5 --SpectralMap -N spectral_map.dat
-```
-
-Writes the momentum-space map from `#!python calculation.spectral_map()` with its
-$\mathbf{k}$-index decoded: one row per orbital per $\mathbf{k}$-point, as
-`#!bash k1 [k2 [k3]] kx [ky [kz]] orbital value error`. The first group is
-$\mathbf{k}$ in fractional reciprocal-lattice coordinates $f_d$, each component in
-`#!bash [-1/2, 1/2)`, with $\mathbf{k}\cdot\mathbf{a}_d=2\pi f_d$; the second is the
-same point in Cartesian components, carrying the inverse of whatever length unit the
-lattice vectors were given in. That range covers one full Brillouin zone as a
-parallelepiped in the $\mathbf{b}_d$ basis, not the Wigner-Seitz zone -- on a honeycomb
-lattice the sampled region is a rhombus, not a hexagon. The last column is the standard
-error over the random vectors.
-
-The $\mathbf{k}$ grid is fixed by the simulation cell, so the labels are only meaningful
-under periodic or fixed-twist boundaries; with random twists each vector is drawn at a
-different twist and the average smears neighbouring $\mathbf{k}$ cells together.
-
-No energy range is accepted, for the same reason as `#!bash --LDOSmap`: KITEx
-stores a single map at the energy and width fixed when it ran, and the output
-header echoes both in eV. The units follow the coefficient set in the same way,
-and the header states which: with `#!python coef="gaussian"` the output is
-$A(\mathbf{k},\alpha;E)$ in 1/eV, diagonal in the orbital $\alpha$ and normalised so
-that $\int\mathrm{d}E\,A=1$ for each $(\mathbf{k},\alpha)$.
-
-### Example 11
-
-``` bash
-./KITE-tools h5_file.h5 --WavePacket -N wavepacket.dat
-```
-
-Writes the time series from `#!python calculation.gaussian_wave_packet()`: one row per
-timestep, as `#!bash t t_rescaled <x> <y> [<z>] Varx Vary [Varz]` followed by one column
-for each operator passed to `#!python operators=`, in that order.
-
-KITEx propagates the rescaled Hamiltonian, so the stored timestep is the argument of the
-Bessel expansion of $e^{-i\tilde H\tilde t}$. The first column is the physical time
-$t=\tilde t/\,$`#!bash EnergyScale`, in units of $\hbar/\mathrm{eV}$; the second is
-$\tilde t$ exactly as stored. The header quotes the scale relating them.
-
-Positions and variances are Cartesian, carrying the length unit of the lattice vectors
-and its square. The operator columns carry whatever units the registered vertex was
-given.
-
-[calculation-gaussian_wave_packet]: kite.md#calculation-gaussian_wave_packet
-[calculation-spectral_map]: kite.md#calculation-spectral_map
 [calculation-custom_one]: kite.md#calculation-custom_one
-[calculation-ldos_map]: kite.md#calculation-ldos_map
-[calculation-custom_one_local]: kite.md#calculation-custom_one_local
 [calculation-custom_two]: kite.md#calculation-custom_two
-[calculation-singleshot_conductivity_dc]: kite.md#calculation-singleshot_conductivity_dc
-[kitex]: kitex.md
 [custom-vertex-example]: ../documentation/examples/custom_vertex_operators.md
 [ree-example]: ../documentation/examples/rashba_edelstein.md
  

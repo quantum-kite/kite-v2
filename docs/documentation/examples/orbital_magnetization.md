@@ -92,7 +92,7 @@ $S(E)=\mathrm{Tr}[\hat M_z\,\delta(E-\hat H)]$ (both applied in
    `#!bash LattVectors`) — the per-cell factors cancel between the extensive trace and the extensive sample
    area, leaving this fixed ratio.
 2. **Hopping-value rescaling.** KITE's `#!python "vx"`/`#!python "vy"` are built directly from the hopping
-   values *as exported to the HDF5* — which `#!python python/kite/__init__.py` divides by `#!bash EnergyScale`
+   values *as exported to the HDF5* — which `#!python src/kite/__init__.py` divides by `#!bash EnergyScale`
    before KITEx runs. So the vertex KITE actually evaluates is $A_{\rm computed}=A_{\rm physical}/E_{\rm
    scale}$, and reconstructing the physical density requires multiplying by $E_{\rm scale}$ to compensate.
 
@@ -104,7 +104,7 @@ running integral $M(E_F)=\int_{-\infty}^{E_F}S(E)\,dE$ is the orbital magnetizat
 The example uses the Haldane model[^3] — a **single-spin** Chern insulator — not the spin-doubled Kane-Mele
 construction of the [spin Hall page][custom-vertex-example]. On the honeycomb lattice with two sublattices A/B,
 nearest-neighbour hopping is $-t$ and the next-nearest-neighbour hopping carries a complex Haldane phase, $+\phi$
-on the A–A bonds and $-\phi$ on the B–B bonds, with $t_2=t/3$, $\phi=-\pi/2$, $\delta=0$ (no Semenoff mass).
+on the A–A bonds and $-\phi$ on the B–B bonds, with $t_2=t/3$, $\phi=\pi/2$, $\delta=0$ (no Semenoff mass).
 
 **The bulk gap is $|E|<1$, not $\sqrt3$.** The local Dirac-point mass is $3\sqrt3\,t_2\sin\phi=\sqrt3\approx1.73$,
 but the lattice model's actual (smaller) *indirect* band gap — verified numerically to 10 significant figures
@@ -112,7 +112,7 @@ via [`#!python kite.visualize.hamiltonian_k`][kite-visualize] and independently 
 Fukui-Hatsugai-Suzuki lattice Chern-number calculation (converged, gap never closes from a $20\times20$ to
 $120\times120$ k-mesh) — is exactly $|E|<1$ (the gap magnitude is an eigenvalue-only quantity, unaffected
 by the convention correction below). Both calculations agree the filled/valence band has **Chern
-number $C=+1$** for this bond-phase assignment and KITE's row=`#!python from_sub`/col=`#!python to_sub`,
+number $C=-1$** for this bond-phase assignment and KITE's row=`#!python from_sub`/col=`#!python to_sub`,
 $e^{+i\mathbf k\cdot\mathbf r}$ hopping convention (see
 [`#!python hamiltonian_k`][kite-visualize]'s own docstring for that convention).
 
@@ -125,8 +125,10 @@ states, the orbital-magnetization spectral density is generically **nonzero insi
 weak uniform on-site disorder ($W=0.05$, well below the gap) on both sublattices and averages over several
 disorder realizations — this converges the stochastic trace considerably faster than a fully clean, large
 `#!python num_random_` run would on its own (matching the same lesson learned for the
-[Kane-Mele disorder example][custom-vertex-example]). If `#!python num_random_` is too low, the
-residual stochastic noise in $S(E)$ can look visibly different on the two sides of $E=0$.
+[Kane-Mele disorder example][custom-vertex-example]). Note that the Haldane model has no particle-hole
+symmetry, so the density of states — and hence the stochastic-trace convergence rate — genuinely differs
+between $E>0$ and $E<0$; a `#!python num_random_` too low for the harder side shows up as visibly more
+residual noise in $S(E)$ on that side, even though the two sides use the same disorder and moment count.
 
 ### Verified result
 
@@ -147,8 +149,8 @@ curvature and orbital moment of each band, integrated over the Brillouin zone) e
 the full spectrum — not restricted to the gap. The two agree closely across the entire range, including the
 bulk-band region and the resonance features near the gap edges: the root-mean-square deviation between the two
 curves is **~1% of the peak magnetization**. Inside the gap, $M(E_F)$ rises **linearly**; a fit restricted to
-$|E|<0.8$ gives $\left.dM/dE_F\right|_{\rm fit}=-0.157$, compared to the exact topological (Streda-relation)
-prediction $-C/(2\pi)=-0.1592$ for $C=+1$ — agreement to **~1%**.
+$|E|<0.8$ gives $\left.dM/dE_F\right|_{\rm fit}=0.157$, compared to the exact topological (Streda-relation)
+prediction $-C/(2\pi)=0.1592$ for $C=-1$ — agreement to **~1%**.
 
 !!! example
 

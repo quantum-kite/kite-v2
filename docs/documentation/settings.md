@@ -18,9 +18,7 @@ Below, we explain each of the arguments in the [`#!python kite.Configuration`][c
 
 !!! Info
 
-     The current syntax assumes that the user will simulate a 2D or 3D system as a default. However, 1D lattices can be easily constructed by simulating a strip geometry with open boundary conditions in the transverse (y) direction, using `#!python ny = 1` and a small `#!python ly`.
-
-     The transverse size cannot be made arbitrarily small: every partition length `#!python ly/ny` must be a multiple of `TILE = 8`, so the narrowest strip KITE will run is `#!python ly = 8`. `TILE` is a compile-time constant of the domain decomposition — see [Performance][performance] — and is not meant to be changed for this purpose. A smaller `#!python ly` exits with a message naming the constraint.
+     The current syntax assumes that the user will simulate a 2D or 3D system as a default. However, 1D lattices can be easily constructed by simulating a strip geometry with open boundary conditions in the transverse (y) direction and `#!python ly, ny = 1`.
 
 ## [Divisions][configuration-divisions]
 : The [`#!python divisions`][configuration-divisions] is an integer number that defines the number of decomposition parts in each spatial direction.
