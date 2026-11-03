@@ -2,34 +2,20 @@ name: kite
 channels:
   - conda-forge
   - nodefaults
-
-# Every dependency carries a lower bound. These are floors, not pins: this file
-# is not a lockfile and does not make a build reproducible -- it states what
-# KITE needs and lets conda resolve the rest.
-#
-# Three of the floors follow from something concrete and say so below. The rest
-# are conservative "no known requirement" floors: old enough not to exclude a
-# working setup, recent enough to be a real statement. They are not derived,
-# and are marked so nobody reads a justification into them.
-#
-# The Python-package floors here must stay in step with pyproject.toml, which
-# is what `pip install -e .` consumes on every install route, conda or not.
 dependencies:
   - python >=3.9,<3.13
-  - cxx-compiler >=1.5          # no known requirement
-  - c-compiler >=1.5            # no known requirement
-  - llvm-openmp >=14            # no known version requirement; CMake requires its presence
-  - cmake >=3.9                 # matches cmake_minimum_required in CMakeLists.txt
-  - make >=4.2                  # no known requirement
-  - hdf5 >=1.14.6 nompi*        # lowest version KITE is built and tested against
-                                # (MacPorts route); the conda route resolves 2.x and
-                                # is tested too. nompi avoids pulling in mpich
-  - fftw >=3.3.8                # no known requirement
-  - numpy >=1.20                # no known requirement
-  - scipy >=1.6                 # scipy.integrate.simpson, which replaced simps
-  - h5py >=3.0                  # no known requirement
-  - matplotlib >=3.4            # no known requirement
-  - pytest >=7.0                # no known requirement
+  - cxx-compiler
+  - c-compiler
+  - llvm-openmp
+  - cmake >=3.9
+  - make
+  - hdf5=*=nompi*
+  - fftw
+  - numpy
+  - scipy
+  - h5py
+  - matplotlib
+  - pytest
 # After activating this environment, install the kite package itself with:
 #   pip install -e .
 # (not done inline here as a `pip:` section, since that resolves "." relative

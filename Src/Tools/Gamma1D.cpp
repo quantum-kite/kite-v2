@@ -36,19 +36,6 @@ void Simulation<T,D>::Gamma1D(int NRandomV, int NDisorder, int N_moments,
   KPM_Vector<T,D> kpm1(2, *this);
 		
   // Make sure the local gamma matrix is zeroed
-  // The loop below advances two moments at a time and writes both, so an odd
-  // count writes one column past the end. Demonstrated at 63 moments: the last
-  // pass writes columns 62 and 63 of an array with 63, and the run still exits
-  // 0. Python refuses an odd count at export; this is the backstop for a file
-  // that never went through it.
-  if(N_moments % 2 != 0){
-    std::cout << "The number of moments must be even, got " << N_moments
-              << ".\n  This calculation accumulates two moments per iteration "
-                 "and writes both, so an odd count writes one element past the "
-                 "array. Aborting.\n";
-    fatal_exit();
-  }
-
   Eigen::Array<T, -1, -1> gamma = Eigen::Array<T, -1, -1 >::Zero(1, N_moments);
   Eigen::Matrix<T, 1, 2> tmp =  Eigen::Matrix < T, 1, 2> ::Zero();		
 

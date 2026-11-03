@@ -27,17 +27,6 @@
     momentum-dependent coupling -- see the orbital-angular-momentum example
     for a case where the coupling itself depends on k).
 
-    Time units
-    ----------
-    KITEx propagates the rescaled Hamiltonian, so the step it works in is
-    rescaled too: t_rescaled = t * EnergyScale, with hbar = 1. The two ways of
-    asking for a step are timestep (rescaled) and timestep_physical (physical),
-    and exactly one of them is given. This example uses timestep_physical=0.1,
-    so the 400 points span t = 0 to 39.9 whatever spectrum_range is -- about 1.3
-    Larmor periods at 2B = 0.2. The output file carries both values, under
-    timestep and timestep_physical, and spin_precession_simple_process.py reads
-    the physical one straight out.
-
     Operators: Sx, Sy, Sz are registered as on-site 2x2 matrices via
     add_orbital_coupling(), the same mechanism used throughout KITE's custom
     operators (custom_one, custom_two, and this generalized
@@ -104,7 +93,7 @@ def register_spin_operators(calculation):
     return ['l0', 'l1', 'l2']
 
 
-def main(t=1.0, B=0.1, num_points=400, num_moments=256, timestep_physical=0.1,
+def main(t=1.0, B=0.1, num_points=400, num_moments=256, timestep=0.5,
          width=4.0, lx=128,
          output_file="spin_precession_simple-output.h5"):
     lattice = simple_square_lattice_with_field(t=t, B=B)
@@ -127,8 +116,7 @@ def main(t=1.0, B=0.1, num_points=400, num_moments=256, timestep_physical=0.1,
 
     calculation.gaussian_wave_packet(
         num_points=num_points, num_moments=num_moments, num_disorder=1,
-        k_vector=k_vector, spinor=spinor, width=width,
-        timestep_physical=timestep_physical,
+        k_vector=k_vector, spinor=spinor, width=width, timestep=timestep,
         mean_value=mean_value, operators=operators)
 
     kite.config_system(lattice, configuration, calculation, filename=output_file)

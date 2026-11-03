@@ -44,19 +44,7 @@ template std::complex<long double> integrate<long double>(Eigen::Matrix<long dou
 
 template <typename T>
 T fermi_function(T energy, T mu, T beta){
-	const T x = beta*(energy - mu);
-	// beta is 1/kT, so a requested temperature of zero makes it infinite. Away
-	// from mu that is already the right answer -- exp gives 0 or infinity and f
-	// is 1 or 0 -- but at energy == mu exactly the product is infinity*0, which
-	// is NaN and poisons the whole integral rather than one point of it. The
-	// T -> 0 limit of the occupation there is 1/2.
-	//
-	// This is the only input for which the result differs: every x that is a
-	// number takes the same expression it always did, so a run that produced
-	// numbers before produces the same bytes now.
-	if(std::isnan(x))
-		return T(0.5);
-	return 1.0/(1.0 + exp(x));
+	return 1.0/(1.0 + exp(beta*(energy - mu)));
 }
 template float fermi_function(float, float, float);
 template double fermi_function(double, double, double);
@@ -306,27 +294,3 @@ template long double delta(int, long double);
 
 
 
-
-std::string fermi_resolution_line(double temperature, double dE){
-	// The Fermi factor is analytic with poles a distance pi*kT off the real
-	// axis, so integrating it on a uniform grid converges geometrically in
-	// kT/dE. Measured on the shipped CondDC grid against a reference integral:
-	// the relative error is 2.4e-7 at a ratio of 1, 1.8e-5 at 0.5, 1.6e-4 at
-	// 0.25 and 1.3e-3 at zero temperature, where the integrand has a genuine
-	// step and Simpson loses its order entirely and decays only as 1/N.
-	//
-	// So below about half a step the number the user asked for is not the one
-	// the grid can represent. That is reported here, not corrected: the fix is
-	// theirs to choose (more points, or a temperature they meant).
-	std::ostringstream out;
-	if(dE <= 0.0)
-		return "";
-	const double ratio = temperature/dE;
-	out << "   Fermi edge in integration steps: " << ratio;
-	if(ratio < 0.5)
-		out << "\n      The Fermi edge is narrower than half the integration step, so the\n"
-		       "      energy integral does not resolve it and converges only linearly.\n"
-		       "      Raise the number of integration points, or the temperature.";
-	out << "\n";
-	return out.str();
-}

@@ -1,13 +1,17 @@
 """ Post-processing for kane_mele_spin_hall.py: Kubo-Bastin spin Hall integral.
 
-    Reads the moment matrix /Calculation/CustomTwo/Gamma written by KITEx and
-    integrates the Kubo-Bastin integrand against the Fermi function to give
-    sigma^{s_z}_{xy}(mu). KITE-tools computes the same quantity into
-    custom_two.dat; this script exists so the reconstruction broadening and the
-    energy grid can be varied without re-running KITEx.
+    There is NO KITE-tools step for custom_two. This script reads the raw
+    double-Chebyshev moment matrix /Calculation/CustomTwo/Gamma written by
+    KITEx, reconstructs the Kubo-Bastin integrand at a finite reconstruction
+    broadening, and integrates it against the Fermi function to give the spin
+    Hall conductivity sigma^{s_z}_{xy} as a function of Fermi energy.
 
-    The spin Hall plateau and what sets its flatness are discussed in
-    docs/documentation/examples/custom_vertex_operators.md.
+    This is the diag=0 (antisymmetric / Hall) branch of examples/cond_sum.py,
+    reproduced here so the example is self-contained. Response is returned in
+    the same convention as KITE's charge-conductivity post-processors (density
+    scaling included); for a spin current the natural quantum is e/(4*pi) but
+    the point of this example is the FLAT PLATEAU across the bulk gap and its
+    sign, not an exactly quantized number at L=64.
 
     Usage:
         python kane_mele_spin_hall_process.py kane_mele_spin_hall-output.h5
@@ -74,11 +78,7 @@ def spin_hall(file_path, mu_values, k_BT=0.01, scat_phys=0.04,
         )
         energy_scale = np.array(f["EnergyScale"]).item()
         num_velocities = int(np.array(f["/Calculation/CustomTwo/NumVelocities"]))
-        # Read in the orientation KITE-tools reads it. The stored dataset is
-        # already what the reconstruction wants; transposing it here put this
-        # script in the opposite orientation to the C++, which for a Hall-type
-        # (nearly imaginary) Gamma is a sign flip.
-        moments_matrix = f["/Calculation/CustomTwo/Gamma"][:]
+        moments_matrix = f["/Calculation/CustomTwo/Gamma"][:].T
 
     Moments_D, Moments_G = moments_matrix.shape
     spin_degeneracy = 1.0
@@ -105,11 +105,7 @@ def spin_hall(file_path, mu_values, k_BT=0.01, scat_phys=0.04,
     units = 1.0 / (2.0 * np.pi)
     density_scale = (num_orbitals * spin_degeneracy) / (unit_cell_area * units)
     energy_scale_correction = energy_scale ** (num_velocities - 2)
-    # e^2/h for the operator pair as written, matching KITE-tools. No factor 2:
-    # the s_z = sigma_z/2 vertex carries its own 1/2, so the plateau reads 1.
-    # spin_degeneracy stays 1 here as it is in the C++ -- a spin factor is put
-    # in by hand or carried by the lattice, never supplied by the reconstruction.
-    return mu_values, cond * density_scale * energy_scale_correction
+    return mu_values, 2.0 * cond * density_scale * energy_scale_correction
 
 
 if __name__ == "__main__":

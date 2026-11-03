@@ -9,7 +9,6 @@
 #include <iostream>
 #include <complex>
 #include <string>
-#include <sstream>
 #include "../macros.hpp"
 
 template <typename T>	
@@ -59,9 +58,3 @@ std::function<std::complex<T>(int, T)> greenAscat(T scat);
 
 template <typename TR>
 TR delta(int n, TR energy);
-
-//: How many integration steps the Fermi edge is wide, as a line for the
-//: parameter banner. Both arguments are in KPM reduced units, so the ratio is
-//: unit-free. Reported rather than enforced: a user may legitimately want a
-//: temperature the grid cannot resolve, but should not have to deduce it.
-std::string fermi_resolution_line(double temperature, double dE);

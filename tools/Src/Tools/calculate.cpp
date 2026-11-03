@@ -21,16 +21,11 @@
 #include "systemInfo.hpp"
 #include "../Spectral/dos.hpp"
 #include "../Spectral/ldos.hpp"
-#include "../Spectral/ldosmap.hpp"
-#include "../Spectral/spectralmap.hpp"
-#include "../Wavepacket/wavepacket.hpp"
 #include "../Spectral/arpes.hpp"
 #include "../CondDC/conductivity_dc.hpp"
-#include "../CondDC/singleshot.hpp"
 #include "../OptCond_1order/conductivity_optical.hpp"
 #include "../OptCond_2order/conductivity_2order.hpp"
 #include "../Custom/customone.hpp"
-#include "../Custom/customonelocal.hpp"
 #include "../Custom/customtwo.hpp"
 #include "calculate.hpp"
 
@@ -52,16 +47,11 @@ void calculate(char *name, shell_input & variables){
   verbose_message("----------------- CALCULATIONS ----------------- \n");
   arpes<U, DIM>                   arpes(info, variables); 
   ldos<U, DIM>                    lDOS(info, variables); 
-  ldosmap<U, DIM>                 lDOSmap(info, variables);
-  spectralmap<U, DIM>             SpectralMap(info, variables);
-  wavepacket<U, DIM>              WavePacket(info, variables);
   dos<U, DIM>                     DOS(info, variables); 
   conductivity_dc<U, DIM>         condDC(info, variables);
-  singleshot<U, DIM>              singleShot(info, variables);
   conductivity_optical<U, DIM>    condOpt(info, variables);
   conductivity_nonlinear<U, DIM>  condOpt2(info, variables);
   customone<U, DIM>               customOne(info, variables);
-  customonelocal<U, DIM>          customOneLocal(info, variables);
   customtwo<U, DIM>               customTwo(info, variables);
   verbose_message("------------------------------------------------ \n\n");
 

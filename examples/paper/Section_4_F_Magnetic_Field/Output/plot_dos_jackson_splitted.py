@@ -14,8 +14,7 @@ import numpy as np
 import matplotlib.pyplot as mpl
 
 from matplotlib import ticker
-e = 1.602176565e-19     #: [C] elementary charge
-hbar = 6.58211899e-16   #: [eV*s]
+from pybinding.constants import e, hbar
 
 
 def get_moments_and_scales(file_name):
@@ -25,7 +24,7 @@ def get_moments_and_scales(file_name):
     moments = np.array(file_input['Calculation']['dos']['MU']).flatten()
 
     # get the energy scale, b is 0 at the moment
-    a, b = file_input['EnergyScale'][()], file_input['EnergyShift'][()]
+    a, b = file_input['EnergyScale'].value, file_input['EnergyShift'].value
 
     return moments, a, b
 
@@ -35,21 +34,24 @@ def get_size(file_name):
 
     l_size = np.array(file_input['L']).flatten()
     l1, l2 = l_size[0], l_size[1]
-    num_orbitals = file_input['NOrbitals'][()]
+    num_orbitals = file_input['NOrbitals'].value
 
     return num_orbitals, l1, l2
 
 
 # ************************************
 # keep these definitions for kite website
-from cycler import cycler
+import seaborn as sns
 
 mpl.rcParams['figure.dpi'] = 100
 mpl.rcParams['savefig.dpi'] = 100
+sns.set_style("white")
 # Kite color scheme
 colors = ["dusty purple", "faded green", "windows blue", "amber", "greyish"]
-mpl.rcParams['axes.prop_cycle'] = cycler(color=['xkcd:' + c for c in colors])
-mpl.rcParams['font.size'] = 17
+current_palette = sns.xkcd_palette(colors)
+sns.set_palette(current_palette)
+sns.set_style("ticks")
+sns.set_context("talk", font_scale=1.3)
 
 # ************************************
 # read h5 just to know the number of moments, enters the name of the DOS file

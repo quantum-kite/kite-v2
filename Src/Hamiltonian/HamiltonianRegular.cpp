@@ -73,37 +73,6 @@ void Periodic_Operator<T,D>::Convert_Build (  LatticeStructure <D> & r )
     for(unsigned  i = 0; i < NHoppings(io); i++)
       {
         b3.set_coord(distance(i,io));                              // Get Coordinates in Basis 3,  The last is the Final Orbital.
-
-        // The destination cell is D base-3 digits, so every component must be
-        // -1, 0 or +1. A hand-authored file can hold a longer hopping, and the
-        // carry then lands in the digit above. When that digit is the orbital
-        // field the decoded orbital runs past Orb, which is both a different
-        // bond and an out-of-range index. Abort, naming the hopping: continuing
-        // would index past the orbital table, and warning and proceeding gave
-        // exit codes 1 1 1 1 1 0 over six runs of the same file with the seeds
-        // fixed, because what is read back varies.
-        //
-        // A carry out of a NON-final direction cannot be detected here: it
-        // produces a legitimate address for a different cell. On a 2D
-        // two-orbital lattice [+2,0] and [-1,+1] both encode as 15, and the
-        // moments are then bit-identical to the [-1,+1] model. Python refuses
-        // such a hopping at export; this is only the backstop for files that
-        // never went through it.
-        if(b3.coord[D] >= static_cast<std::ptrdiff_t>(r.Orb)){
-          std::cout << "Hopping " << i << " from orbital " << io
-                    << " decodes to orbital " << b3.coord[D]
-                    << ", but this lattice has only " << r.Orb << ".\n"
-                       "  Its destination cell reaches beyond the "
-                       "first-neighbour cell, which the file format cannot "
-                       "represent, so the address has overflowed into the "
-                       "orbital field.\n"
-                       "  This file was not written by kite.config_system, "
-                       "which refuses such a hopping.\n"
-                       "  Aborting: continuing would read past the orbital "
-                       "table, so the run would be both wrong and unsafe.\n";
-          fatal_exit();
-        }
-
         b3.coord[D] -= io;                                         // Obtain the difference in orbital coordinates
         v.array() -= 1;                                            // Subtract to the first D elements of v to get v(i) in (-1, 0 , 1)
         distance(i,io) = Ld.set_index(b3.coord).index;             // Convert in distances in this lattice

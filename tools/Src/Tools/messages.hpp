@@ -12,7 +12,7 @@ void print_header_message(){
       "|            Chebyshev Polynomial Green's Function Approach              | \n"
       "|             to Real-Space Quantum Transport Simulations                | \n"    
       "|                                                                        | \n"                                              
-      "|                     KITE | Release 2.0                                 | \n"         
+      "|                     KITE | Release 1.1                                 | \n"         
       "|                     Kite home: quantum-kite.com                        | \n"
       "|                                                                        | \n"
       "|    Reference: S. M. Joao et al., R. Soc. Open Sci. 7, 191809 (2020)    | \n"

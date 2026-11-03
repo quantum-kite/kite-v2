@@ -138,9 +138,9 @@ def main(W, t=1.0, t2=0.15, moments=256, num_disorder=1,
                         disorder=disorder, filename=output_file)
 
     # Run:   ../build/KITEx <output_file>
-    # then either ../build/KITE-tools <output_file> --CustomTwo, or reuse
-    # kane_mele_spin_hall_process.spin_hall() for the same Kubo-Bastin energy
-    # integral in Python, exactly as in the clean example.
+    # There is NO KITE-tools step for custom_two -- reuse
+    # kane_mele_spin_hall_process.spin_hall() for the Kubo-Bastin energy
+    # integral, exactly as in the clean example.
     return output_file
 
 

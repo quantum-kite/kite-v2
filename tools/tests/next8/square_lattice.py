@@ -1,8 +1,7 @@
 import kite
 import numpy as np
 import sys
-from kite import lattice as latt
-from kite import visualize
+import pybinding as pb
 
 
 L = int(sys.argv[1])
@@ -16,7 +15,7 @@ def square_lattice(onsite=0):
     a1 = np.array([1, 0])
     a2 = np.array([0, 1])
 
-    lat = latt.Lattice(a1=a1, a2=a2)
+    lat = pb.Lattice(a1=a1, a2=a2)
     lat.add_sublattices(('A', [0, 0], onsite))
     lat.add_hoppings(   ([1, 0], 'A', 'A', -1),
                         ([0, 1], 'A', 'A', -1))
@@ -46,7 +45,7 @@ M = b1[0:2]
 K = [0.23*np.pi, 0]
 
 points = [K, K]
-k_path = visualize.make_path(*points)[0]
+k_path = pb.results.make_path(*points)
 weights = 1.0
 
 

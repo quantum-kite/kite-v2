@@ -386,7 +386,7 @@ void KPM_Vector <T, 3>::test_boundaries_system() {
   }
   std::cout << "Thread : " << r.thread_id << std::endl;
 #pragma omp barrier
-  fatal_exit();
+  exit(1);
   
 }
 

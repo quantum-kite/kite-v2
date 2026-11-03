@@ -1,13 +1,12 @@
 import kite
 import matplotlib.pyplot as plt
 import numpy as np
-from kite import lattice as latt
-from kite import visualize
+import pybinding as pb
 
 def square_lattice(onsite=(0, 0)):
     a1 = np.array([1, 0])
     a2 = np.array([0, 1])
-    lat = latt.Lattice(a1=a1, a2=a2)
+    lat = pb.Lattice(a1=a1, a2=a2)
     lat.add_sublattices(('A', [0, 0], onsite[0]))
     lat.add_hoppings(
         ([1, 0], 'A', 'A', - 1),
@@ -29,7 +28,7 @@ Gamma = [0, 0]
 K1 = b1[0:2] + b2[0:2]
 points = [Gamma, K1]
 
-k_path = visualize.make_path(*points, step=0.01)[0]
+k_path = pb.results.make_path(*points, step=0.01)
 
 calculation_arpes = kite.Calculation(configuration)
 calculation_arpes.arpes(k_vector=k_path, num_moments=moments, num_disorder=1)

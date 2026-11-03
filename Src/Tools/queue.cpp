@@ -70,7 +70,7 @@ std::string num2str3(int dir_num){
   case 26:
     dir = "zzz"; break;
   default:
-    std::cout << "Invalid direction in num2str_dir3.\n"; fatal_exit();
+    std::cout << "Invalid direction in num2str_dir3.\n"; exit(1);
   }
   return dir;
 }
@@ -92,16 +92,13 @@ std::string num2str2(int dir_num) {
   case 5:
     dir = "yx"; break;
   case 6:
-    // "yz", not "yx": this string picks the velocity pair as well as naming the
-    // dataset, so a repeated "yx" made direction='yz' compute yx and store it as
-    // Gammayx, which KITE-tools then could not find.
-    dir = "yz"; break;
+    dir = "yx"; break;
   case 7:
     dir = "zx"; break;
   case 8:
     dir = "zy"; break;
   default:
-    std::cout << "Invalid direction for the optical conductivity.\n"; fatal_exit();
+    std::cout << "Invalid direction for the optical conductivity.\n"; exit(1);
   }
   return dir;
 }

@@ -86,13 +86,13 @@ kite_style.apply()
 # indirect band gap.
 GAP_EDGE = 1.0
 
-# Exact topological prediction for this lattice: C=+1 for the filled/valence
+# Exact topological prediction for this lattice: C=-1 for the filled/valence
 # band, for the stored Haldane NNN phase orientation and KITE's row=from_id/
 # col=to_id, +i*k.r convention (verified directly against the C++ propagation
 # and ARPES plane-wave code). The modern-theory relation for this sign convention is
-# dM/dE_F = -C/(2*pi), which is NEGATIVE for C=+1 -- matching the actual,
-# negative slope both KITEx and the k-space calculation below produce.
-CHERN_NUMBER = +1
+# dM/dE_F = -C/(2*pi), which is POSITIVE for C=-1 -- matching the actual,
+# positive slope both KITEx and the k-space calculation below produce.
+CHERN_NUMBER = -1
 EXPECTED_SLOPE = -CHERN_NUMBER / (2 * np.pi)
 
 
@@ -213,7 +213,7 @@ def kspace_full_range(lattice, Efs, Nk=80):
             # moment expression -Im[...], not +Im[...]. Combined with the
             # corrected (row=from_id, +i*k.r) H(k) above, this gives
             # dM/dE_F = -C/(2*pi) in the gap, matching the actual KITEx data
-            # for the stored (C=+1) Haldane phase orientation.
+            # for the stored (C=-1) Haldane phase orientation.
             s_m -= np.imag(num) / dE_nm
             s_o -= 2 * np.imag(num) / dE_nm ** 2
         En = E[..., n]
@@ -252,7 +252,7 @@ def plot(h5_name, dat_name, out_path="plots/haldane_orbital_magnetization_previe
     ax1.axvspan(-GAP_EDGE, GAP_EDGE, color=kite_style.KITE_ACCENT, alpha=0.08)
     ax1.set_ylabel(r"$S(E)$  (nm$^{-2}$)", fontsize=13)
     ax1.set_title("Haldane model: orbital-magnetization spectral density\n"
-                  r"($t_2=t/3$, $\phi=-\pi/2$, $\delta=0$: $C=+1$ Chern insulator)",
+                  r"($t_2=t/3$, $\phi=\pi/2$, $\delta=0$: $C=-1$ Chern insulator)",
                   fontsize=12)
 
     ax2.plot(E, M_kspace, color="0.4", ls=":", lw=2.0,

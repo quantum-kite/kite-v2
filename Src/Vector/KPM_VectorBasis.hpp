@@ -12,10 +12,6 @@ template <typename T, unsigned D>
 class KPM_VectorBasis: public ComplexTraits<T> {
 protected:
   int index;
-  // Norm of phi_0, captured at n = 0, for the containment certificate in
-  // cheb_iteration. Zero means "not captured yet", which disables the check --
-  // a driver whose expansion does not start at n = 0 is not certified.
-  double norm_phi0 = 0.0;
   const int memory;
   Simulation<T,D> & simul;
   Hamiltonian<T,D>           & h;

@@ -13,7 +13,7 @@
     Calculation type: LDoS
     Last updated: 08/05/2025
 """
-from kite import lattice as latt
+import pybinding as pb
 import sys
 import kite
 import numpy as np
@@ -28,7 +28,7 @@ def tmd(signsoc):
     t2 = 0.2  # nest-nearest neighbour hopping
     m=0.1  # sub-lattice symmetry breaking term
     # create a lattice with 2 primitive vectors
-    lat = latt.Lattice(
+    lat = pb.Lattice(
         a1=[a, 0],
         a2=[a/2, a/2 * sqrt(3)]
     )

@@ -10,13 +10,11 @@
         ##############################################################################      
 """
 import numpy as np
-from kite import lattice as latt
+import pybinding as pb
 import kite
 import sys
 
-from kite.repository import graphene
-
-t_nn = graphene.t_nn
+from pybinding.repository.graphene import t_nn
 
 t = 2.8  # eV
 
@@ -34,7 +32,7 @@ def graphene(onsite=(0, 0), nearest_neighbors=1):
 
     a1 = np.array([1 + np.cos(theta), np.sin(theta)])
     a2 = np.array([0, 2 * np.sin(theta)])
-    lat = latt.Lattice(
+    lat = pb.Lattice(
         a1=a1, a2=a2
     )
     lat.add_sublattices(

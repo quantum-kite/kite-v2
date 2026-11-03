@@ -84,7 +84,7 @@ void Simulation<T,D>::calc_singleshot() {
       direction_string = "z,z";
     else{
       std::cout << "Invalid singleshot direction. Has to be xx, yy or zz. Exiting.\n";
-      fatal_exit();
+      exit(1);
     }
        
     // We also need to determine the number of energies that we need to calculate
@@ -168,11 +168,7 @@ void Simulation<T,D>::singleshot(Eigen::Array<double, -1, 1> energies,
   // which is N*number_of_orbitals
   unsigned int spin_degeneracy = 1;
     
-  double factor = -2.0*spin_degeneracy*number_of_orbitals/unit_cell_area;	// e^2/h, per spin:
-  // the 2 converts the Kubo-Greenwood form reconstructed above (which keeps the pi
-  // from Im green, unlike KITE-tools' CondDC) into e^2/h, and number_of_orbitals
-  // undoes the random-vector normalization. spin_degeneracy is 1, so a spinless
-  // model needs its own factor of 2 for physical spin degeneracy.
+  double factor = -2.0*spin_degeneracy*number_of_orbitals/unit_cell_area;	// This is in units of sigma_0, hence the 4
     
   // process the string with indices and verify if the demanded
   // calculation is meaningful. For that to be true, this has to be a 
@@ -181,7 +177,7 @@ void Simulation<T,D>::singleshot(Eigen::Array<double, -1, 1> energies,
   if(indices.at(0).at(0) != indices.at(1).at(0)){
     std::cout << "SingleShot is only meaningful for the longitudinal conductivity.";
     std::cout << "Please use directions 'x,x', 'y,y' or 'z,z'. Exiting.\n";
-    fatal_exit();
+    exit(1);
   }
 
 

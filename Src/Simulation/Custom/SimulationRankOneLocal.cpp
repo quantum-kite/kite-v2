@@ -144,15 +144,8 @@ void Simulation<T, D>::custom_one_local(
     h.generate_disorder();
     for (int site = 0; site < number_local_sites_; ++site) {
       gamma_site.setZero();
-      // FixPosition is a flat cell index (Python writes position . [1, Lx, Lx*Ly]),
-      // and build_site decodes its argument in r.Lt coordinates, orbital-slowest, so
-      // the orbital stride is the global cell count r.Nt. It is NOT r.Ld[0] -- that is
-      // the ghost-padded local extent of direction 0, which appears legitimately three
-      // lines below as the inner-product block stride and is a stride in nothing here.
-      // Same encoding as SimulationLMU.cpp:175-178 and SimulationLDOSOperator.cpp:111.
       const std::size_t global_index =
-        static_cast<std::size_t>(positions_[site]) +
-        static_cast<std::size_t>(orbitals_[site]) * r.Nt;
+        positions_[site] * r.Ld[0] + orbitals_[site];
       kpm_trc_0.build_site(global_index);
       kpm_trc_0.Exchange_Boundaries();
       for (auto &vec : vectors)

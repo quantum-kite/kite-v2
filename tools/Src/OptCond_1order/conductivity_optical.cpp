@@ -64,7 +64,7 @@ conductivity_optical<T, DIM>::conductivity_optical(system_info<T, DIM>& info, sh
 template <typename T, unsigned DIM>
 void conductivity_optical<T, DIM>::printOpt(){
   double scale = systemInfo.energy_scale;
-  std::cout << "The optical conductivity will be calculated with these parameters: (energy units)\n"
+  std::cout << "The optical conductivity will be calculated with these parameters: (eV, Kelvin)\n"
     "   Temperature: "            << temperature*scale  << ((default_temperature)?  " (default)":"") << "\n"
     "   Broadening: "             << scat*scale         << ((default_scat)?         " (default)":"") << "\n"
     "   Fermi energy: "           << e_fermi*scale      << ((default_efermi)?       " (default)":"") << "\n"
@@ -76,8 +76,7 @@ void conductivity_optical<T, DIM>::printOpt(){
     "   Number of green blocks: " << Convergence_G      << ((default_Convergence_G)?   " (default)":"") << "\n"
     "   Num integration points: " << N_energies         << ((default_NEnergies)?    " (default)":"") << "\n"
     "   Kernel for Dirac deltas: "<< "jackson"          << " (default)\n"
-    "   Filename: "               << filename           << ((default_filename)?     " (default)":"") << "\n"
-    << fermi_resolution_line(double(temperature), 2.0*lim/double(N_energies - 1));
+    "   Filename: "               << filename           << ((default_filename)?     " (default)":"") << "\n";
   if(!Moments_divisible)
     std::cout << "Warning! The number of moments specified does not divide the number of delta blocks"
       " and the number of green blocks. The Gamma matrix has been padded with zeros so that this requirement"
@@ -186,13 +185,6 @@ bool conductivity_optical<T, DIM>::fetch_parameters(){
 
   N_omegas = NumPoints;
   default_Nfreqs = false;
-  // beta, not temperature, is what the integrand uses: the deltaF lambda below
-  // captures it by value. Reading Temperature without recomputing beta left
-  // this reader computing at the set_default_parameters value of 0.001 eV
-  // while the banner printed the temperature the user had asked for. The three
-  // siblings that fetch a temperature -- conductivity_dc, conductivity_2order
-  // and customtwo -- all recompute here for the same reason.
-  beta = 1.0/temperature;
   default_temperature = false;
   
 

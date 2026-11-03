@@ -139,18 +139,15 @@ void Simulation<T, D>::custom_ss_two(
     }
 #pragma omp barrier
     const unsigned num_en = energies_.size();
-    // sigma_, gamma_ and energies_ arrive already rescaled from Python.
-    // energy_scale is retained only for norm_0/norm_1, which scale the
-    // coefficient arrays, not the user's input.
     const value_type norm_0 = 1 / energy_scale;
-    const value_type sigma = sigma_;
-    const value_type gamma = gamma_;
+    const value_type sigma = sigma_ * norm_0;
+    const value_type gamma = gamma_ * norm_0;
     const value_type norm_1 = norm_0 * norm_0;
 
     std::array<Eigen::Array<T, -1, -1>, 2> coefs;
     unsigned count = 0;
     for (const auto &vv : energies_) {
-      const value_type en = vv;
+      const value_type en = vv / energy_scale;
       const T z = en + I * gamma;
       const Eigen::Array<T, -1, 1> dgreen_tmp =
         Coefficients::build_dgreen<value_type>(z) * norm_1;

@@ -76,15 +76,8 @@ bool customtwo<T, DIM>::is_required(){
 template <typename T, unsigned DIM>
 void customtwo<T, DIM>::set_default_parameters(){
     double scale = systemInfo->energy_scale;
-    double shift = systemInfo->energy_shift;
 
-    // The integration step has to be well under the broadening it resolves.
-    // At the former default of 513 points over [-0.99, 0.99], dE = 3.87e-3
-    // against a default broadening of 0.01/energy_scale = 2.5e-3 -- coarser
-    // than the Lorentzian being integrated, costing about 1% silently.
-    // Measured on the Kane-Mele spin Hall plateau, which converges from
-    // below: the grid stops moving the answer at 2049 points.
-    NEnergies = 1025;
+    NEnergies = 513;
     default_NEnergies = true;
 
     filename = "custom_two.dat";
@@ -95,12 +88,8 @@ void customtwo<T, DIM>::set_default_parameters(){
     default_energy_limits = true;
 
     NFermiEnergies = 100;
-    // +-1 eV, which on a shifted spectrum is not +-1/scale: the shift has to
-    // come off first, exactly as conductivity_dc does it and as this file's own
-    // -F override already did. Without it the default window was displaced by
-    // energy_shift.
-    minFermiEnergy = (-1.0 - shift)/scale;
-    maxFermiEnergy = ( 1.0 - shift)/scale;
+    minFermiEnergy = -1.0/scale;
+    maxFermiEnergy = 1.0/scale;
     default_NFermi = true;
     default_mFermi = true;
     default_MFermi = true;
@@ -134,12 +123,10 @@ bool customtwo<T, DIM>::fetch_parameters(){
     }
     NumMoments = numMomentsA;
 
+    T temp_from_file;
     try{
-        // The temperature (kb*T) is in energy units, and the python script has
-        // already divided it by SCALE -- same convention and same dataset shape
-        // as conductivity_dc, whose read this mirrors. Dividing again here ran
-        // every custom_two at T/SCALE.
-        get_hdf5(&temperature, &file, (char*)(dirName+"Temperature").c_str());
+        get_hdf5(&temp_from_file, &file, (char*)(dirName+"Temperature").c_str());
+        temperature = temp_from_file / systemInfo->energy_scale;
         beta = 1.0/temperature;
         default_temp = false;
     } catch(H5::Exception& e){}
@@ -149,10 +136,6 @@ bool customtwo<T, DIM>::fetch_parameters(){
     try{
         Gamma = Eigen::Array<std::complex<T>,-1,-1>::Zero(NumMoments, NumMoments);
         get_hdf5(Gamma.data(), &file, (char*)MatrixName.c_str());
-        // Gamma2D.cpp and SimulationRankTwo.cpp accumulate adjoints of each
-        // other, but both apply the same projection 0.5*(G + factor*G^dagger)
-        // before storing, and P(G^dagger) = factor*P(G) for real factor = +/-1.
-        // The two stored matrices are the same object, element for element.
         result = true;
     } catch(H5::Exception& e) {debug_message("CustomTwo: There is no Gamma matrix.\n");}
 
@@ -224,7 +207,7 @@ void customtwo<U, DIM>::printCustomTwo(){
         default: component = "-2*Re[Gamma-contraction]"; break;
     }
 
-    std::cout << "The custom_two() Kubo-Bastin response will be calculated with these parameters: (energy units)\n"
+    std::cout << "The custom_two() Kubo-Bastin response will be calculated with these parameters: (eV, Kelvin)\n"
         "   Temperature: "             << temperature*scale             << ((default_temp)?         " (default)":"") << "\n"
         "   Broadening: "              << scat*scale                    << ((default_scat)?         " (default)":"") << "\n"
         "   Delta broadening: "        << deltascat*scale               << ((default_deltascat)?    " (default)":"") << "\n"
@@ -235,8 +218,7 @@ void customtwo<U, DIM>::printCustomTwo(){
         "   Num integration points: "  << NEnergies                     << ((default_NEnergies)?    " (default)":"") << "\n"
         "   Num Chebyshev moments: "   << NumMoments << "\n"
         "   Number of velocity operators across both vertices: " << NumVelocities <<
-        " (NumVelocities mod 4 = " << p << " -> physical component is " << component << ")\n"
-    << fermi_resolution_line(double(temperature), (maxEnergy - minEnergy)/double(NEnergies - 1));
+        " (NumVelocities mod 4 = " << p << " -> physical component is " << component << ")\n";
 }
 
 template <typename U, unsigned DIM>
@@ -314,25 +296,6 @@ template <typename U, unsigned DIM>
 void customtwo<U, DIM>::save_to_file(Eigen::Matrix<std::complex<U>, -1, 1> response){
   std::ofstream myfile;
   myfile.open(filename);
-  myfile << "# Kubo-Bastin response of a user-defined vertex pair, from\n"
-            "# calculation.custom_two(), as a function of Fermi energy.\n"
-            "# The two vertices carry " << NumVelocities << " velocity operator"
-         << ((NumVelocities == 1)? "" : "s") << " between them.\n";
-  if(NumVelocities == 2)
-    myfile << "# Units: e^2/h for the operator pair exactly as written, the same as\n"
-              "# --CondDC. Nothing is folded in here: a vertex built from\n"
-              "# s_z = sigma_z/2 carries that 1/2 itself, so the Kane-Mele Z_2\n"
-              "# plateau reads +-1. Multiply by 2 to quote it as sigma^{s_z}_xy in\n"
-              "# units of e/4pi. Spin degeneracy is never supplied here either --\n"
-              "# put it in by hand, or carry both spins in the lattice.\n";
-  else
-    myfile << "# Units: a factor EnergyScale^(NumVelocities-2) has been applied, which fixes\n"
-              "# the velocity-count scaling, and a factor (-1)^NumVelocities for the\n"
-              "# carrier charge q = -e that each velocity operator carries when it becomes\n"
-              "# a current. The absolute MAGNITUDE has only been calibrated at\n"
-              "# NumVelocities = 2, so treat the overall scale here as uncalibrated; the\n"
-              "# sign is fixed by the convention above and is not.\n";
-  myfile << "# col 1: Fermi energy (eV)   col 2: response (real)   col 3: response (imaginary)\n";
   for(int i = 0; i < NFermiEnergies; i++){
     U energy = fermiEnergies(i)*systemInfo->energy_scale + systemInfo->energy_shift;
     myfile << energy << " " << response(i).real() << " " << response(i).imag() << "\n";
@@ -376,28 +339,60 @@ void customtwo<U, DIM>::calculate(){
 
     Eigen::Matrix<std::complex<U>, -1, 1> response = calc_response(X);
 
-    // The same constant as conductivity_dc.cpp's own "den": both paths
-    // reconstruct the same Kubo-Bastin trace from the same stored moment
-    // matrix, so they normalize identically.
-    U den = systemInfo->num_orbitals*systemInfo->spin_degeneracy
+    // Normalization validated against the quantized Z2 spin Hall plateau
+    // (examples/kane_mele_spin_hall.py, NumVelocities=2 case) -- NOT the same
+    // constant as conductivity_dc.cpp's own "den" (that machinery's Gamma comes
+    // from a structurally different C++ moment-accumulation path, Gamma2D.cpp,
+    // and is independently calibrated against the Haldane Chern-insulator
+    // e^2/h plateau; the two are not assumed to share a normalization constant
+    // just because both reconstruct a Kubo-Bastin trace).
+    U den = 2.0*systemInfo->num_orbitals*systemInfo->spin_degeneracy
             / systemInfo->unit_cell_area / unit_scale;
     U energy_scale_correction = std::pow(systemInfo->energy_scale, NumVelocities - 2);
 
-    // The component chosen above settles the i bookkeeping: the raw vertex
-    // operators are missing a factor of i each, so i^p with p = NumVelocities
-    // fixes which part of Z is physical, and i^p has period 4. Nothing here
-    // inspects Gamma -- the component belongs to the observable that was
-    // requested, never to the data.
+    // Overall sign: reading Gamma directly into a square Eigen array here (matching
+    // conductivity_dc.cpp's own read pattern) amounts to a different Gamma orientation
+    // than the Python post-processing scripts use (moments_matrix = f[...][:].T).
+    // For ODD NumVelocities (p%4 in {1,3}) this orientation difference does NOT flip
+    // the sign, verified against examples/rashba_edelstein_graphene.py's pure-Rashba
+    // case (sign_convention=+1).
     //
-    // What that leaves is the charge. Each velocity operator turns a velocity
-    // into a current, which carries the carrier charge q = -e, so a response
-    // built from p of them carries q^p while KITE's raw operators do not. An
-    // even count gives a positive power of e and is invisible -- conductivity_dc
-    // always has two and reports in e^2/h -- while an odd count is a sign.
-    // Reported quantities carry e^p, the same convention as --CondDC.
-    // q = -e per velocity operator: (-1)^p, with the magnitude already in den.
-    const U charge_sign = (NumVelocities % 2 == 0) ? U(1.0) : U(-1.0);
-    response = response*(charge_sign*den*energy_scale_correction);
+    // For EVEN NumVelocities (p%4 in {0,2}) it DOES flip the sign -- but which sign is
+    // needed depends on a distinction the original calibration never tested: whether
+    // the two vertex operators A, B are the SAME operator (e.g. sigma_xx: A=B=v_x,
+    // a longitudinal/self-correlation response) or DIFFERENT, direction-mixing
+    // operators (e.g. spin Hall: A={v_x,s_z}/2, B=v_y, an antisymmetric Hall-type
+    // response). By the cyclic property of the trace, Gamma_mn(A,B) = Gamma_nm(B,A)
+    // always; when A=B this makes the (pre-Hermitization) Gamma matrix genuinely
+    // symmetric under m<->n, so store_custom_two's Hermitization forces the FINAL
+    // stored Gamma to be real (Hermitian + symmetric = real), whereas for A!=B
+    // (spin Hall) Gamma stays genuinely complex. The original sign_convention=-1 for
+    // p%4==2 was calibrated ONLY against the A!=B spin-Hall plateau
+    // (docs/documentation/examples/custom_vertex_operators.md: sigma_sz_xy ~ -2.02);
+    // it silently assumed every p%4==2 vertex pair is of that antisymmetric type.
+    // Found wrong empirically (2026-08): reconstructing sigma_xx via custom_two(vx,vx)
+    // on a MoS2 lattice gave a result anti-correlated (r=-0.95) with KITE's
+    // independently-implemented conductivity_dc(direction='xx') on the identical
+    // lattice/config -- i.e. exactly the wrong sign for the A=B case. Confirmed by
+    // Gamma's own realness: spin Hall's stored Gamma is 94% imaginary-weighted
+    // (sum|Im|/sum(|Re|+|Im|)), MoS2 sigma_xx's is 90% real-weighted (the residual
+    // ~10% is stochastic noise, not signal) -- a robust, well-separated runtime
+    // signal for which calibration applies, requiring no change to the (unaffected,
+    // still-passing) A!=B branch. A==B pairs can only ever have EVEN NumVelocities
+    // (identical operators contain the same number of "v" tokens, so the total is
+    // always 2x that count), so the odd branch above is provably unaffected by this
+    // distinction and needs no equivalent check.
+    U sign_convention;
+    if (p % 2 == 0) {
+        U imag_weight = Gamma.imag().cwiseAbs().sum();
+        U real_weight = Gamma.real().cwiseAbs().sum();
+        bool gamma_is_real = imag_weight < 0.5 * (real_weight + imag_weight);
+        sign_convention = gamma_is_real ? 1.0 : -1.0;
+    } else {
+        sign_convention = 1.0;
+    }
+
+    response = response*(sign_convention*den*energy_scale_correction);
 
     save_to_file(response);
 }

@@ -22,34 +22,15 @@ endif()
 project(KITE)
 
 
-find_package(HDF5 1.14.6 COMPONENTS CXX C HL)
-
-# HDF5 is required, not optional, and so are its C++ and high-level components:
-# the configuration file, the moments and the results all travel through it, and
-# "H5Cpp.h" is included unconditionally. Reporting a missing dependency as a
-# status line and configuring anyway turns one clear line into a wall of C++
-# errors much later, with the cause scrolled away.
-#
-# The minimum matches the floor in environment.yml and the one stated in
-# docs/installation.md, and it is the lowest version KITE is actually built
-# against: the MacPorts route resolves 1.14.6 and the conda route resolves 2.x,
-# and both pass the suite. Older releases may well work; none is exercised
-# anywhere, and a floor nothing tests is not a supported range.
-if(NOT HDF5_FOUND)
-    message(FATAL_ERROR
-        "KITE requires HDF5 with the C++ and high-level APIs, and CMake could not find it.\n"
-        "  Many distributions ship HDF5 without them; KITE needs all three components.\n"
-        "  Install a build that has them and point CMake at it:\n"
-        "      -DCMAKE_PREFIX_PATH=<prefix>   (or set $HDF5_ROOT)\n"
-        "  or use the conda environment, which pins a matched HDF5 alongside the compiler:\n"
-        "      conda env create -f environment.yml && conda activate kite\n"
-        "  See docs/installation.md for the supported routes.")
+find_package(HDF5 COMPONENTS CXX C HL)
+if(${HDF5_FOUND})
+  include_directories(${HDF5_INCLUDE_DIR})
+  set(HDF5_USE_STATIC_LIBRARIES ON)
+  MESSAGE(STATUS "Hdf5 Library:  ${HDF5_CXX_HL_LIBRARIES}")
+  MESSAGE(STATUS "Hdf5Hl Library:  ${HDF5_CXX_LIBRARIES}")
+else()
+  MESSAGE(STATUS "Couldn't find HDF5")
 endif()
-
-include_directories(${HDF5_INCLUDE_DIR})
-set(HDF5_USE_STATIC_LIBRARIES ON)
-MESSAGE(STATUS "Hdf5 Library:  ${HDF5_CXX_HL_LIBRARIES}")
-MESSAGE(STATUS "Hdf5Hl Library:  ${HDF5_CXX_LIBRARIES}")
 MESSAGE(STATUS "Compiler:  ${CMAKE_CXX_COMPILER}")
 
 option(USE_SYSTEM_EIGEN "Use the system-installed Eigen3 instead of the bundled copy in third_party/eigen3" OFF)
@@ -90,28 +71,16 @@ endif()
 
 set (CORRECT_CODING_FLAGS "")
 find_package(OpenMP)
-MESSAGE(STATUS "OPENMP:  ${OPENMP_FOUND}")
-
-# OpenMP is required, not optional. `#include <omp.h>` is unconditional in
-# Src/Generic.hpp and in twelve translation units under tools/Src/, so a build
-# without it does not fall back to a serial path -- every file fails to
-# compile. Configuring successfully and failing at compile time pushes a
-# missing dependency into a wall of C++ errors, so stop here instead.
-if (NOT OPENMP_FOUND)
-    message(FATAL_ERROR
-        "KITE requires OpenMP, and this toolchain does not provide it.\n"
-        "  <omp.h> is included unconditionally, so there is no serial build to fall back to.\n"
-        "  On macOS, Apple Clang ships without OpenMP support. Either install a compiler\n"
-        "  that has it and point CMake at it:\n"
-        "      -DCMAKE_C_COMPILER=<cc> -DCMAKE_CXX_COMPILER=<c++>   (or set $CC/$CXX)\n"
-        "  or use the conda environment, which pins a compiler and llvm-openmp together:\n"
-        "      conda env create -f environment.yml && conda activate kite\n"
-        "  See docs/installation.md for the supported routes.")
+MESSAGE(STATUS "OPENMP:  ${OPENMP_FOUND}")      
+if (OPENMP_FOUND)
+    set (CMAKE_C_FLAGS "${CORRECT_CODING_FLAGS} ${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set (CMAKE_CXX_FLAGS "${CORRECT_CODING_FLAGS} -O3 ${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    set (CMAKE_EXE_LINKER_FLAGS "${CORRECT_CODING_FLAGS} ${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_C_FLAGS}")
+  else()
+    set(CMAKE_CXX_FLAGS "${CORRECT_CODING_FLAGS}")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CORRECT_CODING_FLAGS} -g")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 endif()
-
-set (CMAKE_C_FLAGS "${CORRECT_CODING_FLAGS} ${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-set (CMAKE_CXX_FLAGS "${CORRECT_CODING_FLAGS} -O3 ${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-set (CMAKE_EXE_LINKER_FLAGS "${CORRECT_CODING_FLAGS} ${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_C_FLAGS}")
 
 
 

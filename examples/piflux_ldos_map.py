@@ -135,11 +135,10 @@ def main(onsite=(0, 0), t=1, output_file="piflux_ldos_map-output.h5"):
 
     # for generating the output, run:
     # ../build/KITEx piflux_ldos_map-output.h5
-    # then, for a .dat with every site decoded:
-    # ../build/KITE-tools piflux_ldos_map-output.h5 --LDOSmap
-    # process_piflux_ldos.py instead reads the /Calculation/ldos_map/Map
-    # dataset straight out of the HDF5, which keeps the map in array form for
-    # the plot; see it for the indexing convention.
+    # There is no KITE-tools post-processing step for ldos_map -- read the
+    # /Calculation/ldos_map/Map dataset directly from the output HDF5 with
+    # h5py; see process_piflux_ldos.py for the exact indexing convention
+    # and a ready-made plotting routine.
     return output_file
 
 

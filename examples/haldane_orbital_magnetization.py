@@ -66,12 +66,10 @@
     ---------------------------------------------------
     Honeycomb lattice, two sublattices A/B. Nearest-neighbour hopping -t is
     spin-diagonal charge hopping; the next-nearest-neighbour hopping carries the
-    complex Haldane phase: the amplitude is t2 * exp(i*phi) on A-A and its
-    conjugate on B-B, with t2 = t/3 and phi = -pi/2, i.e. -i*t2 on A-A. That is
-    the same assignment as dos_dccond_haldane.py and the up-spin block of
-    kane_mele_spin_hall.py, so the filled band has Chern number C = +1. phi is
-    kept EXPLICIT here because it is a genuine tunable of the Haldane
-    construction.
+    complex Haldane phase, +phi on the A-A bonds and -phi on the B-B bonds. We
+    use t2 = t/3 and the canonical flux phi = pi/2, kept EXPLICIT here because it
+    is a genuine tunable of the Haldane construction (unlike kane_mele_spin_hall.py,
+    which hardcodes the equivalent +/- i on the NNN bonds, i.e. phi = pi/2 too).
 
     The two Dirac points acquire opposite-sign Haldane masses of magnitude
     3*sqrt(3)*t2*sin(phi); a sublattice on-site asymmetry delta (onsite=(delta,-delta))
@@ -102,10 +100,10 @@ from kite import custom
 from kite import lattice as latt
 
 
-def haldane(t=1.0, phi=-0.5 * np.pi, delta=0.0):
+def haldane(t=1.0, phi=0.5 * np.pi, delta=0.0):
     """Return the Haldane honeycomb lattice (2 sublattices A, B).
 
-    t2 = t/3, complex NNN phase phi on A-A and -phi on B-B, on-site
+    t2 = t/3, complex NNN phase +phi on A-A and -phi on B-B, on-site
     asymmetry (delta, -delta). delta = 0 => pure Haldane Chern insulator.
     """
     a = 0.24595   # [nm] unit-cell length
@@ -140,7 +138,7 @@ def haldane(t=1.0, phi=-0.5 * np.pi, delta=0.0):
     return lat
 
 
-def main(t=1.0, phi=-0.5 * np.pi, delta=0.0, moments=256, num_random=800,
+def main(t=1.0, phi=0.5 * np.pi, delta=0.0, moments=256, num_random=800,
          num_disorder=4, disorder_w=0.05,
          output_file="haldane_orbital_magnetization-output.h5"):
     """Prepare the input file for KITEx (orbital magnetization via custom_one).

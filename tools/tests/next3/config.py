@@ -1,6 +1,6 @@
 import kite
 import numpy as np
-from kite import lattice as latt
+import pybinding as pb
 
 
 
@@ -8,7 +8,7 @@ def square_lattice(onsite=(0, 0)):
     a1 = np.array([1, 0])
     a2 = np.array([0, 1])
 
-    lat = latt.Lattice(
+    lat = pb.Lattice(
         a1=a1, a2=a2
     )
 

@@ -121,12 +121,7 @@ void conductivity_dc<T, DIM>::set_default_parameters(){
     NumThreads          = systemInfo.NumThreads;
     default_NumThreads  = true;
 
-    // Number of energies used in the energy integration. The step must stay
-    // well under `scat` below (0.01/scale): at the former 513 over [-0.99,
-    // 0.99], dE = 3.87e-3 against a broadening of 2.5e-3, so the grid was
-    // coarser than the Lorentzian it integrates. Measured on graphene
-    // sigma_xx: 513 -> 6.9859, 1025 -> 6.7164, 2049 -> 6.8521, 8193 -> 6.8519.
-    NEnergies           = 1025;
+    NEnergies           = 513;              // Number of energies used in the energy integration
     default_NEnergies   = true;
 
     deltascat           = 0.01/scale;       // scattering parameter in the delta function
@@ -329,7 +324,7 @@ void conductivity_dc<U, DIM>::printDC(){
     std::string energy_range = "[" + std::to_string(minEnergy*scale + shift) + ", " + std::to_string(maxEnergy*scale + shift) + "]";
 
     // Prints all the information about the parameters
-    std::cout << "The DC conductivity will be calculated with these parameters: (energy units)\n"
+    std::cout << "The DC conductivity will be calculated with these parameters: (eV, Kelvin)\n"
         "   Temperature: "             << temperature*scale             << ((default_temp)?         " (default)":"") << "\n"
         "   Broadening: "              << scat*scale                    << ((default_scat)?         " (default)":"") << "\n"
         "   Delta broadening: "        << deltascat*scale               << ((default_deltascat)?    " (default)":"") << "\n"
@@ -340,8 +335,7 @@ void conductivity_dc<U, DIM>::printDC(){
         "   Integration range: "       << energy_range                  << ((default_energy_limits)?" (default)":" (Estimated from DoS)") << "\n"
         "   Num integration points: "  << NEnergies                     << ((default_NEnergies)?    " (default)":"") << "\n"
         "   Num Chebychev moments: "   << NumMoments                    << ((default_NumMoments)?   " (default)":"") << "\n"
-        "   Num threads: "             << NumThreads                    << ((default_NumThreads)?   " (default)":"") << "\n"
-    << fermi_resolution_line(double(temperature), (maxEnergy - minEnergy)/double(NEnergies - 1)); 
+        "   Num threads: "             << NumThreads                    << ((default_NumThreads)?   " (default)":"") << "\n"; 
 }
 
 

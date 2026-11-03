@@ -45,7 +45,7 @@ nav:
       - Real-Time Wave-Packet Evolution: 'documentation/examples/time_evolution.md'
       - Néel-Gapped Bearded/Klein Ribbon (Operator LDOS): 'documentation/examples/afm_zigzag_ribbon.md'
     - KITE scripts v.1.1:
-      - Example catalogue: 'documentation/more_examples/additional_examples.md'
+      - About Examples-dir: 'documentation/more_examples/additional_examples.md'
     - Advanced Examples:
       - Large Systems: 'documentation/more_examples/large_systems.md'
       - Custom Local Potential: 'documentation/more_examples/custom_local_potential.md'
@@ -154,10 +154,6 @@ markdown_extensions:
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
 
 extra:
-  # Single source for the documented release. VERSION.md, README.md and
-  # docs/background/index.md must agree with it; see
-  # tests/documentation_version_regression.py
-  version: "2.0"
   news:
     - title: KITE Spring Workshop @ York
       # link: york.ac.uk

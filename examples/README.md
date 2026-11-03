@@ -49,15 +49,14 @@ These are pure-KITE scripts (using `kite.lattice.Lattice`, `python/kite/lattice.
 | `dos_vacancies.py` | Honeycomb lattice with structural vacancy disorder (`kite.StructuralDisorder`) at two different concentrations, one per sublattice. |
 | `dos_dccond_square_lattice.py` | DOS and Hall (`xy`) DC conductivity of a square lattice threaded by a real, Peierls-substituted magnetic field (`kite.Modification(magnetic_field=...)`) — a lattice Landau-level / Hofstadter-type calculation, not a zero-field demo. |
 | `dos_dccond_haldane.py` | DOS and DC (xy) conductivity of the Haldane model, with uniform on-site disorder on both sublattices. |
-| `dccond_graphene_magnetic_field.py` | DOS and Hall (`xy`) DC conductivity of graphene in a strong Peierls-substituted magnetic field — 5/64 of a flux quantum per hexagon, so the magnetic length is 1.33 lattice constants and the spectrum is Hofstadter's rather than a Dirac Landau fan. σ<sub>xy</sub> shows a single plateau at ±1 e²/h per spin. Dimensionless units (a = t = 1). |
 
 **Optical / DC conductivity**
 
 | Script | What it demonstrates |
 | --- | --- |
-| `hbn_optcond2_vacancies.py` | **Second-order (nonlinear)** optical conductivity σ<sub>xxy</sub> of hexagonal boron nitride with vacancy disorder — not the ordinary linear σ<sub>ab</sub>(ω) computed elsewhere in this table. The gapped honeycomb (hBN) lattice is essential, not incidental: its onsite A/B potential breaks inversion symmetry, which is required for this third-rank response to be nonzero at all. |
+| `hbn_optcond2_vacancies.py` | **Second-order (nonlinear)** optical conductivity σ<sub>xxy</sub> of hexagonal boron nitride with vacancy disorder — not the ordinary linear σ<sub>ab</sub>(ω) computed elsewhere in this table. The gapped honeycomb (hBN) lattice is essential, not incidental: its onsite A/B potential breaks inversion symmetry, which is required for this third-rank response to be nonzero at all. See the docstring in the script itself for what its `special=1` flag actually skips in the C++ core. |
 | `optcond_t_symmetric_cubic_weyl_sm.py` | Linear optical conductivity (\(\sigma_{xx}\)) of the T-symmetric cubic Weyl semimetal; a heavily-parallelized example. See also the [Optical Conductivity write-up][optical-conductivity-example]. |
-| `dccond_phosphorene.py` | Single-shot DC conductivity (`xx`/`yy`) of bilayer phosphorene. See the [in-depth Phosphorene write-up][phosphorene-example]. Single-shot needs no reconstruction; extract the result with `KITE-tools phxx-output.h5 --SingleShot`. |
+| `dccond_phosphorene.py` | Single-shot DC conductivity (`xx`/`yy`) of bilayer phosphorene. See the [in-depth Phosphorene write-up][phosphorene-example]. |
 | `weyl_lt.py` | The same Weyl-semimetal optical-conductivity calculation as `optcond_t_symmetric_cubic_weyl_sm.py`, built using KITE's own `kite.lattice.Lattice` API rather than pybinding — compare directly against `pybinding/weyl_pb.py`. |
 
 **Local density of states (LDOS) and spectral function (ARPES)**
@@ -95,7 +94,7 @@ These are pure-KITE scripts (using `kite.lattice.Lattice`, `python/kite/lattice.
 
 | Script | What it demonstrates |
 | --- | --- |
-| `spin_precession_simple.py` | The simplest possible introduction to `calculation.gaussian_wave_packet()`: textbook Larmor precession of a spin-1/2 in a uniform transverse field (a toy on-site coupling, not a simulated electromagnetic field — see the script's docstring), on a plain square lattice with no other physics. Matches the exact analytic solution to machine precision (~1e-13) over more than one full period, with zero dephasing (the coupling is k-independent). See the [in-depth write-up][time-evolution-example]. Post-process with `spin_precession_simple_process.py`. |
+| `spin_precession_simple.py` | The simplest possible introduction to `calculation.gaussian_wave_packet()`: textbook Larmor precession of a spin-1/2 in a uniform transverse field (a toy on-site coupling, not a simulated electromagnetic field — see the script's docstring), on a plain square lattice with no other physics. Matches the exact analytic solution to machine precision (~1e-13) over more than one full period, with zero dephasing (the coupling is k-independent). See the [in-depth write-up][time-evolution-example]. |
 
 **Custom local potential**
 
@@ -105,10 +104,10 @@ These are pure-KITE scripts (using `kite.lattice.Lattice`, `python/kite/lattice.
 
 **Utility / plotting helper scripts**
 
-The folder also contains a few shared helpers that are not examples in their own right:
-`process_arpes.py` (a symlink to `tools/process_arpes.py`, imported by the `arpes_*.py` scripts),
-`process_single_shot.py` (a symlink to `tools/process_single_shot.py`), `myaux.py`,
-`kite_style.py`, and `kite.mplstyle` (shared plotting/style helpers).
+The folder also contains a handful of non-calculation helper scripts that are not examples in their own
+right: `process_cond.py`, `process_conductivities.py`, `process_statistics.py`, and `cond_sum.py`
+(Chebyshev-moment summation/post-processing helpers used by some of the scripts above), plus
+`myaux.py`, `kite_style.py`, and `kite.mplstyle` (shared plotting/style helpers).
 
 ## `examples/pybinding/*.py`
 

@@ -17,8 +17,13 @@
                        example uses gapped honeycomb (hexagonal boron nitride: +-gap/2 onsite potential on
                        the A/B sublattices) specifically because that staggered potential is what breaks
                        inversion symmetry and makes sigma_xxy nonzero in the first place.
-                       This example computes the general case: all four Chebyshev-moment tensors
-                       (Gamma0/1/2/3).
+                       `special=1` selects a hard-coded fast path in Src/Simulation/SimulationCondOpt2.cpp's
+                       CondOpt2(): the general case computes 4 Chebyshev-moment tensors (Gamma0/1/2/3), but
+                       the special=1 branch used here only computes Gamma1 and Gamma2, skipping Gamma0 and
+                       Gamma3 -- per the C++ source comment, this is a materials-specific simplification for
+                       HBN ("nonlinear but only has simple objects that need calculating"), not a generic
+                       numerical shortcut; do not reuse special=1 for a different lattice without checking
+                       whether the same simplification actually applies there.
     Last updated: 08/05/2025
 """
 from kite import lattice as latt
@@ -83,7 +88,8 @@ def main():
             num_points=512,
             num_moments=N,
             num_random=1,
-            num_disorder=1
+            num_disorder=1,
+            special=1
             )
 
     kite.config_system(lattice, configuration, calculation, filename=output_file, disorder_structural=disorder_structural)

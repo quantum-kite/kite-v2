@@ -190,22 +190,6 @@ void customone<U, DIM>::calculate(){
 
     std::ofstream myfile;
     myfile.open(filename);
-    myfile << "# Operator-weighted spectral density from calculation.custom_one(),\n"
-              "#   f_A(E) = (1/N) Tr[A delta(E-H)],\n"
-              "# reconstructed from Gamma_n = (1/N) Tr[T_n(Htilde) A] with the Jackson kernel.\n"
-              "# Units: [A] per eV per orbital. This is a spectral density, not a response\n"
-              "# function: integrating it against the Fermi function gives <A> per orbital.\n";
-    // Only worth saying when there is a velocity token to scale: KITE's raw v is
-    // a commutator with the rescaled Hamiltonian, and unlike custom_two this unit
-    // applies no EnergyScale power of its own.
-    if(NumVelocities > 0)
-        myfile << "# The vertex carries " << NumVelocities << " velocity operator"
-               << ((NumVelocities == 1)? "" : "s") << ", and no vertex-dependent\n"
-                  "# normalisation is applied: each raw v token is a commutator with the\n"
-                  "# RESCALED Hamiltonian, so multiply this column by EnergyScale^"
-               << NumVelocities << " to\n"
-                  "# express it in terms of the physical velocity operator.\n";
-    myfile << "# col 1: E (eV)   col 2: f_A(E)\n";
     for(int i=0; i < NEnergies; i++){
         myfile << energies(i)*scale + shift << " " << GammaE.real()(i) << "\n";
     }

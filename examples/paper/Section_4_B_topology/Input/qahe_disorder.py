@@ -14,15 +14,11 @@
     Last updated: 08/05/2025
 """
 import numpy as np
-from kite import lattice as latt
+import pybinding as pb
 import matplotlib.pyplot as plt
-import sys
-
 import kite
-from kite.repository import graphene
-
-a, a_cc = graphene.a, graphene.a_cc
-hbar = 6.58211899e-16   #: [eV*s]
+from pybinding.repository.graphene import a_cc, a
+from pybinding.constants import hbar
 from math import sqrt, pi
 
 el_charge = 1.602 * 10 ** -19  #: [C] electron charge
@@ -63,7 +59,7 @@ def honeycomb_lattice_with_SO(onsite=(0, 0)):
     """
 
     # create a lattice with 2 primitive vectors
-    lat = latt.Lattice(
+    lat = pb.Lattice(
         a1=a1, a2=a2
     )
 
@@ -139,13 +135,12 @@ disorder.add_disorder(['Bup', 'Bdown'], 'Uniform', +0.0, 0.1)
 # Simulation for a small system ~ 10^7 orbitals
 
 # number of decomposition parts in each direction of matrix.
-# Size and decomposition are parameters; the defaults are the published values.
-nx = int(sys.argv[2]) if len(sys.argv) > 2 else 4
-ny = int(sys.argv[3]) if len(sys.argv) > 3 else 4  # assumes nx * ny = 16 cores
+nx = 4
+ny = 4 # Assumes nx * ny = 16 cores
 
 # number of unit cells in each direction.
-lx = int(sys.argv[1]) if len(sys.argv) > 1 else 2048
-ly = int(sys.argv[1]) if len(sys.argv) > 1 else 2048
+lx = 2048
+ly = 2048
 
 #
 # make config object which caries info about

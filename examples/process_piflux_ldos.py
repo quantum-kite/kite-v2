@@ -1,8 +1,7 @@
 """ Post-processing for piflux_ldos_map.py: real-space LDOS map around a vacancy.
 
-    KITE-tools --LDOSmap writes the same map as a .dat with every site
-    decoded. This script instead reads the /Calculation/ldos_map/Map dataset
-    directly with h5py, which keeps the map in array form for the plot.
+    ldos_map has no KITE-tools post-processing step -- the output HDF5's
+    /Calculation/ldos_map/Map dataset is read directly with h5py.
 
     Dataset layout (confirmed against Src/Simulation/SimulationLDoS.cpp's
     store_ldos() and Src/Lattice/Coordinates.cpp's index convention, and

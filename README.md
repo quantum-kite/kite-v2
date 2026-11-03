@@ -2,7 +2,7 @@
 
 **Quantum KITE** is an open-source Python/C++ software suite for efficient real-space tight-binding (TB) simulations of electronic structure and bulk quantum transport properties of disordered systems scalable to multi billions of atomic orbitals.
 
-KITE v2.0 (this version) is shipped with the following capabilities:
+KITE v1.1 (this version) is shipped with the following capabilities:
 
 * Quantum Transport: longitudinal and transverse DC conductivities at zero and finite temperature;
 * Optical Properties: AC longitudinal conductivity;
@@ -15,12 +15,6 @@ KITE v2.0 (this version) is shipped with the following capabilities:
 * Algorithms: high-resolution CPGF full spectral (DoS);
 * Algorithms: high-resolution CPGF full spectral (finite temperature response functions);
 * Algorithms: high-resolution CPGF single-shot (zero temperature DC conductivity)
-
-New functionalities in v2.0:
-
-* Electronic Structure: real-space LDoS maps and k-space spectral maps (Markov estimator)
-* Custom Operators: expectation values of user-defined vertex operators, over the full spectrum or site-resolved
-* Custom Operators: two-operator correlators over the full spectrum
 
 New functionalities in v1.1:
 

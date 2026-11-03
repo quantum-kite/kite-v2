@@ -59,25 +59,6 @@ class shell_input{
         bool CustomOne_Exclusive;
         bool CustomOne_is_required;
 
-        int CustomOneLocal_NumEnergies;
-        double CustomOneLocal_Emin;
-        double CustomOneLocal_Emax;
-        std::string CustomOneLocal_Name;
-        bool CustomOneLocal_Exclusive;
-        bool CustomOneLocal_is_required;
-
-        std::string LDOSmap_Name;
-        bool LDOSmap_Exclusive;
-        bool LDOSmap_is_required;
-
-        std::string SpectralMap_Name;
-        bool SpectralMap_Exclusive;
-        bool SpectralMap_is_required;
-
-        std::string Wavepacket_Name;
-        bool Wavepacket_Exclusive;
-        bool Wavepacket_is_required;
-
         // Custom rank-two (custom_two()) Kubo-Bastin response
         double CustomTwo_Temp;
         int CustomTwo_NumEnergies;
@@ -89,11 +70,6 @@ class shell_input{
         std::string CustomTwo_Name;
         bool CustomTwo_Exclusive;
         bool CustomTwo_is_required;
-
-        // Single-shot longitudinal DC conductivity
-        std::string SingleShot_Name;
-        bool SingleShot_Exclusive;
-        bool SingleShot_is_required;
 
         // Local density of states
         std::string lDOS_Name;
@@ -153,7 +129,6 @@ class shell_input{
         void printDOS();
         void printlDOS();
         void printARPES();
-        void printSingleShot();
 
         void parse_CondDC(int argc, char *argv[]);
         void parse_CondOpt(int argc, char *argv[]);
@@ -162,12 +137,7 @@ class shell_input{
         void parse_lDOS(int argc, char *argv[]);
         void parse_ARPES(int argc, char *argv[]);
         void parse_CustomOne(int argc, char *argv[]);
-        void parse_CustomOneLocal(int argc, char *argv[]);
-        void parse_LDOSmap(int argc, char *argv[]);
-        void parse_SpectralMap(int argc, char *argv[]);
-        void parse_Wavepacket(int argc, char *argv[]);
         void parse_CustomTwo(int argc, char *argv[]);
-        void parse_SingleShot(int argc, char *argv[]);
         int get_num_exclusives();
 
 };

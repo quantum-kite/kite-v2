@@ -4,7 +4,7 @@ import numpy as np
 import copy
 import matplotlib.pyplot as mpl
 
-from kite.repository import graphene
+from pybinding.repository import graphene
 
 
 def lorentz_kernel(num_moments, broadening):
@@ -81,7 +81,7 @@ def get_moments_and_scales(file_name):
     moments = np.array(file_input['Calculation']['dos']['MU']).flatten()
 
     # get the energy scale, b is 0 at the moment
-    a, b = file_input['EnergyScale'][()], file_input['EnergyShift'][()]
+    a, b = file_input['EnergyScale'].value, file_input['EnergyShift'].value
 
     return moments, a, b
 
@@ -91,7 +91,7 @@ def get_size(file_name):
 
     l_size = np.array(file_input['L']).flatten()
     l1, l2 = l_size[0], l_size[1]
-    num_orbitals = file_input['NOrbitals'][()]
+    num_orbitals = file_input['NOrbitals'].value
 
     return num_orbitals, l1, l2
 
@@ -102,11 +102,7 @@ def monolayer_density(energy):
     l1gr, l2gr = lattice_gr.vectors
     l1gr, l2gr = l1gr[0:2], l2gr[0:2]
 
-    # NumPy 2.0 removed the 2-vector form of np.cross; embedding both
-    # vectors in 3D leaves the z-component, which is the cell area.
-    _l1 = np.zeros(3); _l1[:len(l1gr)] = l1gr
-    _l2 = np.zeros(3); _l2[:len(l2gr)] = l2gr
-    Ac = np.linalg.norm(np.cross(_l1, _l2))
+    Ac = np.linalg.norm(np.cross(l1gr, l2gr))
     vf = 3 / (2) * abs(graphene.t) * graphene.a_cc  #: [eV*nm] Fermi velocity
 
     dos_slg = 1 * Ac / np.pi * np.abs(energy) / vf ** 2
@@ -116,14 +112,17 @@ def monolayer_density(energy):
 
 # ************************************
 # keep these definitions for kite website
-from cycler import cycler
+import seaborn as sns
 
 mpl.rcParams['figure.dpi'] = 100
 mpl.rcParams['savefig.dpi'] = 100
+sns.set_style("white")
 # Kite color scheme
 colors = ["dusty purple", "faded green", "windows blue", "amber", "greyish"]
-mpl.rcParams['axes.prop_cycle'] = cycler(color=['xkcd:' + c for c in colors])
-mpl.rcParams['font.size'] = 13
+current_palette = sns.xkcd_palette(colors)
+sns.set_palette(current_palette)
+sns.set_style("ticks")
+sns.set_context("talk", font_scale=1)
 
 # ************************************
 # read unrelaxed

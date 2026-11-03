@@ -1,6 +1,6 @@
 """
         ##############################################################################
-        #                        KITE | Release  2.0                                 #
+        #                        KITE | Release  1.1                                 #
         #                                                                            #
         #                        Kite home: quantum-kite.com                         #
         #                                                                            #
@@ -17,12 +17,6 @@ import warnings
 
 from scipy.sparse import coo_matrix
 from scipy.spatial import cKDTree
-
-# Spectral bounds for the Chebyshev rescaling. Documented as public API in
-# docs/api/kite.md but never imported here, so kite.estimate_bounds raised
-# AttributeError. The implementation no longer needs pybinding: it scans the
-# Bloch Hamiltonian the lattice already defines.
-from .bounds import estimate_bounds, clean_band_extrema, gershgorin_bound
 
 
 # Class that introduces Structural Disorder into the initially built lattice.
@@ -504,62 +498,6 @@ def _count_velocity_operators(operator_strings):
     return counts[0] if counts else 0
 
 
-# Moment-count constraints imposed by the C++ accumulation loops.
-#
-# The loops write more than one entry per iteration, and index past the array
-# if the count does not divide. Two distinct classes, and they are not
-# interchangeable:
-#
-#   pair-stepping   n += 2        dos, ldos, arpes, custom_one, custom_one_local
-#   block-stepping  n += MEMORY   conductivity_dc, conductivity_optical,
-#                                 conductivity_optical_nonlinear, custom_two,
-#                                 custom_two_local
-#
-# MEMORY is a compile-time constant in Src/Generic.hpp, guarded by #ifndef and
-# defaulting to 16. A binary built with -DMEMORY=8 changes the constraint, so
-# this value must be read from the build rather than hardcoded wherever that
-# becomes possible; until then 16 matches the shipped default.
-#
-# Deliberately NOT constrained here: singleshot_conductivity_dc steps by one,
-# and ldos_map, spectral_map, custom_singleshot_two, lcm and st_lcm carry no
-# num_moments at all -- their resolution comes from a width parameter.
-KITE_MEMORY = 16
-
-
-def _check_num_moments(num_moments, calculation, stepping):
-    """Reject a moment count the C++ loops cannot accumulate.
-
-    Failing here, in Python, costs a clear message. Failing in C++ costs an
-    out-of-bounds write, which may crash or may return numbers -- at
-    num_moments=1000 conductivity_dc overruns by 8008 elements, and whether
-    that faults depends on where the allocation lands.
-    """
-    if not isinstance(num_moments, (int, np.integer)) or num_moments <= 0:
-        raise SystemExit(
-            "{}: num_moments must be a positive integer, got {!r}".format(
-                calculation, num_moments))
-
-    if stepping == "pair" and num_moments % 2 != 0:
-        raise SystemExit(
-            "{}: num_moments must be EVEN, got {}.\n"
-            "  The C++ accumulation loop advances two moments per iteration and "
-            "writes both, so an odd count indexes one element past the array.\n"
-            "  Use {} or {}.".format(calculation, num_moments,
-                                     num_moments - 1, num_moments + 1))
-
-    if stepping == "block" and num_moments % KITE_MEMORY != 0:
-        raise SystemExit(
-            "{}: num_moments must be a multiple of {}, got {}.\n"
-            "  This calculation accumulates in blocks of {} moments, so a count "
-            "that does not divide overruns the array by {} elements -- evenness "
-            "is not sufficient here.\n"
-            "  Use {} or {}.".format(
-                calculation, KITE_MEMORY, num_moments, KITE_MEMORY,
-                KITE_MEMORY - num_moments % KITE_MEMORY,
-                num_moments - num_moments % KITE_MEMORY,
-                num_moments + KITE_MEMORY - num_moments % KITE_MEMORY))
-
-
 class Calculation:
 
     @property
@@ -692,7 +630,6 @@ class Calculation:
         num_disorder : int
             Number of different disorder realisations.
         """
-        _check_num_moments(num_moments, "dos", "pair")
 
         self._dos.append({'num_points': num_points, 'num_moments': num_moments, 'num_random': num_random,
                           'num_disorder': num_disorder})
@@ -778,7 +715,6 @@ class Calculation:
         operators = operators or []
         self._validate_ldos_operators('ldos', operators)
 
-        _check_num_moments(num_moments, "ldos", "pair")
         self._ldos.append({'energy': energy, 'num_moments': num_moments, 'position': np.asmatrix(position),
                            'sublattice': sublattice, 'num_disorder': num_disorder, 'operators': operators})
 
@@ -856,13 +792,11 @@ class Calculation:
         num_disorder : int
             Number of different disorder realisations.
         """
-        _check_num_moments(num_moments, "arpes", "pair")
 
         self._arpes.append({'k_vector': k_vector, 'weight': weight, 'num_moments': num_moments, 'num_disorder': num_disorder})
 
-    def gaussian_wave_packet(self, num_points, num_moments, timestep=None, k_vector=None, spinor=None,
-                             width=None, mean_value=None, num_disorder=1, operators=None,
-                             timestep_physical=None, **kwargs):
+    def gaussian_wave_packet(self, num_points, num_moments, timestep, k_vector, spinor, width, mean_value,
+                             num_disorder=1, operators=None, **kwargs):
         """Calculate the time evolution function of a wave packet
 
         Parameters
@@ -871,20 +805,12 @@ class Calculation:
             Number of time points for the time evolution.
         num_moments : int
             Number of polynomials in the Chebyshev expansion.
-        timestep : float, optional
-            Timestep, in the same rescaled units as the energy. KITE propagates
-            the rescaled Hamiltonian, so this is the argument of the Bessel
-            expansion of exp(-i H t) and is conjugate to that rescaled energy:
-            a step of `dt` in physical time is `dt * energy_scale` here. To put
-            the output back on a physical axis, divide by `EnergyScale` from the
-            output file. Give either this or `timestep_physical`, not both.
+        timestep : float
+            Timestep for calculation of time evolution.
         k_vector : np.array
             Different wave vectors, components corresponding to vectors b0 and b1.
         spinor : np.array
-            Amplitude on each orbital of the unit cell, one spinor per k vector,
-            in the order the sublattices were added. It is seeded as given and is
-            not projected onto the eigenstates of H(k), so unless it happens to be
-            an eigenvector of H(k) the packet starts with weight in several bands.
+            Spinors for each of the k vectors.
         width : float
             Width of the gaussian.
         mean_value : [float, float]
@@ -899,30 +825,12 @@ class Calculation:
             label's expectation value is written to ``/Calculation/gaussian_wave_packet/<label>``
             in the output file. As with custom_one/custom_two, labels are positional, not
             arbitrary names -- see add_orbital_coupling's documentation.
-        timestep_physical : float, optional
-            Timestep in physical time instead of rescaled time -- inverse energy
-            with hbar = 1, the same units as the `t` column KITE-tools --WavePacket
-            writes. It is converted on export as
-            `timestep = timestep_physical * EnergyScale`, so the physical step is
-            the one asked for whatever `spectrum_range` is, including when KITE
-            estimates the bounds itself. Both values are stored in the output
-            file, under `timestep` and `timestep_physical`. Give either this or
-            `timestep`, not both.
+
+            Optional parameters, forward probing point, defined with x, y coordinate were the wavepacket will be checked
+            at different timesteps.
 
         """
-        missing = [name for name, value in (('k_vector', k_vector), ('spinor', spinor),
-                                            ('width', width), ('mean_value', mean_value))
-                   if value is None]
-        if missing:
-            raise ValueError(
-                "gaussian_wave_packet: missing required argument(s): {}.".format(
-                    ", ".join(missing)))
-        if (timestep is None) == (timestep_physical is None):
-            raise ValueError(
-                "gaussian_wave_packet: give exactly one of `timestep` (rescaled units, "
-                "the argument of the Bessel expansion KITE propagates with) or "
-                "`timestep_physical` (physical time, hbar = 1), not both and not neither.")
-
+        probing_point = kwargs.get('probing_point', 0)
         operators = operators or []
         for label in operators:
             if label not in self._custom_operator_collection:
@@ -932,9 +840,8 @@ class Calculation:
 
         self._gaussian_wave_packet.append(
             {'num_points': num_points, 'num_moments': num_moments,
-             'timestep': timestep, 'timestep_physical': timestep_physical,
-             'num_disorder': num_disorder, 'spinor': spinor, 'width': width, 'k_vector': k_vector,
-             'mean_value': mean_value, 'operators': operators})
+             'timestep': timestep, 'num_disorder': num_disorder, 'spinor': spinor, 'width': width, 'k_vector': k_vector,
+             'mean_value': mean_value, 'probing_point': probing_point, 'operators': operators})
 
     def localized_wave_packet(self,
                               time,
@@ -1004,7 +911,6 @@ class Calculation:
         temperature : float
             Value of the temperature at which we calculate the response.
         """
-        _check_num_moments(num_moments, "conductivity_dc", "block")
         if direction not in self._avail_dir_full:
             print('The desired direction is not available. Choose from a following set: \n',
                   self._avail_dir_full.keys())
@@ -1039,7 +945,6 @@ class Calculation:
                   self._avail_dir_full.keys())
             raise SystemExit('Invalid direction!')
         else:
-            _check_num_moments(num_moments, "conductivity_optical", "block")
             self._conductivity_optical.append(
                 {'direction': self._avail_dir_full[direction], 'num_points': num_points, 'num_moments': num_moments,
                  'num_random': num_random, 'num_disorder': num_disorder,
@@ -1064,6 +969,8 @@ class Calculation:
             Number of different disorder realisations.
         temperature : float
             Value of the temperature at which we calculate the response.
+
+            Optional parameters, forward special, a parameter that can simplify the calculation for some materials.
         """
 
         if direction not in self._avail_dir_nonl:
@@ -1073,7 +980,6 @@ class Calculation:
         else:
             special = kwargs.get('special', 0)
 
-            _check_num_moments(num_moments, "conductivity_optical_nonlinear", "block")
             self._conductivity_optical_nonlinear.append(
                 {'direction': self._avail_dir_nonl[direction], 'num_points': num_points,
                  'num_moments': num_moments, 'num_random': num_random, 'num_disorder': num_disorder,
@@ -1166,7 +1072,6 @@ class Calculation:
                 raise ValueError("The first element must be a numeric type")
             coefs.append(operator_sequence[0]) # numerical factor
             operators.append(operator_sequence[1]) # operator streams
-        _check_num_moments(stream_.moment, "custom_one", "pair")
         num_velocities = _count_velocity_operators(operators)
         self._custom_one.append({'num_moments': stream_.moment, 'num_random' : num_random_, 'num_disorder' : num_disorder_, 'operators' : operators, 'coefs' : coefs, 'num_velocities': num_velocities})
 
@@ -1197,7 +1102,6 @@ class Calculation:
                 raise ValueError("The first element must be a numeric type")
             coefs.append(operator_sequence[0]) # numerical factor
             operators.append(operator_sequence[1]) # operator streams
-        _check_num_moments(stream_.moment, "custom_one_local", "pair")
         self._custom_one_local.append({'energy': energy_, 'num_moments': stream_.moment, 'position': np.asmatrix(position_), 'sublattice': sublattice_, 'num_disorder': num_disorder_, 'operators' : operators, 'coefs' : coefs})
 
     def custom_two(self, stream_, num_random_, num_disorder_, num_points_, temperature_):
@@ -1245,7 +1149,6 @@ class Calculation:
                 coefs[i].append(operator_sequence[0]) # numerical factor
                 operators[i].append(operator_sequence[1]) # operator streams
             num_velocities += _count_velocity_operators(operators[i])
-            _check_num_moments(vertex.moment, "custom_two", "block")
 
         self._custom_two.append({'rank' : len(stream_), 'num_moments': [stream_[0].moment, stream_[1].moment], 'num_random' : num_random_, 'num_disorder' : num_disorder_, 'operators' : operators, 'coefs' : coefs, 'temperature': temperature_, 'num_points' : num_points_, 'num_velocities': num_velocities})
 
@@ -1276,8 +1179,6 @@ class Calculation:
                 coefs[i].append(operator_sequence[0]) # numerical factor
                 operators[i].append(operator_sequence[1]) # operator streams
 
-        for vertex in stream_:
-            _check_num_moments(vertex.moment, "custom_two_local", "block")
         self._custom_two_local.append({'rank' : len(stream_), 'num_moments': [stream_[0].moment, stream_[1].moment], 'positions' : positions_, 'operators' : operators, 'coefs' : coefs})
 
 
@@ -1319,7 +1220,7 @@ class Configuration:
            Periodic boundary conditions each direction:
                "periodic"
                "open"
-               "twisted" -- this option needs the extra argument angles=[phi_1,..,phi_DIM] where phi_i is in [0, 2*M_PI]
+               "twisted" -- this option needs the extra argument angles=[phi_1,..,phi_DIM] where phi_i \in [0, 2*M_PI]
                "random"
        is_complex : bool
            Boolean that reflects whether the type of Hamiltonian is complex or not.
@@ -1343,11 +1244,6 @@ class Configuration:
            map): the random probe vectors used to estimate the trace, unrelated to physical
            disorder. Default is 0 ("don't care", not reproducible), same as seed_h. Set any
            positive integer to make these stochastic estimates reproducible.
-
-           To reproduce a run, record seed_h, seed_v and divisions. The same seeds under a
-           different decomposition give a different realisation, so a seed quoted on its own
-           does not reproduce a figure. OMP_NUM_THREADS is not part of the recipe -- KITEx
-           overrides it with the product of divisions.
        """
 
         if spectrum_range:
@@ -1510,7 +1406,7 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
     """
 
     print('##############################################################################')
-    print('#                        KITE | Release  2.0                                 #')
+    print('#                        KITE | Release  1.1                                 #')
     print('#                        Kite home: quantum-kite.com                         #')
     print('#                                                                            #')
     print('#                        Copyright 2022, KITE                                #')
@@ -1564,35 +1460,20 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
     # if bounds are not specified, find a rough estimate
     if not config.energy_scale:
 
-        # The estimate diagonalises the Bloch Hamiltonian the lattice already
-        # defines, so the clean term is exact, and adds the disorder
-        # contributions additively (Weyl). It supersedes the earlier
-        # `max_onsite + 6*max_hopping`, which assumed coordination six and
-        # ignored disorder entirely: for graphene it returned twice the true
-        # half-bandwidth, halving the resolution at fixed num_moments, while
-        # for a simple cubic lattice it landed the band edge exactly on +-1.
-        #
-        # If anything about the model is beyond what the estimator handles, it
-        # falls back to the old expression rather than guessing: a bound that
-        # is too wide costs resolution, one that is too narrow is silent.
-        try:
-            e_min, e_max = estimate_bounds(
-                lattice, disorder=disorder,
-                disorder_structural=disorder_structural,
-                magnetic_field=bool(kwargs.get('modification', None)
-                                    and (getattr(kwargs['modification'], 'magnetic_field', None)
-                                         or getattr(kwargs['modification'], 'flux', None))))
-        except Exception as exc:
-            max_hopping_energy = max(
-                (np.max(np.abs(hop.energy)) for hop in lattice.hoppings.values()),
-                default=0)
-            max_onsite_energy = max(
-                (np.max(np.abs(sub.energy)) for sub in lattice.sublattices.values()),
-                default=0)
-            bound = max_onsite_energy + 6 * max_hopping_energy
-            e_min, e_max = -bound, bound
-            print('Bound estimate fell back to the coordination-six rule ({}).'.format(
-                type(exc).__name__))
+        max_hopping_energy = 0
+        for name, hop in lattice.hoppings.items():
+            hopping_energy = np.max(np.abs(hop.energy))
+            if hopping_energy > max_hopping_energy:
+                max_hopping_energy = hopping_energy
+
+        max_onsite_energy = 0
+        for name, sub in lattice.sublattices.items():
+            onsite_energy = np.max(np.abs(sub.energy))
+            if onsite_energy > max_onsite_energy:
+                max_onsite_energy = onsite_energy
+
+        bound = max_onsite_energy + 6 * max_hopping_energy
+        e_min, e_max = - bound, bound
         print('Using default bounds: ({:.2f}, {:.2f}) eV.'.format(e_min, e_max))
 
         config._energy_scale = (e_max - e_min) / 2.0
@@ -1605,60 +1486,6 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
     vectors = np.asarray(lattice.vectors)
     space_size = vectors.shape[0]
     vectors = vectors[:, 0:space_size]
-
-    # KITEx implements D=2 and D=3 as explicit template specializations of
-    # KPM_Vector; D=1 resolves to the primary template, whose methods are empty
-    # stubs. It compiles, runs and reports success, and every moment comes back
-    # zero -- including mu_0, which is 1 by normalisation. Stop here instead,
-    # where the message can say what to do about it.
-    if space_size == 1:
-        raise SystemExit(
-            'One-dimensional lattices are not implemented in KITEx.\n'
-            '  KITEx specializes its Chebyshev vector for 2D and 3D only. A 1D\n'
-            '  system would run to completion and return identically zero moments\n'
-            '  with no error, so it is rejected here instead.\n'
-            '\n'
-            '  Build it as a 2D lattice that leaves the second direction\n'
-            '  uncoupled. KITE then holds many independent copies at once and the\n'
-            '  stochastic trace averages over all of them, which is cheaper than\n'
-            '  one chain, not dearer. For a chain, hop along x only:\n'
-            '\n'
-            '      lattice = kite.lattice.Lattice(a1=[1, 0], a2=[0, 1])\n'
-            '      lattice.add_sublattices([\'A\', [0, 0], 0.0])\n'
-            '      lattice.add_hoppings([[-1, 0], \'A\', \'A\', -t])   # x only\n'
-            '      configuration = kite.Configuration(..., length=[8192, 16], ...)\n'
-            '\n'
-            '  The same construction carries a zero-dimensional system: put every\n'
-            '  site in the unit cell and give it only [0, 0] hoppings, as the\n'
-            '  molecule examples under examples/paper/Section_4_G_molecules do.\n'
-            '\n'
-            '  Keep the repeated direction short, make the chains long, and keep\n'
-            '  num_moments modest: the energy resolution must stay coarser than\n'
-            '  the level spacing of a finite chain, or KPM resolves the individual\n'
-            '  levels instead of the band.')
-
-    # The real-space map drivers are compiled only for a complex Hamiltonian:
-    # SimulationLDoS.cpp:78 and SimulationSpectral.cpp:82 wrap their whole body
-    # in `if constexpr (is_tt<std::complex, T>::value)`. With is_complex=False
-    # KITEx prints "Calculating LDoS." and exits successfully having written no
-    # Map dataset at all. Stop here instead, where the message can say what to do.
-    complex_only = []
-    if calculation.get_ldos_map:
-        complex_only.append('ldos_map')
-    if calculation.get_spectral_map:
-        complex_only.append('spectral_map')
-    if complex_only and not config.comp:
-        raise SystemExit(
-            '{} {} a complex Hamiltonian.\n'
-            '  These drivers seed a random-PHASE vector, so KITEx compiles them\n'
-            '  only for a complex scalar type. With is_complex=False the run\n'
-            '  reports success and writes no map, so it is rejected here instead.\n'
-            '\n'
-            '  Pass is_complex=True to kite.Configuration(). The model itself may\n'
-            '  stay real; this only widens the scalar type KITEx is built with,\n'
-            '  at the cost of twice the memory for the Chebyshev vectors.'
-            .format(' and '.join(complex_only),
-                    'requires' if len(complex_only) == 1 else 'require'))
 
     # iterate through all the sublattices and add onsite energies to hoppings list
     # count num of orbitals and read the atom positions.
@@ -1786,31 +1613,6 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
     # orbital_to in unit cell [i, j, k] is defined  as [i, j, k] x [1, 3, 9] + relative_orbital_num*3**3 3D
     # relative index of orbital_from is unique as only hoppings from the orbitals in the initial unit cell are exported
     for h in hoppings:
-        # The destination is packed into one integer as
-        #     orbital * 3**D + sum_d (n_d + 1) * 3**d
-        # so the cell field is exactly D base-3 digits: -1, 0, +1 and nothing
-        # else. A component of 2 does not reach a further cell -- it carries
-        # into the digit above, which for the last direction is the ORBITAL
-        # field. The result is a bond to a different orbital at shorter range:
-        # a valid file, a clean run, and the spectrum of a different
-        # Hamiltonian. The structural-disorder path already refuses this (see
-        # add_local_bond_disorder); the Hamiltonian path did not.
-        relative_index = np.asarray(h['relative_index'])
-        if np.any(np.abs(relative_index) > 1):
-            raise SystemExit(
-                'Hopping out of range: relative_index {} reaches beyond the '
-                'first-neighbour unit cell.\n'
-                '  KITE can only represent hoppings whose relative_index has '
-                'every component in -1, 0, +1.\n'
-                '  This is a property of the file format, not a tunable limit: '
-                'the destination cell is stored as D base-3 digits, so a '
-                'component of 2 overflows into the orbital field and silently '
-                'produces a different Hamiltonian.\n'
-                '  Raising NGHOSTS does not help -- that is the halo depth, not '
-                'the width of the address.\n'
-                '  Use a larger unit cell so the bond becomes a '
-                'first-neighbour one.'.format(relative_index.tolist()))
-
         hopping_energy = h['hopping_energy']
         it = np.nditer(hopping_energy, flags=['multi_index'])
         while not it.finished:
@@ -1924,7 +1726,7 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
     # space dimension of the lattice 1D, 2D, 3D
     f.create_dataset('DIM', data=space_size, dtype='u4')
     # lattice vectors. Size is same as DIM
-    f.create_dataset('LattVectors', data=vectors, dtype=np.float32)
+    f.create_dataset('LattVectors', data=vectors, dtype=np.float64)
     # position for each atom
     f.create_dataset('OrbPositions', data=position, dtype=np.float64)
     # total number of orbitals
@@ -1964,14 +1766,7 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
         # find the minimum commensurate magnetic field
         hbar = 6.58211899 * 10 ** -16  #: [eV*s]
         phi0 = 2 * np.pi * hbar  #: [V*s] flux quantum
-        # NumPy 2.0 removed the 2-vector form of np.cross. Embedding both lattice
-        # vectors in 3D keeps the 2D case working and leaves 3D bit-identical:
-        # for a 2D cell only the z-component survives, |a1_x a2_y - a1_y a2_x|.
-        a1 = np.zeros(3)
-        a2 = np.zeros(3)
-        a1[:vectors.shape[1]] = vectors[0, :]
-        a2[:vectors.shape[1]] = vectors[1, :]
-        unit_cell_area = np.linalg.norm(np.cross(a1, a2)) * 1e-18
+        unit_cell_area = np.linalg.norm(np.cross(vectors[0, :], vectors[1, :])) * 1e-18
         magnetic_field_min = phi0 / (leng[1] * unit_cell_area)
         print('For a selected system size, minimum field is: ', magnetic_field_min)
 
@@ -1999,17 +1794,6 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
     grp_dis = grp.create_group('Disorder')
 
     if disorder:
-        # A Disorder object that was constructed but never given an
-        # add_disorder() call leaves _orbital as an empty list, and the
-        # comparison below then raises a TypeError that names neither the
-        # object nor the omission.
-        if len(np.asarray(disorder._orbital).shape) < 2:
-            raise SystemExit(
-                'Disorder: the Disorder object passed to config_system has no '
-                'disorder in it.\n'
-                '  Call add_disorder() on it before exporting, for example:\n'
-                "      disorder.add_disorder('A', 'Uniform', 0.0, 0.1)\n"
-                '  Or omit the disorder= argument entirely for a clean system.')
         present = disorder._orbital > -1
         len_orb = np.max(np.sum(present, axis=0))
         disorder._orbital = disorder._orbital[0:len_orb, :]
@@ -2305,11 +2089,8 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
 
     if calculation.get_ldos_map:
         grpc_p = grpc.create_group('ldos_map')
-        # Rescaled here, not in KITEx: an absolute energy carries the shift,
-        # a width carries only the scale. Keeping both on this side means one
-        # place can drop the shift instead of six.
-        grpc_p.create_dataset('Energy', data = (np.asarray(calculation._ldos_map[0]['energy']) - config.energy_shift) / config.energy_scale, dtype = np.float64)
-        grpc_p.create_dataset('Sigma', data = np.asarray(calculation._ldos_map[0]['sigma']) / config.energy_scale, dtype = np.float64)
+        grpc_p.create_dataset('Energy', data = np.asarray(calculation._ldos_map[0]['energy']), dtype = np.float64)
+        grpc_p.create_dataset('Sigma', data = np.asarray(calculation._ldos_map[0]['sigma']), dtype = np.float64)
         grpc_p.create_dataset('NumVectors', data = np.asarray(calculation._ldos_map[0]['vectors']), dtype = np.int32)
         grpc_p.create_dataset('Coef_ID', data = np.asarray(calculation._ldos_map[0]['coef_id']), dtype = np.int32)
 
@@ -2323,11 +2104,8 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
 
     if calculation.get_spectral_map:
         grpc_p = grpc.create_group('spectral_map')
-        # Rescaled here, not in KITEx: an absolute energy carries the shift,
-        # a width carries only the scale. Keeping both on this side means one
-        # place can drop the shift instead of six.
-        grpc_p.create_dataset('Energy', data = (np.asarray(calculation._spectral_map[0]['energy']) - config.energy_shift) / config.energy_scale, dtype = np.float64)
-        grpc_p.create_dataset('Sigma', data = np.asarray(calculation._spectral_map[0]['sigma']) / config.energy_scale, dtype = np.float64)
+        grpc_p.create_dataset('Energy', data = np.asarray(calculation._spectral_map[0]['energy']), dtype = np.float64)
+        grpc_p.create_dataset('Sigma', data = np.asarray(calculation._spectral_map[0]['sigma']), dtype = np.float64)
         grpc_p.create_dataset('NumVectors', data = np.asarray(calculation._spectral_map[0]['vectors']), dtype = np.int32)
         grpc_p.create_dataset('Coef_ID', data = np.asarray(calculation._spectral_map[0]['coef_id']), dtype = np.int32)
 
@@ -2357,12 +2135,9 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
     if calculation.get_gaussian_wave_packet:
         grpc_p = grpc.create_group('gaussian_wave_packet')
 
-        num_moments, num_points, num_disorder, spinor, width, k_vector, \
-            mean_value = [], [], [], [], [], [], []
-        # Only one of the two is set by the user; the other is derived here,
-        # once the energy scale is final -- it is not known when the calculation
-        # is declared, because an unset spectrum_range is estimated above.
-        timestep, timestep_physical = [], []
+        num_moments, num_points, num_disorder, spinor, width, k_vector, mean_value, \
+                                                                        probing_points = [], [], [], [], [], [], [], []
+        timestep = []
         for single_gauss_wavepacket in calculation.get_gaussian_wave_packet:
             num_moments.append(single_gauss_wavepacket['num_moments'])
             num_points.append(single_gauss_wavepacket['num_points'])
@@ -2371,14 +2146,8 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
             width.append(single_gauss_wavepacket['width'])
             k_vector.append(single_gauss_wavepacket['k_vector'])
             mean_value.append(single_gauss_wavepacket['mean_value'])
-            step = single_gauss_wavepacket['timestep']
-            step_physical = single_gauss_wavepacket['timestep_physical']
-            if step is None:
-                step = step_physical * config.energy_scale
-            else:
-                step_physical = step / config.energy_scale
-            timestep.append(step)
-            timestep_physical.append(step_physical)
+            timestep.append(single_gauss_wavepacket['timestep'])
+            probing_points.append(single_gauss_wavepacket['probing_point'])
         if len(calculation.get_gaussian_wave_packet) > 1:
             raise SystemExit('Only a single function request of each type is currently allowed. Please use another '
                              'configuration file for the same functionality.')
@@ -2386,29 +2155,11 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
         grpc_p.create_dataset('NumPoints', data=num_points, dtype=np.int32)
         grpc_p.create_dataset('NumDisorder', data=num_disorder, dtype=np.int32)
         grpc_p.create_dataset('mean_value', data=mean_value, dtype=np.int32)
+        grpc_p.create_dataset('ProbingPoint', data=np.asmatrix(np.asarray(probing_points)).astype(np.float32))
         grpc_p.create_dataset('width', data=width, dtype=np.float32)
-        # The seeded state carries one amplitude per orbital of the unit cell. A
-        # shorter or longer spinor is not caught downstream: KITEx reads a fixed
-        # stride, so a mismatched row silently seeds the wrong orbitals rather
-        # than failing.
-        spinor_arr = np.asmatrix(np.asarray(spinor)).astype(config.type)
-        if spinor_arr.shape[1] != total_orbitals:
-            raise SystemExit(
-                'gaussian_wave_packet: spinor has {} component(s) but the lattice '
-                'has {} orbital(s) per unit cell.\n'
-                '  The spinor gives the amplitude on each orbital of one unit cell, '
-                'so it must have exactly one entry per orbital, in the order the '
-                'sublattices were added.\n'
-                '  Got shape {}.'.format(
-                    spinor_arr.shape[1], total_orbitals, tuple(spinor_arr.shape)))
-        grpc_p.create_dataset('spinor', data=spinor_arr)
+        grpc_p.create_dataset('spinor', data=np.asmatrix(np.asarray(spinor)).astype(config.type))
         grpc_p.create_dataset('k_vector', data=np.asmatrix(np.asarray(k_vector)), dtype=np.float32)
         grpc_p.create_dataset('timestep', data=timestep, dtype=np.float32)
-        # KITEx reads `timestep` only; this one is for post-processing, so the
-        # physical time axis does not have to be rebuilt by hand from
-        # EnergyScale. float64 because nothing in C++ reads it, and it is the
-        # axis analytic comparisons are made on.
-        grpc_p.create_dataset('timestep_physical', data=timestep_physical, dtype=np.float64)
 
         operator_labels = calculation.get_gaussian_wave_packet[0]['operators']
         if operator_labels:
@@ -2803,12 +2554,9 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
         grpc_op = grpc.create_group('CustomSingleTwo/CustomOperators')
         grpc_p.create_dataset('NumVectors', data = np.asarray(calculation._custom_ss_two[0]['num_random']), dtype = np.int32)
         grpc_p.create_dataset('NumDisorder', data = np.asarray(calculation._custom_ss_two[0]['num_disorder']), dtype = np.int32)
-        # Rescaled here, not in KITEx: an absolute energy carries the shift,
-        # a width carries only the scale. Keeping both on this side means one
-        # place can drop the shift instead of six.
-        grpc_p.create_dataset('Energies', data = (np.asarray(calculation._custom_ss_two[0]['energies']).flatten() - config.energy_shift) / config.energy_scale, dtype = np.float64)
-        grpc_p.create_dataset('Gamma', data = np.asarray(calculation._custom_ss_two[0]['gamma']) / config.energy_scale, dtype = np.float64)
-        grpc_p.create_dataset('Sigma', data = np.asarray(calculation._custom_ss_two[0]['sigma']) / config.energy_scale, dtype = np.float64)
+        grpc_p.create_dataset('Energies', data = np.asarray(calculation._custom_ss_two[0]['energies']).flatten(), dtype = np.float64)
+        grpc_p.create_dataset('Gamma', data = np.asarray(calculation._custom_ss_two[0]['gamma']), dtype = np.float64)
+        grpc_p.create_dataset('Sigma', data = np.asarray(calculation._custom_ss_two[0]['sigma']), dtype = np.float64)
 
         for i in range(calculation._custom_ss_two[0]['rank']):
             grpc_vtx = grpc_p.create_group(f'Vertex{i:01d}')

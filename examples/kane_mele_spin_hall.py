@@ -19,9 +19,9 @@
       A = (1/2){v_x, s_z}   (the spin current in x, symmetrized anticommutator)
       B = v_y               (the charge velocity in y)
     KITE then builds the double-Chebyshev moment matrix Gamma_{mn} =
-    Tr[T_m(H) B T_n(H) A]; KITE-tools does the Kubo-Bastin energy integral and
-    writes custom_two.dat. kane_mele_spin_hall_process.py repeats it in Python
-    to plot sigma^{s_z}_xy against Fermi energy.
+    Tr[T_m(H) B T_n(H) A]; the Kubo-Bastin energy integral is done in Python
+    (see kane_mele_spin_hall_process.py, adapted from examples/cond_sum.py, the
+    diag=0 antisymmetric/Hall branch).
 
     Sign convention
     ---------------
@@ -29,17 +29,11 @@
     sublattices (Aup, Bup) and -1/2 on the spin-down sublattices (Adn, Bdn),
     i.e. s_z = (1/2) sigma_z (hbar = 1). The OVERALL SIGN of the computed spin
     Hall response is fixed by this choice: flipping the sign of every l0 matrix
-    element flips the sign of the plateau.
-
-    Spin up carries the next-nearest-neighbour amplitude -i*t2 on A-A and
-    +i*t2 on B-B, exactly as coded below -- the same assignment as
-    dos_dccond_haldane.py, at t2 = 0.15 -- so its filled band has Chern number
-    C_up = +1. Spin down is the complex conjugate, +i*t2 on A-A, so C_dn = -1.
-    (A Chern sign is only meaningful alongside the convention that fixes it:
-    KITE stores `add_one_hopping(R, from_sub, to_sub, v)` as `H[row=from_sub, col=to_sub]` and uses `exp(+i k.r)`.)
-    This opposite SOC sign between spins is what makes this Kane-Mele, a Z2
-    insulator with a spin Hall plateau, rather than two stacked Haldane copies,
-    which would be a charge Chern insulator.
+    element flips the sign of the plateau. The Haldane phase for spin up is
+    +i (t2 * (-1j) on A-A bonds, following the reference Haldane example),
+    and spin down carries the opposite phase -- this opposite SOC sign between
+    spins is what makes this Kane-Mele (a Z2 insulator with a spin Hall
+    plateau) rather than two stacked Haldane copies (a charge Chern insulator).
 
     Operator-string convention
     ---------------------------
@@ -160,10 +154,8 @@ def main(t=1.0, t2=0.15, moments=256, output_file="kane_mele_spin_hall-output.h5
     kite.config_system(lattice, configuration, calculation, filename=output_file)
 
     # Run:   ../build/KITEx kane_mele_spin_hall-output.h5
-    # then, for the Kubo-Bastin energy integral:
-    # ../build/KITE-tools kane_mele_spin_hall-output.h5 --CustomTwo
-    # kane_mele_spin_hall_process.py does the same integral in Python, which is
-    # what the plots below are built from.
+    # There is NO KITE-tools step for custom_two -- the Kubo-Bastin energy
+    # integral is done in Python; see kane_mele_spin_hall_process.py.
     return output_file
 
 

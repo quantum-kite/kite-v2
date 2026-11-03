@@ -27,6 +27,7 @@ def honeycomb_lattice(onsite=(0, 0), t=1):
     # parameters
     a = 1  # [nm] unit cell length
     a_cc = 1 / np.sqrt(3)  # [nm] carbon-carbon distance
+    t = 2.8  # eV
 
     # define lattice vectors
     a1 = a * np.array([1, 0])

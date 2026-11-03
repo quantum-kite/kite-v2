@@ -108,17 +108,9 @@ void shell_input::printHelp(){
     std::cout << "--CondOpt    Optical conductivity\n";
     std::cout << "--CondOpt2   Second-order optical conductivity (photoconductivity)\n";
     std::cout << "--CustomOne  Single-vertex custom operator trace (generalized DOS)\n";
-    std::cout << "--CustomOneLocal  Single-vertex custom operator, resolved at each probed orbital\n";
-    std::cout << "--LDOSmap  Real-space LDoS map, with site coordinates decoded\n";
-    std::cout << "--SpectralMap  Momentum-space spectral map, with k decoded\n";
-    std::cout << "--WavePacket  Wave-packet time series, on a physical time axis\n";
-    std::cout << "--CustomTwo  Double-vertex custom operator trace (generalized Kubo-Bastin)\n";
-    std::cout << "--SingleShot Longitudinal DC conductivity from the single-shot method\n\n";
+    std::cout << "--CustomTwo  Double-vertex custom operator trace (generalized Kubo-Bastin)\n\n";
 
     std::cout << "After each of these keywords, the program will be expecting the subparameters associated with that word (always separated by spaces):\n\n";
-
-    std::cout << "--SingleShot -N            Name of the output file\n";
-    std::cout << "             -X            Exclusive. Only calculate this quantity\n\n";
 
     std::cout << "--LDOS     -N              Name of the output file\n";
     std::cout << "           -M              Number of Chebyshev moments\n";
@@ -141,7 +133,6 @@ void shell_input::printHelp(){
     std::cout << "           -K              Kernel to use (jackson/green). green requires broadening parameter. Example: -K green 0.01\n";
     std::cout << "           -X              Exclusive. Only calculate this quantity\n\n";
 
-    std::cout << "--CustomOneLocal -E min max num  Energy range and number of points for the\n";
     std::cout << "--CustomOne -E min max num  Energy range and number of points for the\n";
     std::cout << "                            reconstructed calculation.custom_one() spectral\n";
     std::cout << "                            density, Tr[A * delta(E-H)] (jackson kernel only)\n";
@@ -222,7 +213,7 @@ shell_input::shell_input(int argc, char *argv[]){
 	// Processes the input that this program recieves from the command line	
 
     // First, find the position of each of the following functions:
-    valid_keys = std::vector<std::string>{"--DOS", "--CondOpt","--CondDC", "--CondOpt2", "--LDOS", "--ARPES", "--CustomOne", "--CustomTwo", "--SingleShot", "--CustomOneLocal", "--LDOSmap", "--SpectralMap", "--WavePacket"};
+    valid_keys = std::vector<std::string>{"--DOS", "--CondOpt","--CondDC", "--CondOpt2", "--LDOS", "--ARPES", "--CustomOne", "--CustomTwo"};
     len = valid_keys.size();   // length of valid_keys?
     keys_pos = std::vector<int>(len, -1);
     keys_len = std::vector<int>(len, -1);
@@ -264,12 +255,7 @@ shell_input::shell_input(int argc, char *argv[]){
     parse_CondOpt(argc, argv);
     parse_CondOpt2(argc, argv);
     parse_CustomOne(argc, argv);
-    parse_CustomOneLocal(argc, argv);
-    parse_LDOSmap(argc, argv);
-    parse_SpectralMap(argc, argv);
-    parse_Wavepacket(argc, argv);
     parse_CustomTwo(argc, argv);
-    parse_SingleShot(argc, argv);
 
     // Process the exclusive flag. If there are no exclusive functions,
     // all will be calculated. If there's only one, that's the only one
@@ -282,12 +268,7 @@ shell_input::shell_input(int argc, char *argv[]){
     lDOS_is_required = false;
     ARPES_is_required = false;
     CustomOne_is_required = false;
-    CustomOneLocal_is_required = false;
-    LDOSmap_is_required = false;
-    SpectralMap_is_required = false;
-    Wavepacket_is_required = false;
     CustomTwo_is_required = false;
-    SingleShot_is_required = false;
 
     int num_exclusives = get_num_exclusives();
     if(num_exclusives > 1){
@@ -302,12 +283,7 @@ shell_input::shell_input(int argc, char *argv[]){
             if(lDOS_Exclusive) lDOS_is_required = true;
             if(ARPES_Exclusive) ARPES_is_required = true;
             if(CustomOne_Exclusive) CustomOne_is_required = true;
-            if(CustomOneLocal_Exclusive) CustomOneLocal_is_required = true;
-            if(LDOSmap_Exclusive) LDOSmap_is_required = true;
-            if(SpectralMap_Exclusive) SpectralMap_is_required = true;
-            if(Wavepacket_Exclusive) Wavepacket_is_required = true;
             if(CustomTwo_Exclusive) CustomTwo_is_required = true;
-            if(SingleShot_Exclusive) SingleShot_is_required = true;
 
         } else {
             CondDC_is_required = true;
@@ -317,12 +293,7 @@ shell_input::shell_input(int argc, char *argv[]){
             lDOS_is_required = true;
             ARPES_is_required = true;
             CustomOne_is_required = true;
-            CustomOneLocal_is_required = true;
-            LDOSmap_is_required = true;
-            SpectralMap_is_required = true;
-            Wavepacket_is_required = true;
             CustomTwo_is_required = true;
-            SingleShot_is_required = true;
             }
     }
 
@@ -335,14 +306,8 @@ int shell_input::get_num_exclusives(){
     if(CondOpt2_Exclusive)    N_exclusives++;
     if(DOS_Exclusive)         N_exclusives++;
     if(lDOS_Exclusive)        N_exclusives++;
-    if(ARPES_Exclusive)       N_exclusives++;
     if(CustomOne_Exclusive)   N_exclusives++;
-    if(CustomOneLocal_Exclusive) N_exclusives++;
-    if(LDOSmap_Exclusive)     N_exclusives++;
-    if(SpectralMap_Exclusive) N_exclusives++;
-    if(Wavepacket_Exclusive) N_exclusives++;
     if(CustomTwo_Exclusive)   N_exclusives++;
-    if(SingleShot_Exclusive)  N_exclusives++;
 
     return N_exclusives;
 }
@@ -661,139 +626,6 @@ void shell_input::parse_CustomOne(int argc, char* argv[]){
     }
 }
 
-void shell_input::parse_CustomOneLocal(int argc, char* argv[]){
-    // This function looks at the command-line input pertaining to the
-    // custom_one_local() spectral density reconstruction (--CustomOneLocal) and
-    // finds all the relevant parameters. Mirrors parse_CustomOne; there is no
-    // kernel choice (jackson only) and no site selection -- the probed orbitals
-    // are fixed when KITEx runs, not at post-processing time.
-
-    CustomOneLocal_NumEnergies = -1;
-    CustomOneLocal_Emin = 8888.8;
-    CustomOneLocal_Emax = -8888.8;
-    CustomOneLocal_Name = "";
-    CustomOneLocal_Exclusive = false;
-
-    int pos = keys_pos.at(9); // position of "--CustomOneLocal" in valid_keys
-    if(pos != -1){
-        for(int k = 1; k < keys_len.at(9); k++){
-            std::string name = argv[k + pos];
-            std::string n1 = argv[k + pos + 1];
-            if(name == "-N")
-                CustomOneLocal_Name = n1;
-
-            if(name == "-E"){
-                if(k == keys_len.at(9) - 1){
-                    CustomOneLocal_NumEnergies = atoi(n1.c_str());
-                    continue;
-                }
-                std::string n2 = argv[k + pos + 2];
-                if(n2 == "-N" or n2 == "-X"){
-                    CustomOneLocal_NumEnergies = atoi(n1.c_str());
-                    continue;
-                }
-                std::string n3 = argv[k + pos + 3];
-                CustomOneLocal_Emin = atof(n1.c_str());
-                CustomOneLocal_Emax = atof(n2.c_str());
-                CustomOneLocal_NumEnergies = atoi(n3.c_str());
-            }
-
-            if(name == "-X" or n1 == "-X")
-                CustomOneLocal_Exclusive = true;
-        }
-        if(keys_len.at(9) == 1){
-          std::string name = argv[1 + pos];
-          if(name == "-X")
-            CustomOneLocal_Exclusive = true;
-        }
-    }
-}
-
-void shell_input::parse_LDOSmap(int argc, char* argv[]){
-    // This function looks at the command-line input pertaining to the
-    // ldos_map() real-space map (--LDOSmap). There is no energy range to set:
-    // KITEx finishes the energy resolution itself and stores one map at the
-    // energy and width that were fixed when it ran.
-
-    LDOSmap_Name = "";
-    LDOSmap_Exclusive = false;
-
-    int pos = keys_pos.at(10); // position of "--LDOSmap" in valid_keys
-    if(pos != -1){
-        for(int k = 1; k < keys_len.at(10); k++){
-            std::string name = argv[k + pos];
-            std::string n1 = argv[k + pos + 1];
-            if(name == "-N")
-                LDOSmap_Name = n1;
-
-            if(name == "-X" or n1 == "-X")
-                LDOSmap_Exclusive = true;
-        }
-        if(keys_len.at(10) == 1){
-          std::string name = argv[1 + pos];
-          if(name == "-X")
-            LDOSmap_Exclusive = true;
-        }
-    }
-}
-
-void shell_input::parse_SpectralMap(int argc, char* argv[]){
-    // This function looks at the command-line input pertaining to the
-    // spectral_map() momentum-space map (--SpectralMap). As with --LDOSmap
-    // there is no energy range to set: KITEx finishes the energy resolution
-    // itself and stores one map at the energy and width that were fixed when
-    // it ran.
-
-    SpectralMap_Name = "";
-    SpectralMap_Exclusive = false;
-
-    int pos = keys_pos.at(11); // position of "--SpectralMap" in valid_keys
-    if(pos != -1){
-        for(int k = 1; k < keys_len.at(11); k++){
-            std::string name = argv[k + pos];
-            std::string n1 = argv[k + pos + 1];
-            if(name == "-N")
-                SpectralMap_Name = n1;
-
-            if(name == "-X" or n1 == "-X")
-                SpectralMap_Exclusive = true;
-        }
-        if(keys_len.at(11) == 1){
-          std::string name = argv[1 + pos];
-          if(name == "-X")
-            SpectralMap_Exclusive = true;
-        }
-    }
-}
-
-void shell_input::parse_Wavepacket(int argc, char* argv[]){
-    // This function looks at the command-line input pertaining to the
-    // gaussian_wave_packet() time series (--WavePacket). There is nothing to
-    // choose but the output name: the time axis, the number of points and the
-    // tracked operators were all fixed when KITEx ran.
-
-    Wavepacket_Name = "";
-    Wavepacket_Exclusive = false;
-
-    int pos = keys_pos.at(12); // position of "--WavePacket" in valid_keys
-    if(pos != -1){
-        for(int k = 1; k < keys_len.at(12); k++){
-            std::string name = argv[k + pos];
-            std::string n1 = argv[k + pos + 1];
-            if(name == "-N")
-                Wavepacket_Name = n1;
-
-            if(name == "-X" or n1 == "-X")
-                Wavepacket_Exclusive = true;
-        }
-        if(keys_len.at(12) == 1){
-          std::string name = argv[1 + pos];
-          if(name == "-X")
-            Wavepacket_Exclusive = true;
-        }
-    }
-}
-
 void shell_input::parse_CustomTwo(int argc, char* argv[]){
     // This function looks at the command-line input pertaining to the
     // custom_two() Kubo-Bastin response reconstruction (--CustomTwo) and
@@ -1021,46 +853,6 @@ void shell_input::parse_ARPES(int argc, char* argv[]){
 
             }
         }
-        // A lone flag after the keyword never enters the loop above, whose
-        // bound is the number of arguments that follow. parse_lDOS and
-        // parse_CustomTwo carry the same trailing check.
-        if(keys_len.at(j) == 1){
-            std::string name = argv[1 + pos];
-            if(name == "-X")
-                ARPES_Exclusive = true;
-        }
     }
     debug_message("Left parse_ARPES\n");
-}
-
-
-void shell_input::parse_SingleShot(int argc, char* argv[]){
-    // The single-shot conductivity is computed by KITEx itself, so there is
-    // nothing here to re-run at a different temperature, broadening or energy
-    // grid: those were fixed when the calculation was set up. The only thing
-    // left to choose is where the result is written.
-
-    SingleShot_Name = "";
-    SingleShot_Exclusive = false;
-    int pos = keys_pos.at(8);
-    if(pos != -1){
-        for(int k = 1; k < keys_len.at(8); k++){
-            std::string name = argv[k + pos];
-            std::string n1 = argv[k + pos + 1];
-            if(name == "-N")
-                SingleShot_Name = n1;
-            if(name == "-X" or n1 == "-X")
-                SingleShot_Exclusive = true;
-        }
-        if(keys_len.at(8) == 1){
-            std::string name = argv[1 + pos];
-            if(name == "-X")
-                SingleShot_Exclusive = true;
-        }
-    }
-}
-
-void shell_input::printSingleShot(){
-    if(SingleShot_Name != "")
-        std::cout << "    name of the output file: " << SingleShot_Name << "\n";
 }
