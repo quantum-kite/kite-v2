@@ -53,27 +53,30 @@ The same strategy can be used to calculate the optical conductivity for differen
 
 ## Other cases: bespoke post-processing
 
-The `#!python tools` directory also holds `#!python process_arpes.py`, which plots the
-output of a spectral function (ARPES) calculation.
+Some functionalities do not require post-processing or use bespoke post-processing tools that are not included in [KITE-tools][kitetools]. 
+For example, the single-shot longitudinal conductivity functionality `#!python singleshot_conductivity_dc` **does not** 
+store Chebyshev moments in the HDF file, rather it requests [KITEx][kitex] to directly calculate the DC conductivity for specified values of the Fermi energy. 
 
-## The single-shot conductivity
+To extract the calculated DC conductivity, we can use a Python script located in the `#!python tools` directory:  `#!python process_single_shot.py`, using
 
-The single-shot longitudinal conductivity
-[`#!python singleshot_conductivity_dc()`][calculation-singleshot_conductivity_dc] works
-differently from every other target function: it stores **no Chebyshev moments**. Instead
-[KITEx][kitex] solves directly for the conductivity at each Fermi energy you asked for, so
-once [KITEx][kitex] has run the numbers are final — there is no expansion left to
-reconstruct. That is why `#!bash --SingleShot` takes no temperature, broadening or energy
-grid: those were fixed when you set the calculation up.
 
 ``` bash
-./build/KITE-tools outputfile_name_here.h5 --SingleShot
+./tools/process_single_shot.py outputfile_name_here.h5 
 ```
 
-This writes `#!bash singleshot_condDC.dat`: the Fermi energy in eV, then $\sigma_{xx}$ in
-units of $e^2/h$ — the same convention as `#!bash --CondDC`. Use `#!bash -N` to choose a
-different output file and `#!bash -X` to skip every other quantity in the file.
+In the same `#!python tools` directory, users can find another script which plots the output of a spectral function (ARPES) calculation.
 
+!!! Warning "Processing the output of `#!python singleshot_conductivity_dc`"
+
+     [`#!python singleshot_conductivity_dc()`][calculation-singleshot_conductivity_dc] works differently from the other target functions in that it just requires a single run with [KITEx][kitex]. As such, the prost-processing with [KITE-tools][kitetools] is not required, and instead, the requested single-shot values of the DC conductivity can be retrieved directly from the HDF file once [KITEx][kitex] has run. You can extract the results from the HDF file [as explained in the tutorial][tutorial-hdf5], with `#!python "output.h5"` the name of the HDF file:
+                     
+    ``` python linenums="1"
+        import numpy as np
+        from h5py import File
+        condDC = File("output.h5", "r+")['Calculation']['singleshot_conductivity_dc']['SingleShot']
+        np.savetxt("condDC.dat",condDC)                
+    ``` 
+    Alternatively, you can simply use the Python script ('process_single_shot.py') in the `#!bash kite/tools/`-directory.
 
 
 [kitex]: ../api/kitex.md

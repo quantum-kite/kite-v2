@@ -139,24 +139,14 @@ cond = single_shot[:, 3]
 
 plt.plot(energy, cond, 'o-')
 plt.xlabel('$E$ [eV]')
-plt.ylabel(r'$\sigma$ [$2e^2 / h$]')
+plt.ylabel(r'$\sigma$ [$4e^2 / h$]')
 plt.title('Phosphorene')
 
 plt.tight_layout()
 plt.show()
 ```
 
-The four-band phosphorene model is spinless, and KITE reports the conductivity per spin,
-so the plotted values are multiplied by two to account for spin degeneracy.
-
-Alternatively, [KITE-tools][kitetools] writes the same data out directly:
-
-``` bash
-./build/KITE-tools phxx.h5 --SingleShot
-```
-
-This produces `#!bash singleshot_condDC.dat` with the Fermi energy and the conductivity
-(see Sec. [Post-Processing][postprocessing]). 
+Alternatively, the single-shot post-processing python tool in the `#!python tools` directory can be used to produce the data in a more streamlined fashion (see Sec. [Post-Processing][postprocessing]). 
 
 <div>
   <figure>
