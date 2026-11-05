@@ -18,7 +18,11 @@ LABELS = {'l0': 'S_x', 'l1': 'S_y', 'l2': 'S_z'}
 
 def load(file_path):
     with h5py.File(file_path, "r") as f:
-        timestep = float(np.array(f["Calculation"]["gaussian_wave_packet"]["timestep"]))
+        # timestep is stored as a length-1 array, not as a 0-d scalar the way
+        # EnergyScale below is. Converting an array with ndim > 0 to a Python
+        # scalar was deprecated in NumPy 1.25 and is a TypeError in NumPy 2;
+        # .item(), which NumPy names as the replacement, reads either shape.
+        timestep = f["Calculation"]["gaussian_wave_packet"]["timestep"][...].item()
         energy_scale = float(np.array(f["EnergyScale"]))
         series = {label: np.array(f["Calculation"]["gaussian_wave_packet"][label]).flatten().real
                   for label in LABELS}
