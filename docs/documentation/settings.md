@@ -122,6 +122,25 @@ Below, we explain each of the arguments in the [`#!python kite.Configuration`][c
 
     _Lower/upper bounds should be used if exact energy eigenvalues of the lattice model are unknown (e.g. due to the presence of a disorder landscape); see Sec. [Disorder] for more information_. 
 
+    !!! warning "A range that is too narrow fails quietly — every stage still reports success"
+
+        The interval has to enclose the spectrum of the system **as configured, disorder included**; disorder
+        broadens the bands, so the right interval is wider than the clean model's. If it does not enclose
+        the spectrum, the rescaled spectrum falls outside $[-1,1]$, the Chebyshev recursion diverges, and
+        nothing stops it: [KITEx][kitex] prints `#!bash Done.`, [KITE-tools][kitetools] prints
+        `#!bash Complete.`, both exit 0, and the `#!bash .dat` is written at full length.
+
+        Running `#!bash examples/dos_graphene.py` with its `#!python spectrum_range` narrowed from
+        $\pm3.01t$ to $\pm1.0t$ produces a `#!bash dos.dat` of the usual 4000 rows in which **every density
+        value is `#!bash nan`**. That is the good case — it is at least visible. A range that is only
+        slightly too narrow can leave finite numbers that are simply wrong.
+
+        This is why the bound is described above as an *over*estimate: err wide. The cost of erring wide is
+        real but graded — the energy resolution of a Chebyshev expansion goes as the width of the rescaled
+        interval divided by the number of moments, so padding the range costs resolution in proportion, and
+        is bought back by raising `#!python num_moments`. Erring narrow is not graded.
+
+
     To manually set the energy spectrum limits, it is necessary to add an extra parameter ([`#!python spectrum_range`][configuration-spectrum_range])
     to the [`#!python kite.Configuration`][configuration] class:
     
