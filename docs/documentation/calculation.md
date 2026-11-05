@@ -55,10 +55,15 @@ Note that the non-linear optical conductivity functionality is currently restric
   
   :material-close: - Not yet implemented
 
-All target functions require the following parameter:
+Every target function in the table above requires the following parameter:
 
 * `#!python num_moments`
   : Defines the order of Chebyshev expansions and hence the effective energy resolution of the calculation; see [Documentation][optimization].
+
+    The two map functions are the exception: [`#!python ldos_map`][calculation-ldos_map] and
+    [`#!python spectral_map`][calculation-spectral_map] take no `#!python num_moments`. Their expansion order
+    is derived from `#!python sigma_` instead, so that one parameter sets the energy broadening and the
+    number of polynomials together.
 
 Other common parameters are:
 
