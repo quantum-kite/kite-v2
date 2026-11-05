@@ -133,11 +133,8 @@ flags.
 One further compile-time choice exists but is not exposed as a CMake option:
 
 - **`COMPILE_WAVEPACKET`.** CMake sets this to `1` unconditionally, so Gaussian wavepacket propagation
-  is always compiled in. It was previously conditional on `CMAKE_CXX_COMPILER_VERSION >= 8.0.0`, which
-  became redundant: C++17 is required to build KITE at all, and gcc has supported it since 8.0.0, so the
-  guard could only have fired on a compiler that cannot build the rest of the code either. The `makefile`
-  and `compile_script.sh` routes set it to `1` as well, so all three build paths now produce binaries with
-  the same capabilities.
+  is always compiled in. The `makefile` and `compile_script.sh` routes set it to `1` as well, so all three
+  build paths produce binaries with the same capabilities.
 
 ### Preprocessor constants in `Src/Generic.hpp`
 
