@@ -142,3 +142,8 @@ __pycache__
 # the tracked copies of those files live in Section_4_A_twisted_bilayer/Output/
 examples/paper/Section_4_A_twisted_bilayer/Input/H5_files/*.dat
 examples/paper/Section_4_A_twisted_bilayer/Input/H5_files/*.png
+
+# Parameter-sweep output kept at the repo root while exploring (76 MB and
+# growing). Anchored to the root on purpose: material promoted into an
+# example lives under examples/ and stays tracked.
+/sweep-data/
