@@ -478,16 +478,23 @@ request runs:
 
 | Job | What it does |
 |---|---|
-| `#!bash check-docs` | `#!bash mkdocs build --strict` — the documentation fails the build if a link or reference is broken |
+| `#!bash check-docs` | `#!bash mkdocs build --strict` — rebuilds the site and turns any mkdocs warning, such as a page missing from the navigation or a relative link to a file that does not exist, into a failure |
 | `#!bash build-and-test` | Configures and builds via conda on **both** `#!bash ubuntu-latest` and `#!bash macos-latest`, runs a smoke test that generates a config and runs KITEx, then five regression scripts |
 | `#!bash build-and-test-homebrew` | The same build on `#!bash macos-latest` through the Homebrew route of [Section 2.2][homebrew_section], with HDF5 built from source against C++17 |
 | `#!bash docker-build` | Builds the image of [Section 6][docker_section], which carries its own smoke test |
 
 So CI verifies that KITE **builds and runs** on two operating systems by three routes, that the
-documentation is internally consistent, and that five specific regressions hold. It does **not** run the
-rest of `#!bash tests/`, and it does not check any physical result beyond those five. The breadth of the
-`#!bash tests/` directory is available to you locally, as above; it is not what the green check mark on a
-pull request means.
+documentation site builds without an mkdocs warning, and that five specific regressions hold. It does
+**not** run the rest of `#!bash tests/`, and it does not check any physical result beyond those five. The
+breadth of the `#!bash tests/` directory is available to you locally, as above; it is not what the green
+check mark on a pull request means.
+
+One gap is worth naming, because the strict build looks as though it would cover it. A reference-style
+link — the two-bracket form, where the second bracket carries a label defined elsewhere on the page — is
+**not** checked: if the label is never defined, that is not an mkdocs warning. The page renders the
+literal bracketed text and the build still succeeds.
+`#!bash tests/documentation_links_regression.py` is what catches those, and it is not one of the five
+scripts CI runs.
 
 ## 5. Common issues
 
