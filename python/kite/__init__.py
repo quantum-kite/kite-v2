@@ -1772,7 +1772,14 @@ def config_system(lattice, config, calculation, modification=None, **kwargs):
         # find the minimum commensurate magnetic field
         hbar = 6.58211899 * 10 ** -16  #: [eV*s]
         phi0 = 2 * np.pi * hbar  #: [V*s] flux quantum
-        unit_cell_area = np.linalg.norm(np.cross(vectors[0, :], vectors[1, :])) * 1e-18
+        # np.cross stopped accepting 2-component vectors in NumPy 2.5 (deprecated in
+        # 2.0). Padding to three components is the replacement NumPy itself names, and
+        # reproduces exactly what it used to return for them -- the z-component
+        # a1_x*a2_y - a1_y*a2_x -- so a 2D lattice gets the same area it always did.
+        # The 3D case is unaffected: padding a 3-vector to 3 leaves it alone.
+        a1, a2 = (np.pad(np.asarray(v, dtype=float), (0, 3 - len(v)))
+                  for v in (vectors[0, :], vectors[1, :]))
+        unit_cell_area = np.linalg.norm(np.cross(a1, a2)) * 1e-18
         magnetic_field_min = phi0 / (leng[1] * unit_cell_area)
         print('For a selected system size, minimum field is: ', magnetic_field_min)
 
