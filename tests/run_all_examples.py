@@ -35,7 +35,10 @@ KITEX = REPO / "build" / "KITEx"
 TOOLS = REPO / "build" / "KITE-tools"
 
 # Scripts that are library helpers, not runnable examples.
-HELPERS = {"myaux.py", "kite_style.py"}
+# process_cond.py is named like a processor but defines no
+# top-level work: it is the Chebyshev-summation library that
+# process_statistics.py imports.
+HELPERS = {"myaux.py", "kite_style.py", "process_cond.py"}
 
 # Processors this runner cannot pair to a producer, and why. Pairing is by the
 # HDF5 filename a script mentions in its source, so a processor that takes the
@@ -48,6 +51,17 @@ KNOWN_UNPAIRED = {
     "process_single_shot.py": "takes its filename as an argument",
     "process_altermagnet_arpes.py": "reads the two spin-resolved files by argument",
     "afm_zigzag_dos_process.py": "names no HDF5 file in its source",
+    "process_statistics.py": "reads fs.h5, a per-seed file no shipped example writes",
+}
+
+# Producers that one invocation does not cover: the script takes an argument and
+# writes a different HDF5 file for each value, and its processor compares them.
+# Run with no argument only, and the processor dies on a file that was never
+# asked for -- which looks like a broken example and is not one.
+EXTRA_RUNS = {
+    # Clean ribbon by default; the vacancy concentration is argv[1], and
+    # afm_zigzag_ribbon_process.py plots clean against 5% side by side.
+    "afm_zigzag_ribbon.py": [["0.05"]],
 }
 
 def verdict(results):
@@ -178,6 +192,12 @@ def main():
 
         rc, secs, text = run([PYTHON, script], work, log, args.timeout)
         entry["stages"]["python"] = {"rc": rc, "seconds": round(secs, 2)}
+        for extra in EXTRA_RUNS.get(script.name, []):
+            if rc != 0:
+                break
+            rc, more, text = run([PYTHON, script, *extra], work, log, args.timeout)
+            secs += more
+            entry["stages"]["python " + " ".join(extra)] = {"rc": rc, "seconds": round(more, 2)}
         if rc != 0:
             entry["status"] = "python failed"
             entry["error"] = text.strip().splitlines()[-1] if text.strip() else ""

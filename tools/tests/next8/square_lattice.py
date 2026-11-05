@@ -44,12 +44,14 @@ R = b1[0:2] + b2[0:2]
 M = b1[0:2]
 K = [0.23*np.pi, 0]
 
-# A single k-point, which is what this test has always asked KITEx for:
-# the reference input it is compared against, configREF.h5, carries a
-# /Calculation/arpes/k_vector of shape (1, 2). The call this replaced passed the
-# same point twice to make_path, whose job is to interpolate *between* distinct
-# points; kite.visualize.make_path rejects a zero-length segment rather than
-# divide by it, so the one point is now stated directly.
+# A single k-point, which is what this test has always asked KITEx for: the
+# checked-in configREF.h5 carries a /Calculation/arpes/k_vector of shape (1, 2).
+# Shape only -- its value is not this point, and nothing compares the two:
+# script.sh runs KITE-tools on configREF.h5 directly and never regenerates it
+# from this file. The call this replaced passed the same point twice to
+# make_path, whose job is to interpolate *between* distinct points;
+# kite.visualize.make_path rejects a zero-length segment rather than divide by
+# it, so the one point is now stated directly.
 k_path = np.array([K])
 weights = 1.0
 
