@@ -19,8 +19,16 @@ where archive.h5 is the HDF file that stores the output of KITE. If KITE-tools d
   * Second-order optical conductivity (CondOpt2)
   * Custom rank-one spectral density (CustomOne) -- the energy-resolved density $\mathrm{Tr}[A\,\delta(E-H)]$ of a user-defined `#!python kite.custom.Vertex` operator $A$ from [`#!python calculation.custom_one()`][calculation-custom_one]
   * Custom rank-two Kubo-Bastin response (CustomTwo) -- the Fermi-energy-resolved response reconstructed from the double-Chebyshev moment matrix $\Gamma_{mn}=\mathrm{Tr}[T_m(\hat H)\,B\,T_n(\hat H)\,A]$ of a user-defined vertex pair $A,B$ from [`#!python calculation.custom_two()`][calculation-custom_two]
+  * Custom rank-one local spectral density (CustomOneLocal) -- the same vertex as CustomOne, resolved at each probed cell and orbital rather than traced over the lattice, from [`#!python calculation.custom_one_local()`][calculation-custom_one_local]
+  * Real-space LDOS map (LDOSmap) -- the whole-lattice map from [`#!python calculation.ldos_map()`][calculation-ldos_map], with the site coordinates decoded from the flat index
+  * Momentum-space spectral map (SpectralMap) -- the k-resolved map from [`#!python calculation.spectral_map()`][calculation-spectral_map], with each k given in both fractional and Cartesian coordinates
+  * Wave-packet time series (WavePacket) -- the propagation from [`#!python calculation.gaussian_wave_packet()`][calculation-gaussian_wave_packet], on a physical time axis
 
-The SingleShot DC conductivity does not require the post-processing through KITE-tools.
+The SingleShot DC conductivity is already final in the HDF5 file when [KITEx][kitex] finishes: KITE-tools
+does not reconstruct anything for it. It does still have a `#!bash --SingleShot` keyword, which only
+un-rescales the energies and writes the `#!bash .dat` — so use it if you want the data file, and see
+[`#!python singleshot_conductivity_dc()`][calculation-singleshot_conductivity_dc] for the alternative of
+reading the HDF5 yourself.
 
 
 ### Advanced usage
@@ -90,6 +98,25 @@ Each function to compute is specified after the double hyphens — and the param
 | `#!bash --CustomTwo` | `#!bash -d` | Broadening parameter of the Dirac delta                                                             |
 | `#!bash --CustomTwo` | `#!bash -F` | min max num Range of Fermi energies. min and max may be omitted if only one is required              |
 | `#!bash --CustomTwo` | `#!bash -X` | Exclusive. Only calculate this quantity                                                             |
+| `#!bash --CustomOneLocal` | `#!bash -N` | Name of the output file                                                                       |
+| `#!bash --CustomOneLocal` | `#!bash -E` | min max num Energy range and number of points for the reconstructed spectral density          |
+| `#!bash --CustomOneLocal` | `#!bash -X` | Exclusive. Only calculate this quantity                                                       |
+| `#!bash --SingleShot` | `#!bash -N` | Name of the output file                                                                           |
+| `#!bash --SingleShot` | `#!bash -X` | Exclusive. Only calculate this quantity                                                           |
+| `#!bash --LDOSmap`  | `#!bash -N`  | Name of the output file                                                                            |
+| `#!bash --LDOSmap`  | `#!bash -X`  | Exclusive. Only calculate this quantity                                                            |
+| `#!bash --SpectralMap` | `#!bash -N` | Name of the output file                                                                          |
+| `#!bash --SpectralMap` | `#!bash -X` | Exclusive. Only calculate this quantity                                                          |
+| `#!bash --WavePacket` | `#!bash -N` | Name of the output file                                                                           |
+| `#!bash --WavePacket` | `#!bash -X` | Exclusive. Only calculate this quantity                                                           |
+
+!!! note "The last four take only `#!bash -N` and `#!bash -X`"
+
+    `#!bash --LDOSmap`, `#!bash --SpectralMap`, `#!bash --WavePacket` and `#!bash --SingleShot` accept no
+    parameter beyond the output name and the exclusivity flag, because there is nothing left to choose: the
+    energy, the broadening, the time axis, the number of points and the tracked operators were all fixed
+    when [KITEx][kitex] ran, and these readers decode what it stored rather than reconstructing from
+    moments.
 
 All the values specified in this way are assumed to be in the same units as the ones used in the configuration file. All quantities are double-precision numbers except for the ones representing integers, such as the number of points. This list may be found in KITE-tools, run `KITE-tools --help`:
 
@@ -108,6 +135,13 @@ In the table below, we specify the name of the files that are created by KITE-to
 | Single-shot DC Conductivity       | `#!bash [HDF5-filename].dat` | Fermi energy      | Cond ($Re$)      | Cond ($Im$)      |
 | Custom rank-one spectral density   | `#!bash custom_one.dat`      | energy            | $\mathrm{Tr}[A\,\delta(E-H)]$ ($Re$) |      |
 | Custom rank-two Kubo-Bastin response | `#!bash custom_two.dat`    | Fermi energy      | response ($Re$)  |                  |
+| Custom rank-one local spectral density | `#!bash custom_one_local.dat` | energy       | one column per probed cell/orbital | |
+| Real-space LDOS map               | `#!bash ldos_map.dat`        | $x$, $y$ (and $z$ in 3D) | orbital   | value, then its standard error |
+| Momentum-space spectral map       | `#!bash spectral_map.dat`    | $k$ fractional, then Cartesian | orbital | value, then its standard error |
+| Wave-packet time series           | `#!bash wavepacket.dat`      | time $t$          | $t$ rescaled     | $\langle x\rangle\ldots$, variances, operators |
+
+Every one of these files begins with comment lines naming its own columns and units, so the table above is
+a summary rather than the authority — read the header of the file you actually produced.
 
 * All linear conductivities are in units of $e^2/h$
 * Both Planck’s constant and electron charge are set to 1.
@@ -245,6 +279,12 @@ equidistant points in `#!python [-2, 2]`, at temperature `#!bash 0.01`.
 [ground_rules]: ../documentation/optimization.md
 [calculation-custom_one]: kite.md#calculation-custom_one
 [calculation-custom_two]: kite.md#calculation-custom_two
+[calculation-custom_one_local]: kite.md#calculation-custom_one_local
+[calculation-ldos_map]: kite.md#calculation-ldos_map
+[calculation-spectral_map]: kite.md#calculation-spectral_map
+[calculation-gaussian_wave_packet]: kite.md#calculation-gaussian_wave_packet
+[calculation-singleshot_conductivity_dc]: kite.md#calculation-singleshot_conductivity_dc
+[kitex]: kitex.md
 [custom-vertex-example]: ../documentation/examples/custom_vertex_operators.md
 [ree-example]: ../documentation/examples/rashba_edelstein.md
  
