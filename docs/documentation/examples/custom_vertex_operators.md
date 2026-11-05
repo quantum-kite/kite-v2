@@ -37,8 +37,9 @@ of the two families gives $\Gamma_{mn}$. **`#!python num_moments` must be even**
 ### From moments to a transport coefficient: the Kubo-Bastin integral
 
 $\Gamma_{mn}$ is a matrix of numbers, not yet a conductivity. The conversion is the numerical implementation of
-the **Kubo-Bastin formula**[^1], done in Python (`#!python examples/cond_sum.py`, adapted for spin in
-`#!python examples/kane_mele_spin_hall_process.py`). In the KPM representation, both the spectral operator
+the **Kubo-Bastin formula**[^1], done by KITE-tools, which writes `#!bash custom_two.dat`.
+`#!python examples/kane_mele_spin_hall_process.py` carries out the same integral in Python when you want
+to inspect or reshape the reconstruction. In the KPM representation, both the spectral operator
 $\delta(E-\hat H)$ and the Green's-function derivative $dG^{\pm}/dE$ entering the Kubo-Bastin integral are
 expanded in Chebyshev polynomials of $\hat H$; substituting these expansions turns the trace into a
 contraction of the precomputed moment matrix with two energy-dependent coefficient vectors,
