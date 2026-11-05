@@ -92,12 +92,13 @@ MESSAGE(STATUS "Files to compile" ${SRCFILES})
 add_executable(KITEx ${SRCFILES})
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR})
 
-set(compile_wp 1)
-if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0.0)
-    MESSAGE( STATUS "Cannot compile gaussian wavepacket")
-    set(compile_wp 0)
-endif()
-add_definitions(-DCOMPILE_WAVEPACKET=${compile_wp})
+# The wave-packet code needs C++17, which every compiler able to build the
+# rest of KITE already provides: CMAKE_CXX_STANDARD is 17 above, and GCC has
+# supported it since version 8 (May 2018). The capability is therefore always
+# built, and the compiler floor is stated in docs/installation.md, where the
+# user reads it before compiling -- rather than discovered as a silently
+# missing feature.
+add_definitions(-DCOMPILE_WAVEPACKET=1)
 
 
 target_link_libraries(KITEx ${HDF5_CXX_LIBRARIES} ${FFTW3_LIB} ${FFTW3F_LIB})

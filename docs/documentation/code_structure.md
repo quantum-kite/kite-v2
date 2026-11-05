@@ -132,10 +132,12 @@ flags.
 
 One further compile-time choice exists but is not exposed as a CMake option:
 
-- **`COMPILE_WAVEPACKET`.** This is set automatically by CMake — `1` if
-  `CMAKE_CXX_COMPILER_VERSION >= 8.0.0`, otherwise `0` ([`CMakeLists.txt:66-71`][cmakelists_gh]) — and
-  gates whether Gaussian wavepacket propagation is compiled in. There is no supported way to force this
-  on with an older compiler.
+- **`COMPILE_WAVEPACKET`.** CMake sets this to `1` unconditionally, so Gaussian wavepacket propagation
+  is always compiled in. It was previously conditional on `CMAKE_CXX_COMPILER_VERSION >= 8.0.0`, which
+  became redundant: C++17 is required to build KITE at all, and gcc has supported it since 8.0.0, so the
+  guard could only have fired on a compiler that cannot build the rest of the code either. The `makefile`
+  and `compile_script.sh` routes set it to `1` as well, so all three build paths now produce binaries with
+  the same capabilities.
 
 ### Preprocessor constants in `Src/Generic.hpp`
 
@@ -157,7 +159,7 @@ This mechanism relies on the `#ifndef` guard present in the definition of each c
 | `DEBUG` | `0` | Yes (or via `CMAKE_BUILD_TYPE=Debug`) | Enables `debug_message(...)` output. |
 | `VERBOSE` | `1` | Yes | Enables the startup banner and `verbose_message(...)` progress output. |
 | `ESTIMATE_TIME` | `0` | Yes | Defined and guarded, but not read anywhere else in the current codebase; the sole call site that would print it, in `Src/Tools/messages.hpp`, is commented out. |
-| `COMPILE_WAVEPACKET` | `1` | In principle, though CMake always sets this explicitly; overriding it would also require bypassing that `add_definitions` call. | Gates whether `Simulation::Gaussian_Wave_Packet()` is compiled in. |
+| `COMPILE_WAVEPACKET` | `1` | In principle, though all three build routes set it explicitly; overriding it would also require bypassing that `add_definitions` call. | Gates whether `Simulation::Gaussian_Wave_Packet()` is compiled in. Always `1` — see above. |
 
 !!! Warning "Four constants that are not overridable despite appearing alongside those that are"
 

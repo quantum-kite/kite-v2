@@ -45,8 +45,10 @@ git clone https://github.com/quantum-kite/kite-v2.git
 The compiler **must** support *C++17* (or newer) features and [*OpenMP*][openmp] parallelization. 
 
 
-To enable KITE's [Gaussian wavepacket propagation][calculation-gaussian_wave_packet] functionality, compile the source code with a recent gcc version
-(gcc 8.0.0 or newer).
+KITE's [Gaussian wavepacket propagation][calculation-gaussian_wave_packet] is always built; it needs no
+separate flag. It does require the C++17 support already demanded above, which gcc has provided since
+version 8.0.0 — so gcc 8.0.0 or newer is the floor for building KITE at all, not an extra requirement for
+this one feature.
 To check the gcc version, you can use the following command in the terminal:
 
 ``` bash

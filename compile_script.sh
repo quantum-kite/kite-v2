@@ -1,5 +1,5 @@
-echo "Compiling KITEx and KITE-tools. To have the full functionality, you need to have at least version 8 of gcc. If you do not, you will not be able to run guassian_wavepacket. To enable compiling with this feature, please edit this file and set WAVEPACKET=1. By default, the flag WAVEPACKET is set to 0"
-WAVEPACKET=0
+echo "Compiling KITEx and KITE-tools. Requires a C++17 compiler (GCC 8 or newer)."
+WAVEPACKET=1
 
 # create the directory structure
 mkdir -p build
@@ -20,10 +20,10 @@ echo "Compiling KITEx"
 cd build
 for i in $sources; do
   echo "Compiling $i"
-  g++ -DCOMPILE_WAVEPACKET=$WAVEPACKET -std=gnu++11 -O2 $i  $include $headers  -fopenmp -c
+  g++ -DCOMPILE_WAVEPACKET=$WAVEPACKET -std=c++17 -O2 $i  $include $headers  -fopenmp -c
 done 
 echo "Linking"
-g++ -std=gnu++11 -O2 *.o $libraries -fopenmp -o ../KITEx
+g++ -std=c++17 -O2 *.o $libraries -fopenmp -o ../KITEx
 echo "Done."
 cd ..
 
@@ -35,9 +35,9 @@ echo "Compiling KITE-tools"
 cd tools/build
 for i in $sources; do
   echo "Compiling $i"
-  g++ -std=gnu++11 -O2 $i $include $headers -fopenmp -c
+  g++ -std=c++17 -O2 $i $include $headers -fopenmp -c
 done 
 echo "Linking"
-g++ -std=gnu++11 -O2 *.o $libraries -fopenmp -o ../../KITE-tools
+g++ -std=c++17 -O2 *.o $libraries -fopenmp -o ../../KITE-tools
 echo "Done."
 cd ../..

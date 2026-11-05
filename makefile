@@ -24,7 +24,7 @@ CPPFLAGS := $(EIGEN_INC) \
 	-ISrc/Hamiltonian \
 	-ISrc/Vector \
 	-ISrc/Simulation \
-	-DCOMPILE_WAVEPACKET=0 \
+	-DCOMPILE_WAVEPACKET=1 \
 	$(HDF5_FLAGS)
 
 CXXFLAGS := -std=c++17 -O3 -fopenmp
