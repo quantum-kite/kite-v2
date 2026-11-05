@@ -989,10 +989,24 @@ The KITE package for pre-processing is split up in various subclasses and contai
 
 ## make_pybinding_model
 
-:   !!! declaration-function "*function* `#!python kite.make_pybinding_model(lattice, disorder=None, disorder_structural=None, shape=None)`"
+:   !!! declaration-function "*function* `#!python kite.bounds_pb.make_pybinding_model(lattice, disorder=None, disorder_structural=None, shape=None)`"
             
             
     :   Build a Pybinding model with disorder used in Kite. Bond disorder or magnetic field are not currently supported.
+
+        !!! warning "Part of the optional Pybinding path, and not re-exported as `#!python kite.*`"
+
+            This function lives in `#!python kite.bounds_pb`, which imports [Pybinding][pybinding] at module
+            level; it is **not** available as `#!python kite.make_pybinding_model`. Import it explicitly,
+            inside an environment where the optional extra is installed
+            (`#!bash pip install "quantum-kite[pybinding]"`):
+
+            ``` python
+            from kite.bounds_pb import make_pybinding_model
+            ```
+
+            Nothing in KITE's own modelling path needs it — [`#!python kite.lattice.Lattice`][lattice-class]
+            is the dependency-free way to define a lattice.
 
         **Parameters**
     
@@ -1147,6 +1161,7 @@ The KITE package for pre-processing is split up in various subclasses and contai
 [configuration-set_type]: #configuration-set_type
 
 [make_pybinding_model]: #make_pybinding_model
+[lattice-class]: ../documentation/tb_model.md
 [estimate_bounds]: #estimate_bounds
 [config_system]: #config_system
 [loud_deprecation_warning]: #louddeprecationwarning
