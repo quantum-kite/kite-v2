@@ -89,7 +89,16 @@ def run(cmd, cwd, log, timeout):
                               capture_output=True, text=True, timeout=timeout)
         rc, out, err = proc.returncode, proc.stdout, proc.stderr
     except subprocess.TimeoutExpired as exc:
-        rc, out, err = "timeout", exc.stdout or "", exc.stderr or ""
+        # `text=True` does not reach here: TimeoutExpired carries the raw
+        # buffers, so .stdout/.stderr are bytes whenever the child wrote
+        # anything before the timeout (and None when it wrote nothing).
+        # Concatenating those with a str below raised TypeError and took the
+        # whole run down while reporting a timeout it had already caught.
+        def _text(buf):
+            if buf is None:
+                return ""
+            return buf.decode(errors="replace") if isinstance(buf, bytes) else buf
+        rc, out, err = "timeout", _text(exc.stdout), _text(exc.stderr)
     elapsed = time.time() - t0
     with open(log, "a") as fh:
         fh.write(f"\n$ {' '.join(str(c) for c in cmd)}\n[rc={rc} {elapsed:.1f}s]\n{out}\n{err}\n")
