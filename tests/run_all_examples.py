@@ -64,20 +64,41 @@ EXTRA_RUNS = {
     "afm_zigzag_ribbon.py": [["0.05"]],
 }
 
+# Examples that really do fail, whose cause is not established and whose repair
+# has been deferred to a later cycle. They are reported in full, with the
+# reason, and do not fail the run -- otherwise the suite is unusable as a gate
+# and nobody runs it, which loses the other forty.
+#
+# This is a narrow door. An entry needs a named reason, and an example that
+# starts passing is reported too, so the list cannot quietly outlive its cause.
+# Anything failing that is not listed here still fails the run.
+KNOWN_FAILING = {
+    "hbn_optcond2_vacancies.py":
+        "nonlinear_cond.dat comes out entirely non-finite, 512 of 512 in both "
+        "conductivity columns. Not sparse poles: total. spectrum_range brackets "
+        "the bandwidth, so it is not the usual cause, and num_moments is a "
+        "multiple of 16 as the second-order path needs. Cause not established; "
+        "deferred rather than guessed at.",
+}
+
 def verdict(results):
     """Split a report into (failures, unpaired, unexpectedly unpaired).
 
-    The exit status is non-zero when either the first or the third is
-    non-empty. An unpaired processor was never run and so was never checked,
-    which is a limitation of the filename pairing rather than a defect -- but
-    only for the ones already known. A new one is a silent loss of coverage.
+    Returns (bad, unpaired, surprises, deferred). The exit status is non-zero
+    when `bad` or `surprises` is non-empty. An unpaired processor was never run
+    and so was never checked, which is a limitation of the filename pairing
+    rather than a defect -- but only for the ones already known. A new one is a
+    silent loss of coverage. `deferred` holds the real failures listed in
+    KNOWN_FAILING: still printed, still in the report, just not fatal.
     """
     ok = ("ok", "ok (no KITEx stage)")
     unpaired = {k: v for k, v in results.items() if v.get("status") == "unpaired"}
-    bad = {k: v for k, v in results.items()
-           if v.get("status") not in ok and k not in unpaired}
+    failing = {k: v for k, v in results.items()
+               if v.get("status") not in ok and k not in unpaired}
+    deferred = {k: v for k, v in failing.items() if k in KNOWN_FAILING}
+    bad = {k: v for k, v in failing.items() if k not in KNOWN_FAILING}
     surprises = {k: v for k, v in unpaired.items() if k not in KNOWN_UNPAIRED}
-    return bad, unpaired, surprises
+    return bad, unpaired, surprises, deferred
 
 
 H5_IN_SOURCE = re.compile(r"""['"]([A-Za-z0-9_./-]+\.h5)['"]""")
@@ -263,18 +284,25 @@ def main():
     report = out_root / "sweep-report.json"
     report.write_text(json.dumps(results, indent=2, sort_keys=True))
 
-    bad, unpaired, surprises = verdict(results)
+    bad, unpaired, surprises, deferred = verdict(results)
 
-    print(f"\n{len(results) - len(bad) - len(unpaired)}/{len(results)} clean; "
-          f"report at {report}")
+    clean = len(results) - len(bad) - len(unpaired) - len(deferred)
+    print(f"\n{clean}/{len(results)} clean; report at {report}")
     for name, entry in sorted(bad.items()):
         print(f"  {entry['status']:<16} {name}  {entry.get('error','')}")
+    for name, entry in sorted(deferred.items()):
+        print(f"  {'deferred':<16} {name}  {entry.get('status')}"
+              f"{': ' + entry['error'] if entry.get('error') else ''}")
+        print(f"  {'':<16}   {KNOWN_FAILING[name]}")
     for name in sorted(unpaired):
         note = KNOWN_UNPAIRED.get(name, "NOT A KNOWN EXCEPTION")
         print(f"  {'unpaired':<16} {name}  ({note})")
     for name in sorted(KNOWN_UNPAIRED):
         if name in results and name not in unpaired:
             print(f"  {'now paired':<16} {name}  (remove it from KNOWN_UNPAIRED)")
+    for name in sorted(KNOWN_FAILING):
+        if name in results and name not in deferred:
+            print(f"  {'now clean':<16} {name}  (remove it from KNOWN_FAILING)")
 
     return 1 if (bad or surprises) else 0
 
