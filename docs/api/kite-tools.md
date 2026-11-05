@@ -140,8 +140,11 @@ In the table below, we specify the name of the files that are created by KITE-to
 | Momentum-space spectral map       | `#!bash spectral_map.dat`    | $k$ fractional, then Cartesian | orbital | value, then its standard error |
 | Wave-packet time series           | `#!bash wavepacket.dat`      | time $t$          | $t$ rescaled     | $\langle x\rangle\ldots$, variances, operators |
 
-Every one of these files begins with comment lines naming its own columns and units, so the table above is
-a summary rather than the authority — read the header of the file you actually produced.
+The last four files — `#!bash custom_one_local.dat`, `#!bash ldos_map.dat`,
+`#!bash spectral_map.dat` and `#!bash wavepacket.dat` — begin with comment lines naming their own columns
+and units, and the number of columns in each depends on what you asked for. For those, read the header of
+the file you actually produced rather than this table. The others are written as bare numbers with no
+header.
 
 * All linear conductivities are in units of $e^2/h$
 * Both Planck’s constant and electron charge are set to 1.
