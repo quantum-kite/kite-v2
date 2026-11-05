@@ -435,7 +435,59 @@ To obtain the file with the DOS-data, you need to [post-process][kitetools] the 
 ```
 
 which generates the appropriate data file. For more details refer to the [tutorial][tutorial].
- 
+
+
+### 4.1 Running the verification suite
+
+The example above tells you that KITE builds and runs. The suite under `#!bash tests/` is what tells you it
+still computes what it used to — it is also how a defect gets demonstrated, so it is worth knowing how to
+run before you need it. It needs the core install from [Section 2][get_dependencies] plus `#!bash pytest`
+(already in `#!bash environment.yml`), and binaries in `#!bash build/`.
+
+``` bash
+pytest tests/
+```
+
+!!! warning "This collects far less than the directory holds"
+
+    `#!bash tests/` contains 86 Python files, but only `#!bash tests/test_standalone_regressions.py` matches
+    pytest's default `#!bash test_*.py` collection pattern, and the project does not override it. So the
+    command above collects **7 cases**, which between them drive a handful of the regression scripts. A
+    green `#!bash pytest tests/` is therefore a much weaker statement than the size of the directory
+    suggests — do not read it as "the suite passes".
+
+    The rest are run directly, one file at a time, either way round:
+
+    ``` bash
+    python tests/sigma_y_regression.py
+    pytest tests/no_pybinding_dependency_regression.py
+    ```
+
+    Not all of them pass today. Several encode expectations that are themselves under review, so a red file
+    is a thing to read rather than a defect to fix; start from the docstring at the top of the file, which
+    in each case states what the test asserts and why.
+
+`#!bash tests/start_tests.sh` drives the older per-directory cases, which compare freshly generated HDF5
+against checked-in `#!bash *REF.h5` fixtures. It is not part of CI (see below), and some of its fixtures
+predate C++ changes that have since altered the exported file.
+
+### 4.2 What the continuous integration actually covers
+
+Stated plainly, because promising cover that is not there is worse than promising none. Every push and pull
+request runs:
+
+| Job | What it does |
+|---|---|
+| `#!bash check-docs` | `#!bash mkdocs build --strict` — the documentation fails the build if a link or reference is broken |
+| `#!bash build-and-test` | Configures and builds via conda on **both** `#!bash ubuntu-latest` and `#!bash macos-latest`, runs a smoke test that generates a config and runs KITEx, then five regression scripts |
+| `#!bash build-and-test-homebrew` | The same build on `#!bash macos-latest` through the Homebrew route of [Section 2.2][homebrew_section], with HDF5 built from source against C++17 |
+| `#!bash docker-build` | Builds the image of [Section 6][docker_section], which carries its own smoke test |
+
+So CI verifies that KITE **builds and runs** on two operating systems by three routes, that the
+documentation is internally consistent, and that five specific regressions hold. It does **not** run the
+rest of `#!bash tests/`, and it does not check any physical result beyond those five. The breadth of the
+`#!bash tests/` directory is available to you locally, as above; it is not what the green check mark on a
+pull request means.
 
 ## 5. Common issues
 
@@ -515,6 +567,7 @@ default (see [Section 2][get_dependencies]); install it yourself inside a runnin
 [get_dependencies]: #2-get-dependencies
 [conda_section]: #conda_section
 [docker_section]: #6-using-docker
+[homebrew_section]: #22-for-mac-os-x-users
 [macports_recipe]: #23-verified-macports-recipe
 [fftw3_common_issue]: #52-fftw3-not-found-or-only-some-precisions-found
 [fftw3_precision_limits]: documentation/code_structure.md#fftw3-precision-limits
