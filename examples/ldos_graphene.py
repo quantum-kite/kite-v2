@@ -154,7 +154,10 @@ def main(onsite=(0, 0)):
         boundaries=[mode, mode],
         is_complex=False,
         precision=1,
-        spectrum_range=[-2.8, 2.8]
+        # graphene's bandwidth is +/-3t = +/-8.4 eV at the t = 2.8 eV used above; the
+        # range has to enclose the spectrum with margin, or the Chebyshev recursion
+        # diverges and the run still exits 0
+        spectrum_range=[-8.7, 8.7]
     )
 
     # specify calculation type
