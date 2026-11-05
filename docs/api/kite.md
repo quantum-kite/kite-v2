@@ -222,6 +222,21 @@ The KITE package for pre-processing is split up in various subclasses and contai
           Default `#!python 0` ("don't care", not reproducible), same as `#!python seed_h`. Set
           any positive integer to make these stochastic estimates reproducible.
 
+            !!! info "What a run is reproducible *from*: both seeds **and** `#!python divisions`"
+
+                Quoting the seeds alone does not let anyone reproduce a figure. Each seed is mixed
+                with the OpenMP thread index before use, and the thread count is the product of
+                [`#!python divisions`][configuration-divisions] — so the realisation is a property
+                of the seeds and the decomposition together. Same seeds and same
+                `#!python divisions` reproduce bit for bit; change either seed, or change
+                `#!python divisions`, and the numbers move.
+
+                `#!bash OMP_NUM_THREADS` does **not** enter: `#!python KITEx` calls
+                `#!cpp omp_set_num_threads()` with the product of `#!python divisions` and
+                overrides whatever the environment says. A reproduction recipe that pins
+                `#!bash OMP_NUM_THREADS` is pinning the wrong thing while leaving the one that
+                matters free.
+
             !!! Note
 
                 Setting `#!python seed_h`/`#!python seed_v` makes one whole `KITEx` run
