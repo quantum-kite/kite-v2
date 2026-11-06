@@ -8,6 +8,11 @@ All notable changes to KITE are recorded here. The format follows
 
 ### Fixed
 
+- `import kite` printed `SyntaxWarning: invalid escape sequence '\\i'` on every import. A
+  docstring documenting the `twisted` boundary option used the mathematical `\\in` without an
+  `r` prefix. The docstring is now raw; its text is unchanged. Python has said this warning
+  becomes a `SyntaxError`, so the package would eventually have failed to import.
+
 - The example sweep's own guard stopped running. `verdict()` in
   `tests/run_all_examples.py` grew a fourth return value when deferred failures were
   introduced, and `tests/sweep_exit_status_regression.py` kept unpacking three, so five
