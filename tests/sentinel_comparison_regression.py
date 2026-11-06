@@ -10,7 +10,7 @@ hundred lines apart, and nothing ties them together.
 where the field is initialised to `-8.8888`, so the test was true whenever `-R`
 was absent and the sentinel itself was assigned as the frequency ratio. Every
 `--CondOpt2` run without `-R` evaluated the response at `w2 = -8.8888*w1`
-instead of the intended `w2 = w1` (BUG-011).
+instead of the intended `w2 = w1`.
 
 The mismatch is mechanical, so the check is mechanical: it reads both files and
 compares every pair. That is a stronger guarantee than a test of the one option

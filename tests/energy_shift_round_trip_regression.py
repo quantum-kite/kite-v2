@@ -5,7 +5,7 @@ Every entry point that takes an energy must apply the SAME affine map to it.
 Omitting the shift evaluates at E + shift instead of E -- and is completely
 invisible whenever spectrum_range is symmetric about zero, because shift is then
 zero. That is how it reached production in `SimulationLDoS.cpp` once before (the
-comment at `:90-99` records it) and how BUG-010 reached `custom_singleshot_two`.
+comment at `:90-99` records it) and how the same omission later reached `custom_singleshot_two`.
 
 The check here is convention-independent: it does not need to know the right
 answer, only that **two valid rescalings of one model must agree**. Both
@@ -69,7 +69,7 @@ def _sweep(tmp_path, lo, hi, name):
 
 
 def test_two_spectrum_ranges_of_equal_width_put_the_feature_at_the_same_energy(tmp_path):
-    """BUG-010. Same width, so only the shift differs; the peak must not move."""
+    """Same width, so only the shift differs; the peak must not move."""
     symmetric = _sweep(tmp_path, -6, 6, "sym.h5")     # scale 6, shift 0
     asymmetric = _sweep(tmp_path, -5, 7, "asym.h5")   # scale 6, shift 1
 
@@ -88,7 +88,7 @@ def test_two_spectrum_ranges_of_equal_width_put_the_feature_at_the_same_energy(t
 def test_kitex_does_not_rescale_user_supplied_energies(tmp_path):
     """Python owns the rescaling. KITEx reads the shift in exactly one place.
 
-    After T-073 every user-supplied energy and width is rescaled in
+    Every user-supplied energy and width is now rescaled in
     `config_system` before export, so no driver needs `/EnergyShift` to
     interpret its input. One file still reads it, for a reason that is physics
     rather than unit conversion:
@@ -106,8 +106,8 @@ def test_kitex_does_not_rescale_user_supplied_energies(tmp_path):
       Moving it means changing the sentinel too.
 
     Anything else reading `/EnergyShift` is a driver re-doing work Python has
-    already done -- the double-rescale half of T-073, as opposed to BUG-010's
-    dropped-shift half.
+    already done -- the double-rescale failure, as opposed to the
+    dropped-shift one.
     """
     allowed = {"SimulationLocalizedWavePacket.cpp",
                "SimulationGaussianWavePacket.cpp"}
@@ -116,7 +116,7 @@ def test_kitex_does_not_rescale_user_supplied_energies(tmp_path):
 
     unexpected = sorted(readers - allowed)
     assert not unexpected, (
-        f"{unexpected} read /EnergyShift. Since T-073 the shift is applied in "
+        f"{unexpected} read /EnergyShift. The shift is applied in "
         "python/kite/__init__.py before export, so a driver that reads it is "
         "either rescaling twice or disagreeing with the exporter")
 

@@ -129,7 +129,7 @@ def test_it_beats_the_automatic_estimate_for_graphene():
 
 
 # ---------------------------------------------------------------------------
-# The automatic path inside config_system (T-023)
+# The automatic path inside config_system
 # ---------------------------------------------------------------------------
 
 def _export(lattice, tmp_path, **kwargs):

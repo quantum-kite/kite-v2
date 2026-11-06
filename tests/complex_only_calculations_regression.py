@@ -4,8 +4,8 @@ Both drivers seed a random-PHASE vector, so KITEx compiles their bodies only for
 a complex scalar type: `SimulationLDoS.cpp` and `SimulationSpectral.cpp` wrap
 everything in `if constexpr (is_tt<std::complex, T>::value)`. Built with
 `is_complex=False` the calculation prints "Calculating LDoS." and exits zero
-having written no Map dataset at all -- the same silent-success failure as
-BUG-009, where the user cannot tell a missing result from a real one.
+having written no Map dataset at all -- the same silent-success failure
+seen before, where the user cannot tell a missing result from a real one.
 
 `config_system` therefore refuses at export, before a run is ever started.
 

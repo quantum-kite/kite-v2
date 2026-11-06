@@ -6,7 +6,7 @@ recursion grows exponentially -- and KITEx used to finish anyway, exit 0, and
 write moments of 1e85 against a physical bound of 1. The number is meaningless
 long before the run ends, and nothing said so.
 
-`spectrum_range` cannot be made rigorous at export (DEC-023): with Gaussian
+`spectrum_range` cannot be made rigorous at export: with Gaussian
 disorder the support is unbounded, so there is no range that strictly contains
 the spectrum. The certificate is the other half -- it costs one norm every 16
 steps and it is exact, because the bound holds if and only if the spectrum is

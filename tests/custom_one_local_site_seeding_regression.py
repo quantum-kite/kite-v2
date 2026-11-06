@@ -24,8 +24,6 @@ correctly rather than silently collapsing to something symmetric.
 The lattice has to break the A/B symmetry or the two sublattices agree
 trivially and this measures nothing: on-site +1 and -1 with
 `spectrum_range=[-8, 8]` makes mu_1 and mu_3 odd in the on-site sign.
-
-Tracked as BUG-009.
 """
 
 import json

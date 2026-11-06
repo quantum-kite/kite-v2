@@ -6,7 +6,7 @@ longer bond carries into the digit above, and where that digit is the orbital
 field the decoded orbital runs past `Orb` -- `HamiltonianRegular.cpp` then
 indexes `rOrb.col()` off the end of the table.
 
-DEC-024 part 3 originally said to warn and proceed. That was amended to abort
+The rule originally said to warn and proceed. That was amended to abort
 (PM, 2026-10-30) once proceeding was shown to be non-deterministic: with the
 seeds fixed, six runs of the same file gave exit codes 1 1 1 1 1 0, because the
 garbage read back varies.

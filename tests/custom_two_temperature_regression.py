@@ -5,7 +5,7 @@ and the readers' internal `temperature` is in those same rescaled units -- each
 reader's own default (`0.001/scale`) and its own `-T` override (`.../scale`)
 say so. `customtwo.cpp` used to divide the stored value a second time, so every
 custom_two ran at `T/energy_scale` while `conductivity_dc` ran at `T` from the
-identical number in the identical file (BUG-005).
+identical number in the identical file.
 
 The check is a comparison, not a stored constant: one file declares both
 calculations at the same temperature, and KITE-tools has to report the same

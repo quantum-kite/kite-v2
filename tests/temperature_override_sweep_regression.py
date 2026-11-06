@@ -2,10 +2,10 @@
 
 Four defects of this cycle were one defect wearing four hats: the energy
 scale/shift convention is applied per reader, by hand, with nothing enforcing
-that the readers agree. `--ARPES -T` was read in reduced units (BUG-013);
-`custom_two`'s default Fermi window dropped the shift (BUG-014); `custom_two`
-divided a temperature that Python had already divided (BUG-005); a solver
-dropped the shift outright (BUG-010). Each was closed by making one file match
+that the readers agree. `--ARPES -T` was read in reduced units;
+`custom_two`'s default Fermi window dropped the shift; `custom_two`
+divided a temperature that Python had already divided; a solver
+dropped the shift outright. Each was closed by making one file match
 its siblings, and each was found by looking at that file.
 
 So this sweeps instead of naming. Every reader that accepts `-T` is run three
@@ -32,7 +32,7 @@ Writing it as a sweep paid for itself immediately: `--CondOpt` failed the first
 rule. It read the stored temperature into `temperature` but never recomputed
 `beta`, which is the only thing its integrand uses, so every run computed at
 the hardcoded 0.001 eV while printing the temperature that had been asked for.
-That is BUG-015, now fixed; this file is what found it and what would find the
+That one is now fixed; this file is what found it and what would find the
 next one.
 """
 
@@ -159,7 +159,7 @@ def test_the_flag_at_its_own_value_reproduces_the_default_run(flag, output,
 
 @pytest.mark.parametrize("flag,output,temperature", READERS)
 def test_the_flag_is_not_read_in_reduced_units(flag, output, temperature, exported):
-    """The shape BUG-013 had: the flag taken as already divided."""
+    """The shape the ARPES defect had: the flag taken as already divided."""
     _, scale = exported
     reduced = temperature() / scale
     plain = _read(exported, flag, "plain2")

@@ -241,7 +241,7 @@ def test_the_ladder_catches_a_spectrum_range_that_is_too_narrow(tmp_path):
     A range covering a third of the true bandwidth puts the rescaled spectrum
     at |x| = 3, where T_n grows exponentially. This test used to read the
     moments back and show they had exploded and that the odd ones no longer
-    vanished. Since T-024 the recursion carries a containment certificate and
+    vanished. The recursion now carries a containment certificate and
     the run aborts instead, so there are no moments to read: the same defect,
     detected earlier. See containment_certificate_regression.py.
     """

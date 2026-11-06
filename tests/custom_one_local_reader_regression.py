@@ -3,7 +3,7 @@
 Until this reader existed, `custom_one_local` handed the user bare Chebyshev
 moments at `/Calculation/CustomOneLocal/Gamma` with no shipped way to turn them
 into a spectral density. That combination -- an entry point with no reader and
-no example -- is why BUG-009 survived as long as it did: nothing exercised it
+no example -- is why the defect survived as long as it did: nothing exercised it
 end to end.
 
 Two kinds of check here.
@@ -11,7 +11,7 @@ Two kinds of check here.
 *Registration* is static and mechanical. `shell_input` finds a flag by indexing
 `keys_pos` with the flag's position in `valid_keys`, a hand-written integer. Get
 it wrong, or insert a key ahead of it, and the flag is silently read from the
-wrong place -- the same class of defect as BUG-011's mismatched sentinel. Both
+wrong place -- the same class of defect as a mismatched sentinel. Both
 are grep-level and both are checked.
 
 *Reconstruction* runs the real binaries. The reference is an independent Jackson
@@ -91,8 +91,8 @@ def test_every_parser_indexes_its_own_key():
 def test_the_sentinels_agree_with_the_defaults():
     """Each override must compare against the value the parser assigns.
 
-    BUG-011 is this check failing in conductivity_2order; the reader added here
-    must not repeat it.
+    A past defect was exactly this check failing in `conductivity_2order`;
+    the reader added here must not repeat it.
     """
     text = PARSE.read_text()
     chunk = re.search(r"void shell_input::parse_CustomOneLocal\(int argc[^\n]*\n(.*?)\n\}", text, re.S)

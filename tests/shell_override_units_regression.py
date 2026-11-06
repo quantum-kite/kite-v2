@@ -9,13 +9,13 @@ banner that shows the discrepancy, so only a comparison finds it.
 Two such defects are pinned here, both measured before they were fixed:
 
 `--ARPES -T` assigned `variables.ARPES_Temp` with no `/scale`, so it was off by
-`energy_scale` while every other reader took eV (BUG-013). ARPES prints no
+`energy_scale` while every other reader took eV. ARPES prints no
 temperature line at all, so nothing on screen revealed it.
 
 `custom_two`'s default Fermi range was `+-1.0/scale`, omitting the `- shift`
 that `conductivity_dc` applies and that `custom_two`'s own `-F` override already
 applied, so on a shifted spectrum the default swept a window displaced by the
-shift (BUG-014).
+shift.
 
 Both are checked against a reference rather than a stored number: a flag set to
 a reader's own default must reproduce the default run, and two readers given the
@@ -50,7 +50,7 @@ def _numeric(path):
     return np.array([r for r in rows if len(r) == width])
 
 
-# --- BUG-013: --ARPES -T is in energy units ----------------------------------
+# --- --ARPES -T is in energy units -------------------------------------------
 
 _ARPES = r'''
 import sys, numpy as np, kite
@@ -109,7 +109,7 @@ def test_the_arpes_temperature_flag_is_not_in_reduced_units(arpes):
         "skipping the /energy_scale conversion again")
 
 
-# --- BUG-014: the default Fermi window is the same for both readers ----------
+# --- The default Fermi window is the same for both readers -------------------
 
 _SHIFTED = r'''
 import sys, numpy as np, kite

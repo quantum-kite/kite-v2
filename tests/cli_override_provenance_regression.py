@@ -10,12 +10,12 @@ This file asserts the guarantee twice. Structurally, every reader must call
 would silently hand the stored value back whatever the user typed. Behaviourally,
 a flag passed to a working entry point must change its output file.
 
-The investigation behind this (BUG-003) was opened on an observation that
+The investigation behind this was opened on an observation that
 `--CondOpt2` wrote byte-identical output with and without `-T` and `-O`. That
 turned out not to be a provenance problem: the second-order path returns NaN for
 its stored default temperature, and one NaN table is byte-identical to another.
 With a temperature that does not overflow the Fermi factor, every documented
-`--CondOpt2` flag changes the result. The NaN itself belongs to T-062.
+`--CondOpt2` flag changes the result. The NaN itself is a separate defect.
 """
 
 import re

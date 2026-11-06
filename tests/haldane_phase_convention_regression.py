@@ -79,7 +79,7 @@ def test_the_orbital_magnetization_example_matches_the_others():
 
 
 def test_all_the_haldane_examples_agree():
-    """One convention across the examples, which is the point of T-064."""
+    """One convention across the examples, which is the point."""
     ref = _chern(_load("ref2", "examples/dos_dccond_haldane.py").haldane())
     orb = _chern(_load("orb2", "examples/haldane_orbital_magnetization.py").haldane())
     assert ref == pytest.approx(orb, abs=1e-6), (
@@ -98,7 +98,7 @@ def test_all_the_haldane_examples_agree():
     ("docs/documentation/examples/orbital_magnetization.md", r"$C=+1$"),
 ])
 def test_every_page_states_the_amplitude_it_actually_codes(path, must_say):
-    """T-064: one convention, stated as the amplitude rather than as a bare phi.
+    """One convention, stated as the amplitude rather than as a bare phi.
 
     A bare "phi = pi/2" is not a convention-free fact -- absorbing the leading
     minus into the exponential swaps the label -- so the pages quote the
