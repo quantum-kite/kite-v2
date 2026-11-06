@@ -130,6 +130,51 @@ def env_for_run():
     return env
 
 
+def redact(text):
+    """Strip the absolute paths that carry the machine's user name.
+
+    `run.log` records the command line and the child's output verbatim, and both
+    are full of `/Users/<name>/...`. The default output directory is ignored by
+    git, but `--outdir` is free, so the log can land anywhere -- including inside
+    a public repository. Rewriting the two prefixes keeps the log readable and
+    keeps the user name out of it. The repository prefix goes first because it
+    sits underneath the home directory.
+    """
+    for real, token in ((str(REPO), "<repo>"), (str(Path.home()), "<home>")):
+        if real:
+            text = text.replace(real, token)
+    return text
+
+
+MARKER = ".sweep-output-root"
+
+
+def claim_output_root(path):
+    """Refuse to take over a directory this sweep did not create.
+
+    Every example's working directory is removed with `shutil.rmtree` before the
+    run, and `--outdir` is taken from the command line unchecked. `--outdir /etc`
+    would delete `/etc/<name>` for every example name that happened to exist.
+    Nobody is attacking a developer tool invoked by hand, but a destructive
+    operation should not be one typo away, so this fails closed: the sweep writes
+    a marker into its own output root and will only delete inside a directory
+    that carries it. An existing directory with other content in it is refused,
+    not emptied.
+    """
+    if path.exists():
+        if not path.is_dir():
+            sys.exit(f"--outdir {path} exists and is not a directory")
+        if not (path / MARKER).exists() and any(path.iterdir()):
+            sys.exit(
+                f"--outdir {path} already has content and was not created by this "
+                f"sweep (no {MARKER}). Refusing: the sweep deletes directories "
+                f"under its output root. Point --outdir at a new or empty path, "
+                f"or at one a previous sweep made.")
+    path.mkdir(parents=True, exist_ok=True)
+    (path / MARKER).touch()
+    return path
+
+
 def run(cmd, cwd, log, timeout):
     t0 = time.time()
     try:
@@ -149,7 +194,8 @@ def run(cmd, cwd, log, timeout):
         rc, out, err = "timeout", _text(exc.stdout), _text(exc.stderr)
     elapsed = time.time() - t0
     with open(log, "a") as fh:
-        fh.write(f"\n$ {' '.join(str(c) for c in cmd)}\n[rc={rc} {elapsed:.1f}s]\n{out}\n{err}\n")
+        fh.write(redact(
+            f"\n$ {' '.join(str(c) for c in cmd)}\n[rc={rc} {elapsed:.1f}s]\n{out}\n{err}\n"))
     return rc, elapsed, (out or "") + (err or "")
 
 
@@ -198,8 +244,7 @@ def main():
         if not binary.exists():
             sys.exit(f"missing {binary} -- build the project first")
 
-    out_root = Path(args.outdir)
-    out_root.mkdir(parents=True, exist_ok=True)
+    out_root = claim_output_root(Path(args.outdir).resolve())
 
     scripts = [p for p in sorted(EXAMPLES.glob("*.py")) if p.name not in HELPERS]
     if args.only:
