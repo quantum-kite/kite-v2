@@ -8,6 +8,13 @@ All notable changes to KITE are recorded here. The format follows
 
 ### Fixed
 
+- The example sweep's own guard stopped running. `verdict()` in
+  `tests/run_all_examples.py` grew a fourth return value when deferred failures were
+  introduced, and `tests/sweep_exit_status_regression.py` kept unpacking three, so five
+  of its cases raised before asserting anything. The gate was widened in the same change
+  that disabled the check on it. The exit decision now lives in one function,
+  `exit_status`, which both the sweep and its guard call, so neither restates the rule.
+
 - `examples/ldos_graphene.py` asked for a spectral range of `[-2.8, 2.8]` eV while using
   `t = 2.8` eV. Graphene's bandwidth is ±3t = ±8.4 eV, so the range was too narrow by a
   factor of three, the Chebyshev recursion diverged, and the example wrote local densities

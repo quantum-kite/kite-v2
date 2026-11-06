@@ -33,9 +33,13 @@ def runner():
 
 
 def _verdict(runner, results):
-    """The runner's own decision, not a copy of it."""
-    bad, _unpaired, surprises = runner.verdict(results)
-    return 1 if (bad or surprises) else 0
+    """The runner's own decision, not a copy of it.
+
+    It calls `exit_status` rather than unpacking `verdict`, so a change to
+    what `verdict` returns cannot leave this file checking the wrong thing,
+    or -- as happened once -- raising before it checks anything at all.
+    """
+    return runner.exit_status(results)
 
 
 def test_a_clean_run_passes(runner):
@@ -45,11 +49,20 @@ def test_a_clean_run_passes(runner):
 
 
 def test_a_diverged_example_fails(runner):
-    """Non-finite output is the signature the sweep exists to catch."""
+    """Non-finite output is the signature the sweep exists to catch.
+
+    The example named here must not be one of the deferred ones, or this
+    asserts the opposite of what it reads as. It said
+    `hbn_optcond2_vacancies.py` until that script was deferred, at which
+    point the case was checking that a deferral works.
+    """
+    name = "dccond_graphene_magnetic_field.py"
+    assert name not in runner.KNOWN_FAILING, (
+        f"{name} is deferred now; this case needs an example that still "
+        "fails the gate")
     results = {"dos_graphene.py": {"status": "ok"},
-               "hbn_optcond2_vacancies.py": {
-                   "status": "diverged",
-                   "diverged": ["nonlinear_cond.dat: 1024 non-finite values"]}}
+               name: {"status": "diverged",
+                      "diverged": ["condDC.dat: 1024 non-finite values"]}}
     assert _verdict(runner, results) == 1
 
 
@@ -74,6 +87,29 @@ def test_a_processor_that_becomes_unpaired_does_fail(runner):
     results = {"dos_graphene.py": {"status": "ok"},
                "some_new_process.py": {"status": "unpaired", "kind": "processor"}}
     assert _verdict(runner, results) == 1
+
+
+def test_a_deferred_failure_does_not_fail_the_gate(runner):
+    """A real failure, listed in KNOWN_FAILING, is reported but not fatal."""
+    assert runner.KNOWN_FAILING, "the deferred list is empty"
+    name = sorted(runner.KNOWN_FAILING)[0]
+    results = {"dos_graphene.py": {"status": "ok"},
+               name: {"status": "diverged",
+                      "diverged": ["nonlinear_cond.dat: 1024 non-finite values"]}}
+    assert _verdict(runner, results) == 0
+
+
+def test_an_unlisted_failure_still_fails_beside_a_deferred_one(runner):
+    """Deferring one failure must not excuse the next."""
+    name = sorted(runner.KNOWN_FAILING)[0]
+    results = {name: {"status": "diverged", "diverged": ["non-finite"]},
+               "dos_graphene.py": {"status": "failed", "error": "boom"}}
+    assert _verdict(runner, results) == 1
+
+
+def test_every_deferred_entry_carries_a_reason(runner):
+    for name, reason in runner.KNOWN_FAILING.items():
+        assert reason and reason.strip(), f"{name} is deferred with no reason given"
 
 
 def test_every_documented_exception_carries_a_reason(runner):

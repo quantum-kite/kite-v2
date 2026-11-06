@@ -82,9 +82,10 @@ KNOWN_FAILING = {
 }
 
 def verdict(results):
-    """Split a report into (failures, unpaired, unexpectedly unpaired).
+    """Split a report into (bad, unpaired, surprises, deferred).
 
-    Returns (bad, unpaired, surprises, deferred). The exit status is non-zero
+    The exit status derives from this; `exit_status` below is the single
+    place that decides it. The exit status is non-zero
     when `bad` or `surprises` is non-empty. An unpaired processor was never run
     and so was never checked, which is a limitation of the filename pairing
     rather than a defect -- but only for the ones already known. A new one is a
@@ -99,6 +100,18 @@ def verdict(results):
     bad = {k: v for k, v in failing.items() if k not in KNOWN_FAILING}
     surprises = {k: v for k, v in unpaired.items() if k not in KNOWN_UNPAIRED}
     return bad, unpaired, surprises, deferred
+
+
+def exit_status(results):
+    """The gate's decision, in one place.
+
+    `main` returns this and the guard test calls it, so neither restates the
+    rule. It was restated once: `verdict` grew a fourth return value and the
+    test kept unpacking three, which made the guard raise instead of check --
+    and the gate went unverified while it was being widened.
+    """
+    bad, _unpaired, surprises, _deferred = verdict(results)
+    return 1 if (bad or surprises) else 0
 
 
 H5_IN_SOURCE = re.compile(r"""['"]([A-Za-z0-9_./-]+\.h5)['"]""")
@@ -304,7 +317,7 @@ def main():
         if name in results and name not in deferred:
             print(f"  {'now clean':<16} {name}  (remove it from KNOWN_FAILING)")
 
-    return 1 if (bad or surprises) else 0
+    return exit_status(results)
 
 
 if __name__ == "__main__":
