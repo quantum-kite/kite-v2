@@ -123,7 +123,7 @@ def test_the_identities_are_not_vacuous(moments):
 
 
 def test_open_boundaries_are_distinct_and_finite(moments):
-    """RF-019's fourth mode; cutting the wrapping bond is not a phase on it."""
+    """The fourth boundary mode; cutting the wrapping bond is not a phase."""
     assert np.isfinite(moments["open"]).all()
     assert np.abs(moments["open"] - moments["periodic"]).max() > 1e-3
 

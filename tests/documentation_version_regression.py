@@ -85,8 +85,8 @@ ENTRY_POINTS = {
 
 #: Methods of `Calculation` that are not advertised capabilities:
 #: `add_orbital_*` build a custom operator rather than request a calculation,
-#: and `localized_wave_packet` is descoped this release
-#: (see `descoped_capability_regression.py`).
+#: and `localized_wave_packet` is descoped this release: the implementation
+#: stays in the tree, and no page documents it.
 NOT_ADVERTISED = {"__init__", "add_orbital_coupling", "add_orbital_index",
                   "localized_wave_packet",
                   # next version, so the capability lists must not name them
