@@ -355,52 +355,17 @@ make
 If these commands have run successfully, you will now find [KITEx][kitex] and [KITE-tools][kitetools]  in the `#!bash kite/build/` directory, which are now ready to use!
 
 
-### 3.1 Alternative build routes
+### 3.1 Other build files in the repository
 
-**CMake, above, is the main route** — it is the one the CI builds on both `#!bash ubuntu-latest` and
-`#!bash macos-latest`, the one [Section 2.4 (conda)][conda_section] and the [Dockerfile][docker_section]
-drive, and the only one that discovers HDF5, FFTW3 and OpenMP for you. Use it unless you have a reason not
-to.
+**CMake, above, is the route to use** — on its own, or through
+[conda][conda_section] or [Docker][docker_section], both of which drive it. It is what the CI builds, and
+the only one that finds HDF5, FFTW3 and OpenMP for you.
 
-Two other build files are kept in the repository. They produce binaries with the **same capabilities** —
-all three routes compile with C++17 and set `#!bash COMPILE_WAVEPACKET=1`, so none of them gives you a
-smaller KITE. What differs is how much you have to tell them yourself.
-
-!!! warning "Alternative 1 — `#!bash makefile`: you supply what CMake would have found"
-
-    `#!bash make` builds both executables into `#!bash build/`, like CMake. It does no dependency
-    discovery at all: it compiles with plain `#!bash g++`, and the variable it reserves for HDF5's include
-    path (`#!bash HDF5_FLAGS`) is never given a value, so HDF5 and FFTW3 must already be on the compiler's
-    default search path. On macOS neither assumption holds — `#!bash g++` resolves to Apple Clang, which
-    rejects `#!bash -fopenmp`, and MacPorts/Homebrew put the libraries under their own prefix. You pass all
-    three in yourself. On the MacPorts setup of [Section 2.3][macports_recipe]:
-
-    ``` bash
-    make CXX=/opt/local/bin/g++-mp-14 \
-         HDF5_FLAGS="-I/opt/local/include" \
-         LDFLAGS="-fopenmp -L/opt/local/lib -lhdf5_cpp -lhdf5 -lfftw3f -lfftw3"
-    ```
-
-    On a Linux distribution whose packages install into the default prefixes, plain `#!bash make` is
-    expected to be enough.
-
-!!! danger "Alternative 2 — `#!bash compile_script.sh`: no overrides, and it does not stop on failure"
-
-    This is the oldest route, kept for reference. Three things make it a poor first choice:
-
-    * **The compiler is hardcoded.** `#!bash g++` appears literally in each of its four compile and link
-      commands, with no variable to override. On macOS that is Apple Clang, so every compilation fails on
-      `#!bash -fopenmp` and there is no way to redirect it short of editing the file.
-    * **It does not check whether anything succeeded.** The script has no error handling, so it prints
-      `#!bash Done.` and exits with status 0 even when every single compilation failed and no binary was
-      produced. A successful-looking run is not evidence of a successful build — check for the executables.
-    * **The binaries land somewhere else.** It writes `#!bash KITEx` and `#!bash KITE-tools` to the
-      repository root, not to `#!bash build/`, so the commands in [Section 4][test_kite] (`#!bash ../build/KITEx`)
-      do not match what it produced. It also hardcodes `#!bash /opt/local` and `#!bash $HOME` as library
-      prefixes.
-
-A third alternative, [Docker][docker_section], is described in Section 6; it installs nothing on the host
-and is the supported route on Windows.
+The repository also contains a `#!bash makefile` and a `#!bash compile_script.sh`. They are kept for
+existing users and are not maintained: neither discovers dependencies, both hardcode a compiler, and
+`#!bash compile_script.sh` exits 0 even when every compilation failed. They build the same KITE — the
+difference is only how much you have to supply yourself. If you are already using one, keep going; if you
+are reading this to decide, use CMake.
 
 
 ## 4. Test KITE
