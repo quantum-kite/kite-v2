@@ -63,6 +63,13 @@ All notable changes to KITE are recorded here. The format follows
 
 ### Documentation
 
+- The header of `examples/ldos_graphene.py` described the example as building a
+  near-decoupled resonant impurity with severed bonds, producing a sublattice-polarised
+  LDOS pattern. The script does not do that: the bond entries add to the clean hopping
+  rather than replacing it, so a value of `-0.0` changes nothing, and the output is
+  spatially flat to within 2%. The header now states what the example is — local density
+  of states with structural disorder — and nothing more. No behaviour changed.
+
 - The KITE-tools output table said `dos.dat` carries a third column with the imaginary part
   of the density of states, and that single-shot DC conductivity carries one too. Neither
   does: both files have two columns, and the single-shot file is `singleshot_condDC.dat`,

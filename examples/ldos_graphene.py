@@ -9,21 +9,7 @@
     Lattice: Honeycomb
     Configuration: Periodic boundary conditions, double precision,
                     manual rescaling, size of the system 128x128, with domain decomposition (nx=ny=1)
-    Calculation type: Local density of states (calculation.ldos) at a set of chosen positions/orbitals,
-                       around a single near-decoupled resonant impurity -- NOT just "LDOS at arbitrary
-                       chosen positions" in the abstract: the point of this example is the impurity itself.
-
-    Physics
-    -------
-    `main()`'s StructuralDisorder block places a single A-sublattice site (node0) whose 3 nearest-neighbor
-    hoppings to its B neighbors (node1/node2/node3) are all set to timp = -0.0 (i.e. severed), while that
-    same site's own onsite energy is shifted by a strong limp = -1.0 (comparable to the hopping t = 2.8 eV
-    rescaled onto this lattice's energy window). The site is not literally removed (it isn't a StructuralDisorder
-    vacancy) -- it is a near-decoupled resonant impurity: still present, but electronically cut off from its
-    neighbors and given a large onsite potential, the textbook setup for an impurity resonance state near the
-    Dirac point. calculation.ldos then maps the resulting LDOS on a 10x10-unit-cell grid (both sublattices) of
-    positions centered on the impurity, which is what reveals the expected sublattice-polarized,
-    STM-observable LDOS pattern around it -- not a generic "pick some points" LDOS demo.
+    Calculation type: Local density of states (calculation.ldos), with structural disorder
     Last updated: 08/05/2025
 """
 
@@ -154,9 +140,7 @@ def main(onsite=(0, 0)):
         boundaries=[mode, mode],
         is_complex=False,
         precision=1,
-        # graphene's bandwidth is +/-3t = +/-8.4 eV at the t = 2.8 eV used above; the
-        # range has to enclose the spectrum with margin, or the Chebyshev recursion
-        # diverges and the run still exits 0
+        # graphene's bandwidth is +/-3t = +/-8.4 eV; the range must enclose it
         spectrum_range=[-8.7, 8.7]
     )
 
