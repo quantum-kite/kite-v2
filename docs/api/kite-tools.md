@@ -128,11 +128,11 @@ In the table below, we specify the name of the files that are created by KITE-to
 |-----------------------------------|------------------------------|-------------------|------------------|------------------|
 | Local Density of States           | `#!bash ldos{E}.dat`         | lattice position  | LDOS ($Re$)      |                  |
 | ARPES                             | `#!bash arpes.dat`           | k-vector          | ARPES ($Re$)     |                  |	
-| Density of States                 | `#!bash dos.dat`             | energy            | DOS ($Re$)       | DOS ($Im$)       |
+| Density of States                 | `#!bash dos.dat`             | energy            | DOS              |                  |
 | Optical Conductivity              | `#!bash optical_cond.dat`    | Frequency         | Opt. Cond ($Re$) | Opt. Cond ($Im$) |
 | DC Conductivity                   | `#!bash condDC.dat`          | Fermi energy      | Cond ($Re$)      | Cond ($Im$)      |
 | Second-order optical conductivity | `#!bash nonlinear_cond.dat`  | Frequency         | NL Cond ($Re$)   | NL Cond ($Im$)   |
-| Single-shot DC Conductivity       | `#!bash [HDF5-filename].dat` | Fermi energy      | Cond ($Re$)      | Cond ($Im$)      |
+| Single-shot DC Conductivity       | `#!bash singleshot_condDC.dat` | Fermi energy    | Cond             |                  |
 | Custom rank-one spectral density   | `#!bash custom_one.dat`      | energy            | $\mathrm{Tr}[A\,\delta(E-H)]$ ($Re$) |      |
 | Custom rank-two Kubo-Bastin response | `#!bash custom_two.dat`    | Fermi energy      | response ($Re$)  |                  |
 | Custom rank-one local spectral density | `#!bash custom_one_local.dat` | energy       | one column per probed cell/orbital | |

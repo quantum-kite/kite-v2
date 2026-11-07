@@ -63,6 +63,12 @@ All notable changes to KITE are recorded here. The format follows
 
 ### Documentation
 
+- The KITE-tools output table said `dos.dat` carries a third column with the imaginary part
+  of the density of states, and that single-shot DC conductivity carries one too. Neither
+  does: both files have two columns, and the single-shot file is `singleshot_condDC.dat`,
+  not a name derived from the HDF5 file. Verified against output the examples produced, not
+  only against the source. The other three entries claiming an imaginary part are correct.
+
 - `docs/installation.md` names CMake as the main build route and describes the two
   alternatives, each with what it does and does not cover; it also gains a section on how
   to run the verification suite and a statement of what continuous integration actually

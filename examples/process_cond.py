@@ -63,6 +63,13 @@ def fermi_function(E, mu, beta):
 def calculate_conductivity(
     file_path, mu_values, k_BT, E_grid, eta, sigma
 ):
+    # Block size of the Chebyshev sums below, which must equal the MEMORY the
+    # binaries were compiled with -- the loops in Gamma2D/Gamma3D stride by it.
+    # MEMORY is a compile-time constant, `#ifndef`-guarded in Src/Generic.hpp, so
+    # 16 is its default and not necessarily its value: a build configured with
+    # -DMEMORY=... makes this literal wrong, and nothing here can detect that.
+    # Check it against Src/Generic.hpp if the numbers from this script disagree
+    # with KITE-tools.
     mem = 16
     with h5py.File(file_path, "r") as f:
         num_orbitals = np.array(f["NOrbitals"]).item()
