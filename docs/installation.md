@@ -42,14 +42,8 @@ git clone https://github.com/quantum-kite/kite-v2.git
     do not need to install Eigen3 yourself. If you specifically want to use your own system Eigen3 instead
     (e.g. to pick up a newer version), pass `#!bash -DUSE_SYSTEM_EIGEN=ON` to `#!bash cmake` in [Section 3][kitex_kitetools].
 
-The compiler **must** support *C++17* (or newer) features and [*OpenMP*][openmp] parallelization. 
-
-
-KITE's [Gaussian wavepacket propagation][calculation-gaussian_wave_packet] is always built; it needs no
-separate flag. It does require the C++17 support already demanded above, which gcc has provided since
-version 8.0.0 — so gcc 8.0.0 or newer is the floor for building KITE at all, not an extra requirement for
-this one feature.
-To check the gcc version, you can use the following command in the terminal:
+The compiler **must** support *C++17* (or newer) features and [*OpenMP*][openmp] parallelization.
+With gcc, that means **version 8.0.0 or newer**. To check your version:
 
 ``` bash
 g++ --version
