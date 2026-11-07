@@ -15,6 +15,7 @@
 #include "../Tools/myHDF5.hpp"
 #include "../macros.hpp"
 #include "parse_input.hpp"
+#include "compiletime_info.h"
 
 
 void shell_input::printDC(){
@@ -87,11 +88,10 @@ void shell_input::printARPES(){
 }
 
 void shell_input::printInfo(){
-
-  //std::cout << "Information about the compilation process:\n"
-    //"Host machine name: " << MACHINE_NAME << "\n"
-    //"Host machine operating system: " << SYSTEM_NAME << "\n"
-    //"Compilation date: " << TODAY << "\n";
+  std::cout << "Information about the compilation process:\n"
+    "Host machine name: " << MACHINE_NAME << "\n"
+    "Host machine operating system: " << SYSTEM_NAME << "\n"
+    "Compilation date: " << TODAY << "\n";
 }
 
 void shell_input::printHelp(){

@@ -41,6 +41,14 @@ KITE-tools supports a set of command-line instructions to force it to use user-s
 
 Each function to compute is specified after the double hyphens — and the parameters of each function is specified after the single hyphen -. The list of available commands is as follows:
 
+Two options stand apart from the table below: they take no HDF5 file, run on their own
+and exit.
+
+| Option | Short | Description |
+|--------|-------|-------------|
+| `#!bash --help` | `#!bash -h` | Prints the command-line guide, which is the same list given here. |
+| `#!bash --info` | `#!bash -i` | Prints the machine name, operating system and date the binary was configured. Quote it when reporting a problem — it identifies the build rather than the run. |
+
 | Function            | Parameter    | Description                                                                                         |
 |---------------------|--------------|-----------------------------------------------------------------------------------------------------|
 | `#!bash --LDOS`     | `#!bash -N`  | Name of the output file                                                                             |

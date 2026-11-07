@@ -61,6 +61,12 @@ All notable changes to KITE are recorded here. The format follows
   summed and post-processed conductivity output. `KITE-tools` performs both, so the scripts
   duplicated the shipped path in a second, unverified implementation.
 
+- `KITE-tools --info` printed nothing. It is advertised in `--help` as reporting the
+  compilation details, and the parser accepted it, but the function behind it had its
+  whole body commented out while the generated header it needs was being built and was
+  already on the include path. It now prints the machine, operating system and
+  configuration date, in both the long and short forms.
+
 ### Documentation
 
 - The header of `examples/ldos_graphene.py` described the example as building a
