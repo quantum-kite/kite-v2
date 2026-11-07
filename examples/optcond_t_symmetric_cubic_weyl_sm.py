@@ -63,23 +63,8 @@ def main(anderson_w=0):
 
     # number of decomposition parts [nx,ny,nz] in each direction of matrix.
     # This divides the lattice into various sections, each of which is calculated in parallel
-    # Sized so the example runs on a laptop in seconds. These are reduced
-    # parameters, kept small to demonstrate the workflow: seeing the physics
-    # this calculation is for needs a bigger run than this one.
-    #
-    # Two things to raise, in this order of effect:
-    #   num_moments -- the dominant cost. The Gamma2D double loop is quadratic
-    #     in it, measured here as 256 -> 1024 taking KITEx from 8 s to 340 s at
-    #     this lattice size. It also sets the energy resolution, roughly
-    #     pi * (half the spectrum_range) / num_moments. Keep it a multiple of
-    #     16; see the divisibility warning in docs/documentation/performance.md.
-    #   lx/ly/lz -- the published runs use 128. Raising the lattice also cuts
-    #     the share of work spent on the ghost halo, which at this size is
-    #     nearly half of each sub-domain.
-    #
-    # Set divisions to the cores you actually have: optimization.md asks for
-    # nx*ny*nz equal to the available cores, and performance.md requires each of
-    # lx/nx, ly/ny, lz/nz to stay a multiple of 8 -- KITEx aborts otherwise.
+    # Reduced to run in seconds on a laptop. For the physics, raise num_moments
+    # first (published runs use lx = ly = lz = 128); see performance.md.
     nx = ny = nz = 2
     # number of unit cells in each direction.
     lx = ly = lz = 32
