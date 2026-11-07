@@ -496,7 +496,7 @@ The KITE package for pre-processing is split up in various subclasses and contai
 
             :   | Parameter                                                   | Description                                                                                                   |
                 |-------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
-                | `#!python k_vector`:*`#!python array_like`*                 | List of k-points in Cartesian units, as given by `#!python lattice.reciprocal_vectors()`. KITE converts them internally and reports results in the same units. |
+                | `#!python k_vector`:*`#!python array_like`*                 | List of k-points in Cartesian units, as given by `#!python lattice.reciprocal_vectors()`. Results come back in the same units. |
                 | `#!python weight`:*`#!python array_like`*                   | List of orbital weights used for ARPES.                                                                       |
                 | `#!python num_moments`:*`#!python int`*                     | Number of polynomials in the Chebyshev expansion.                                                             |
                 | `#!python num_disorder`:*`#!python int`*                    | Number of different disorder realisations.                                                                    |
