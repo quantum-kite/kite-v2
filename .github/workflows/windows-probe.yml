@@ -1,0 +1,75 @@
+# Probe: can KITE build natively on Windows with MinGW-w64 instead of MSVC?
+#
+# Native Windows support was dropped because MSVC rejects five things the code
+# relies on: M_PI, the and/or/not word-operators, an unsigned OpenMP loop index,
+# and an Eigen::Map overload that only resolves on LP64. Four of those five are
+# MSVC-specific -- GCC has M_PI, accepts the word-operators, and its OpenMP takes
+# unsigned indices -- so a MinGW build should clear them without touching Src/.
+#
+# The fifth is not a compiler question: Windows is LLP64 under MinGW too, so an
+# Eigen::Map overload that needs LP64 should still fail. This job exists to find
+# out which of those two outcomes is real, and nothing else.
+#
+# It runs only on its own branch and by hand. It is not part of the gate.
+name: windows-probe
+
+on:
+  push:
+    branches: [probe/windows-mingw]
+  workflow_dispatch:
+
+jobs:
+  mingw-build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-ninja
+            mingw-w64-x86_64-hdf5
+            mingw-w64-x86_64-fftw
+            mingw-w64-x86_64-python
+            mingw-w64-x86_64-python-numpy
+
+      - name: Toolchain versions
+        run: |
+          g++ --version
+          cmake --version
+          echo "--- hdf5 ---"; ls /mingw64/lib | grep -i hdf5 | head
+          echo "--- fftw ---"; ls /mingw64/lib | grep -i fftw | head
+
+      - name: Configure
+        id: configure
+        continue-on-error: true
+        run: |
+          mkdir -p build && cd build
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Release ..
+
+      - name: Build — this is the measurement
+        id: build
+        continue-on-error: true
+        run: cmake --build build -j 4 2>&1 | tee build.log
+
+      - name: What failed, if anything
+        run: |
+          echo "configure: ${{ steps.configure.outcome }}"
+          echo "build:     ${{ steps.build.outcome }}"
+          if [ -f build/build.log ] || [ -f build.log ]; then
+            LOG=$( [ -f build.log ] && echo build.log || echo build/build.log )
+            echo "=== first 40 error lines ==="
+            grep -iE 'error|undefined reference' "$LOG" | head -40 || echo "(no error lines)"
+            echo "=== do the five known blockers appear? ==="
+            for p in 'M_PI' "'and'" "'or'" "'not'" 'Eigen::Map' 'OpenMP'; do
+              printf '  %-14s %s\n' "$p" "$(grep -ic "$p" "$LOG" 2>/dev/null || echo 0)"
+            done
+          fi
+          ls build/KITEx* build/KITE-tools* 2>/dev/null && echo "BINARIES PRODUCED" || echo "no binaries"
