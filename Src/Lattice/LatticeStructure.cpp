@@ -235,7 +235,11 @@ void LatticeStructure<D>::print_coordinates(std::size_t pos1, std::size_t pos2)
   Coordinates<long, D + 1> Latt1(Ld);
   Coordinates<long, D + 1> Latt2(Ld);
   Eigen::Matrix<double, D, 1> r1, r2;
-  Eigen::Map<Eigen::Matrix<std::ptrdiff_t, D, 1>> v1(Latt1.coord), v2(Latt2.coord); // Column vectors
+  // The element type must match Coordinates<long, D+1> above: Latt1.coord is long[].
+  // std::ptrdiff_t is the same type as long on LP64 (Linux, macOS) and the two were
+  // interchangeable there, but on LLP64 -- Windows, including under MinGW -- ptrdiff_t
+  // is long long and no Map constructor accepts long[].
+  Eigen::Map<Eigen::Matrix<long, D, 1>> v1(Latt1.coord), v2(Latt2.coord); // Column vectors
   Latt1.set_coord(pos1);
   Latt2.set_coord(pos2);
     
