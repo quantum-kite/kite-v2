@@ -790,7 +790,8 @@ class Calculation:
         Parameters
         ----------
         k_vector : List
-            List of K points with respect to reciprocal vectors b0 and b1 at which the band structure will be calculated.
+            List of k-points in Cartesian units, as given by lattice.reciprocal_vectors().
+            KITE converts them internally and reports results in the same units.
         weight : List
             List of orbital weights used for ARPES.
         num_moments : int

@@ -69,6 +69,16 @@ All notable changes to KITE are recorded here. The format follows
 
 ### Documentation
 
+- `arpes` said its `k_vector` was given with respect to the reciprocal lattice vectors. It is
+  the opposite: the input is Cartesian, KITE converts it internally, and results come back in
+  the same units. The example page already said so; the API table and the Python docstring did
+  not. The neighbouring `gaussian_wave_packet` does take reciprocal-lattice units, so the two
+  were described identically while differing.
+- The `spectral_map` entry claimed its FFT performs a Bloch transform including intra-cell
+  sublattice phases. That clause is gone; the description of what is computed is unchanged.
+- The broadening note now says that the conductivities which do not take `eta` in Python use a
+  default set in KITE-tools, which prints the value and accepts `-S` to change it.
+
 - The API reference gave `#!python eta` in `singleshot_conductivity_dc` the type `int`.
   It is a float — a small imaginary broadening, typically of order 0.01 — and the same
   quantity is correctly called a float where it appears as `gamma_`. An integer value

@@ -439,8 +439,7 @@ The KITE package for pre-processing is split up in various subclasses and contai
         :   Calculate a full momentum-space (k-resolved) map of the spectral function at one target energy — the
             k-resolved analogue of [`#!python ldos_map()`][calculation-ldos_map]. It uses the same random-phase/Chebyshev-filter
             machinery, but wraps the filtering loop in a unitary FFT that transforms between the real-space (site) and
-            momentum-space (k) bases — a proper Bloch transform that includes intra-cell sublattice phases, not a naive
-            plane DFT — before and after applying $H$: $\mathbb{E}[\text{map}_k] = \text{factor}\cdot\langle k|f(H)^2|k\rangle$.
+            momentum-space (k) bases, before and after applying $H$: $\mathbb{E}[\text{map}_k] = \text{factor}\cdot\langle k|f(H)^2|k\rangle$.
 
             **Parameters**
 
@@ -497,7 +496,7 @@ The KITE package for pre-processing is split up in various subclasses and contai
 
             :   | Parameter                                                   | Description                                                                                                   |
                 |-------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
-                | `#!python k_vector`:*`#!python array_like`*                 | List of K points with respect to reciprocal vectors b0 and b1 at which the band structure will be calculated. |
+                | `#!python k_vector`:*`#!python array_like`*                 | List of k-points in Cartesian units, as given by `#!python lattice.reciprocal_vectors()`. KITE converts them internally and reports results in the same units. |
                 | `#!python weight`:*`#!python array_like`*                   | List of orbital weights used for ARPES.                                                                       |
                 | `#!python num_moments`:*`#!python int`*                     | Number of polynomials in the Chebyshev expansion.                                                             |
                 | `#!python num_disorder`:*`#!python int`*                    | Number of different disorder realisations.                                                                    |

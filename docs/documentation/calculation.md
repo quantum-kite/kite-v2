@@ -84,7 +84,7 @@ Some functions also require the following parameters:
 * `#!python energy`
   : Selected values of Fermi energy at which we want to calculate the `#!python singleshot_conductivity_dc`.
 * `#!python eta`
-  : Imaginary constant (scalar self energy) in the denominator of the Green's function required for lattice calculations of finite-size systems, i.e. an energy resolution (can also be seen as a controlled broadening or inelastic energy scale). For technical details, see [Documentation][optimization].
+  : Imaginary constant (scalar self energy) in the denominator of the Green's function required for lattice calculations of finite-size systems, i.e. an energy resolution (can also be seen as a controlled broadening or inelastic energy scale). For technical details, see [Documentation][optimization]. The conductivities that do not take it in Python use a default broadening set in KITE-tools, which prints the value it used and accepts `#!bash -S` to change it.
 
 The `#!python calculation` is structured in the following way:
 
