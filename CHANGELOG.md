@@ -69,6 +69,11 @@ All notable changes to KITE are recorded here. The format follows
 
 ### Documentation
 
+- The API reference gave `#!python eta` in `singleshot_conductivity_dc` the type `int`.
+  It is a float — a small imaginary broadening, typically of order 0.01 — and the same
+  quantity is correctly called a float where it appears as `gamma_`. An integer value
+  would be far outside the useful range.
+
 - The header of `examples/ldos_graphene.py` described the example as building a
   near-decoupled resonant impurity with severed bonds, producing a sublattice-polarised
   LDOS pattern. The script does not do that: the bond entries add to the clean hopping
